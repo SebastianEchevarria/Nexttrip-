@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="100" fill="#0a0a0a"/>
+  
+  <!-- Subtle gradient overlay -->
+  <rect width="512" height="512" rx="100" fill="url(#bg)"/>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a1a2e" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#0a0a0a" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Main N shape -->
+  <!-- Left vertical bar -->
+  <rect x="108" y="132" width="52" height="220" rx="4" fill="#111"/>
+  
+  <!-- Right vertical bar -->  
+  <rect x="308" y="132" width="52" height="220" rx="4" fill="#111"/>
+
+  <!-- N diagonal stroke (black, thick) -->
+  <polygon points="108,132 165,132 360,318 360,352 298,352 108,165" fill="#111"/>
+
+  <!-- Now draw clean N in white -->
+  <!-- Left bar -->
+  <rect x="110" y="140" width="48" height="214" rx="3" fill="#ffffff"/>
+  <!-- Right bar -->
+  <rect x="310" y="140" width="48" height="214" rx="3" fill="#ffffff"/>
+  <!-- Diagonal -->
+  <polygon points="110,140 158,140 358,325 358,354 310,354 110,169" fill="#ffffff"/>
+
+  <!-- Gold arrow crossing through the N (horizontal, right-pointing) -->
+  <!-- Arrow shaft outline -->
+  <rect x="206" y="221" width="203" height="46" rx="6" fill="#000"/>
+  <!-- Arrow head outline -->
+  <polygon points="385,189 478,244 385,299" fill="#000"/>
+  <!-- Arrow shaft -->
+  <rect x="210" y="225" width="195" height="38" rx="4" fill="#c9a96e"/>
+  <!-- Arrow head -->
+  <polygon points="390,196 468,244 390,292" fill="#c9a96e"/>
+  
+  <!-- Gold highlight/shine on arrow -->
+  <rect x="210" y="225" width="195" height="14" rx="4" fill="#e8d5a3" opacity="0.3"/>
+
+  <!-- No text — device will show app name below icon -->
+</svg>
