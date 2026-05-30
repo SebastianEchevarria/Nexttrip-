@@ -2105,7 +2105,12 @@ export default function NextTripClientApp() {
     });
   },[]);
   const [messages,setMessages]=useState({});
-  const [readCounts,setReadCounts]=useState({});
+  const [readCounts,setReadCounts]=useState(()=>{
+    try{return JSON.parse(localStorage.getItem("nexttrip_read_counts")||"{}");}catch{return {};}
+  });
+  useEffect(()=>{
+    try{localStorage.setItem("nexttrip_read_counts",JSON.stringify(readCounts));}catch{}
+  },[readCounts]);
   const [chatNotifOpen,setChatNotifOpen]=useState(null);
 
   useEffect(()=>{ localStorage.setItem("nexttrip_lang",lang); },[lang]);

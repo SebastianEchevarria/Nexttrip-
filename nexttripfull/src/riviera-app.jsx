@@ -4846,7 +4846,12 @@ export default function RivieraApp() {
   // prevBookingsRef kept for compatibility
   const prevBookingsRef = useRef([]);
   // Track read state: { [bookingId]: lastReadCount }
-  const [readCounts,setReadCounts]=useState({});
+  const [readCounts,setReadCounts]=useState(()=>{
+    try{return JSON.parse(localStorage.getItem("nexttrip_read_counts")||"{}");}catch{return {};}
+  });
+  useEffect(()=>{
+    try{localStorage.setItem("nexttrip_read_counts",JSON.stringify(readCounts));}catch{}
+  },[readCounts]);
   const [chatNotifOpen,setChatNotifOpen]=useState(null);
   const prevPendingRef=useRef(bookings.filter(b=>b.status==="pending").length);
 
