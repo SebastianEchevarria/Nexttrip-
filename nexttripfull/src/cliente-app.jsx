@@ -1369,6 +1369,10 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
               <div style={{display:"flex",alignItems:"center",gap:6}}>
                 <div style={{width:12,height:12,borderRadius:"50%",background:"#111",border:"1.5px solid #444",boxShadow:"inset 0 0 4px rgba(255,255,255,0.1)"}}/>
                 <span style={{color:"#a8b8cc",fontSize:11}}>{lang==="en"?"Midnight Black · Electric":"Negro Medianoche · Eléctrico"}</span>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginTop:5,flexWrap:"wrap"}}>
+                  <span style={{color:"#c9a96e",fontSize:12,fontWeight:700,letterSpacing:2,background:"#c9a96e15",border:"1px solid #c9a96e44",borderRadius:6,padding:"2px 8px"}}>🔲 5361MZC</span>
+                  <span style={{color:"#a8b8cc",fontSize:11}}>· Sebastián Echevarría</span>
+                </div>
               </div>
             </div>
             {/* Electric bolt */}

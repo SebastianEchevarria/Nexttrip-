@@ -3498,6 +3498,10 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
               <div style={{display:"flex",alignItems:"center",gap:5}}>
                 <div style={{width:10,height:10,borderRadius:"50%",background:"#111",border:"1.5px solid #444"}}/>
                 <span style={{color:"#a8b8cc",fontSize:10}}>Negro Medianoche · Eléctrico</span>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginTop:6,flexWrap:"wrap"}}>
+                  <span style={{color:"#c9a96e",fontSize:11,fontWeight:700,letterSpacing:2,background:"#c9a96e15",border:"1px solid #c9a96e44",borderRadius:6,padding:"2px 8px"}}>🔲 5361MZC</span>
+                  <span style={{color:"#a8b8cc",fontSize:11}}>· Sebastián Echevarría</span>
+                </div>
               </div>
             </div>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="#c9a96e" opacity="0.6">
