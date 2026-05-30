@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+  <meta name="theme-color" content="#000000"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <title>NEXTTRIP — Driver & Recepción</title>
+  <link rel="manifest" href="/manifest-driver.json"/>
+  <link rel="apple-touch-icon" href="/icon-driver.svg"/>
+  <meta name="apple-mobile-web-app-title" content="NEXTTRIP"/>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html,body,#root{width:100%;min-height:100%;background:#000;}
+    #loading{position:fixed;inset:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.5s;}
+    #loading.hidden{opacity:0;pointer-events:none;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAfhidX6gGyElvwOwUpoBsNhbk_OFd4roY&libraries=places" async defer></script>
+</head>
+<body>
+  <div id="loading">
+    <svg width="38" height="38" viewBox="0 0 100 100" fill="none" style="margin-bottom:14px">
+      <path d="M50 6C28 6 10 14 4 26c11-3 28-6 46-6s35 3 46 6C90 14 72 6 50 6Z" fill="#c9a96e"/>
+      <path d="M4 26c11-3 28-6 46-6L50 94C36 62 18 44 4 26Z" fill="#c9a96e"/>
+      <path d="M96 26c-11-3-28-6-46-6L50 94c14-32 32-50 46-68Z" fill="#c9a96e" opacity=".7"/>
+    </svg>
+    <div style="color:#a8b8cc;font-size:10px;letter-spacing:3px;margin-bottom:18px;font-family:sans-serif">CARGANDO</div>
+    <div style="width:24px;height:24px;border-radius:50%;border:3px solid #1e293b;border-top-color:#c9a96e;animation:spin 0.8s linear infinite"></div>
+  </div>
+  <div id="root"></div>
+  <script type="module" src="/src/main-driver.jsx"></script>
+</body>
+</html>
