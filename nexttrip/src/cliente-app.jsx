@@ -966,7 +966,7 @@ function ClientAuth({ onLogin, onBack, lang, setLang }) {
   return (
     <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",
       justifyContent:"center",padding:"24px 20px",background:"#000"}}>
-      <RivieraLogo size={80}/>
+      <RivieraLogo size={130}/>
       <div style={{marginTop:12,marginBottom:4,display:"flex",alignItems:"center",gap:8}}>
         <div style={{width:8,height:8,borderRadius:"50%",background:"#c9a96e"}}/>
         <span style={{color:"#e8d5a3",fontSize:12,fontWeight:700,letterSpacing:3}}>VIP CUSTOMER SERVICE</span>
@@ -1027,7 +1027,7 @@ function ClientAuth({ onLogin, onBack, lang, setLang }) {
               <div style={{color:"#22c55e",fontSize:11,marginBottom:10}}>✓ PINs coinciden</div>
             )}
 
-            {/* Discount banner */}
+      {/* Discount banner */}}
             <div style={{background:"#0a1628",border:"1px solid #c9a96e33",borderRadius:10,
               padding:"10px 14px",marginBottom:16,display:"flex",alignItems:"center",gap:8}}>
               <span style={{fontSize:18}}>🏷️</span>
@@ -1189,10 +1189,11 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
   // Clock tick: forces re-render every 30s so past slots auto-block
   const [now, setNow] = useState(()=>new Date());
   useEffect(()=>{
-    const t = setInterval(()=>setNow(new Date()), 30000);
+    const t = setInterval(()=>setNow(new Date()), 1000);
     return ()=>clearInterval(t);
   },[]);
   const [chatBooking,setChatBooking]=useState(null);
+  const [arrivedBooking,setArrivedBooking]=useState(null);
   const [cancelConfirm,setCancelConfirm]=useState(null);
   const [historyOpen,setHistoryOpen]=useState(true); // booking to cancel
   const [form,setForm]=useState({
@@ -1316,7 +1317,92 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
         </div>
       )}
 
-      {/* Discount banner */}
+      {/* ── PRÓXIMO VIAJE CLIENTE ── */}
+      {(()=>{
+        const upcoming = myBookings
+          .filter(b=>["confirmed","pending","inprogress"].includes(b.status))
+          .sort((a,b)=>new Date(`${a.date}T${a.time}:00`)-new Date(`${b.date}T${b.time}:00`))
+          .find(b=>new Date(`${b.date}T${b.time}:00`)-now>-TRIP_DURATION*60*1000);
+        if(!upcoming) return null;
+        const tripDt=new Date(`${upcoming.date}T${upcoming.time}:00`);
+        const diffMs=tripDt-now;
+        const isOngoing=diffMs<0&&diffMs>-TRIP_DURATION*60*1000;
+        const totalSecs=Math.max(0,Math.floor(Math.abs(diffMs)/1000));
+        const days=Math.floor(totalSecs/86400);
+        const hrs=Math.floor((totalSecs%86400)/3600);
+        const mins=Math.floor((totalSecs%3600)/60);
+        const secs=totalSecs%60;
+        const pad=n=>String(n).padStart(2,"0");
+        const countdownStr=days>0?`${days}d ${pad(hrs)}h ${pad(mins)}m`:`${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
+        const urgency=!isOngoing&&diffMs>0&&diffMs<30*60*1000;
+        const isArrived=arrivedBooking&&arrivedBooking.id===upcoming.id;
+        const waitEndMs=tripDt.getTime()+10*60*1000;
+        const waitRemMs=isArrived?Math.max(0,waitEndMs-Date.now()):0;
+        const wSecs=Math.floor(waitRemMs/1000);
+        const wMins=Math.floor(wSecs/60);
+        const wSecsR=wSecs%60;
+        const basePrice=upcoming.proposedPrice||upcoming.fare||0;
+        const discountedPrice=basePrice>0?(basePrice*(1-DISCOUNT_RATE)).toFixed(2):0;
+        return(
+          <div style={{
+            marginBottom:16,
+            background:isArrived?"linear-gradient(135deg,#0a2a1a,#1e293b)":isOngoing?"linear-gradient(135deg,#0a2a0a,#1e293b)":urgency?"linear-gradient(135deg,#2a1500,#1e293b)":"linear-gradient(135deg,#0a1628,#1e293b)",
+            border:`2px solid ${isArrived?"#22c55e":isOngoing?"#22c55e":urgency?"#f59e0b":"#c9a96e44"}`,
+            borderRadius:18,overflow:"hidden",
+            boxShadow:isArrived?"0 0 24px #22c55e44":isOngoing?"0 0 20px #22c55e33":urgency?"0 0 20px #f59e0b33":"none",
+          }}>
+            <div style={{padding:"10px 16px 0",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+              <div style={{display:"flex",alignItems:"center",gap:7}}>
+                <div style={{width:8,height:8,borderRadius:"50%",background:isArrived?"#22c55e":urgency?"#f59e0b":"#c9a96e",animation:"pulse 1s infinite",flexShrink:0}}/>
+                <span style={{color:"#a8b8cc",fontSize:10,letterSpacing:2,fontWeight:600}}>
+                  {isArrived?"🚗 CONDUCTOR LLEGÓ":"PRÓXIMO VIAJE"}
+                </span>
+              </div>
+              <span style={{background:isOngoing?"#22c55e22":urgency?"#f59e0b22":"#c9a96e22",border:`1px solid ${isOngoing?"#22c55e44":urgency?"#f59e0b44":"#c9a96e44"}`,borderRadius:8,padding:"3px 10px",color:isOngoing?"#22c55e":urgency?"#f59e0b":"#c9a96e",fontSize:10,fontWeight:700}}>
+                {upcoming.status==="confirmed"?"✅ Confirmado":upcoming.status==="inprogress"?"🚗 En curso":"⏳ Pendiente"}
+              </span>
+            </div>
+            <div style={{padding:"10px 16px 0"}}>
+              <div style={{color:"#f8fafc",fontSize:16,fontFamily:"'Cormorant Garamond',serif",fontWeight:700,marginBottom:4}}>{upcoming.date} · {upcoming.time}</div>
+              <div style={{color:"#a8b8cc",fontSize:11,marginBottom:2}}><span style={{color:"#c9a96e"}}>▶ </span>{upcoming.origin}</div>
+              <div style={{color:"#a8b8cc",fontSize:11,marginBottom:10}}><span style={{color:"#3b82f6"}}>■ </span>{upcoming.destination}</div>
+            </div>
+            <div style={{margin:"0 12px 12px",display:"flex",gap:8}}>
+              {!isArrived&&(
+                <div style={{flex:1,background:isOngoing?"#22c55e12":urgency?"#f59e0b12":"#c9a96e10",borderRadius:12,padding:"10px 14px"}}>
+                  <div style={{color:"#a8b8cc",fontSize:9,letterSpacing:2,marginBottom:3}}>{isOngoing?"EN CURSO":"TIEMPO RESTANTE"}</div>
+                  <div style={{color:isOngoing?"#22c55e":urgency?"#f59e0b":"#f8fafc",fontSize:26,fontFamily:"'Cormorant Garamond',serif",fontWeight:700,letterSpacing:2}}>{countdownStr}</div>
+                </div>
+              )}
+              {isArrived&&(
+                <div style={{flex:1,background:"#22c55e12",borderRadius:12,padding:"10px 14px",border:"1.5px solid #22c55e44"}}>
+                  <div style={{color:"#22c55e",fontSize:11,fontWeight:700,marginBottom:2}}>🚗 Conductor esperando</div>
+                  <div style={{color:"#a8b8cc",fontSize:9,marginBottom:3}}>ESPERA HASTA LAS {String(new Date(waitEndMs).getHours()).padStart(2,"0")}:{String(new Date(waitEndMs).getMinutes()).padStart(2,"0")}</div>
+                  <div style={{color:wSecs<120?"#ef4444":"#22c55e",fontSize:24,fontFamily:"'Cormorant Garamond',serif",fontWeight:700,letterSpacing:2}}>{pad(wMins)}:{pad(wSecsR)}</div>
+                  {wSecs===0&&<div style={{color:"#ef4444",fontSize:10,fontWeight:700,marginTop:4}}>⚠️ Tiempo de espera agotado</div>}
+                </div>
+              )}
+              {basePrice>0&&(
+                <div style={{background:"#c9a96e10",borderRadius:12,padding:"10px 14px",textAlign:"right",flexShrink:0}}>
+                  <div style={{color:"#a8b8cc",fontSize:9,marginBottom:2}}>TARIFA</div>
+                  <div style={{color:"#a8b8cc",fontSize:11,textDecoration:"line-through"}}>{basePrice} €</div>
+                  <div style={{color:"#c9a96e",fontSize:20,fontFamily:"'Cormorant Garamond',serif",fontWeight:700}}>{discountedPrice} €</div>
+                  <div style={{color:"#22c55e",fontSize:9,fontWeight:700}}>-{Math.round(DISCOUNT_RATE*100)}% VIP</div>
+                </div>
+              )}
+            </div>
+            <div style={{margin:"0 12px 12px"}}>
+              <button onClick={()=>setChatBooking(upcoming)} style={{
+                width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8,
+                background:"linear-gradient(135deg,#1e0a3e,#1e293b)",border:"1px solid #a78bfa55",
+                borderRadius:10,padding:"10px 0",color:"#a78bfa",fontSize:12,fontWeight:700,cursor:"pointer",
+              }}>💬 {lang==="en"?"Chat with driver":"Chat con el conductor"}</button>
+            </div>
+          </div>
+        );
+      })()}
+
+            {/* Discount banner */}
       <div style={{background:"linear-gradient(135deg,#1a130a,#1e293b)",border:"1px solid #c9a96e33",borderRadius:12,padding:"10px 14px",marginBottom:14,display:"flex",alignItems:"center",gap:10}}>
         <span style={{fontSize:20}}>🏷️</span>
         <div>
@@ -1346,22 +1432,23 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
             {Array.from({length:65},(_,i)=>i).map(i=>{
               const totalMins=6*60+i*15; if(totalMins>22*60)return null;
               const slotTime=m2t(totalMins);
+              // Hide past slots on today's date
+              const isToday = form.date===new Date().toISOString().slice(0,10);
+              const slotDt = new Date(`${form.date}T${slotTime}:00`);
+              if(isToday && (slotDt-now) < MIN_CLIENT_ADVANCE_MINS*60*1000) return null;
               const isHour=totalMins%60===0; const isHalfHour=totalMins%30===0;
               const occupied=bookings.some(b=>{
                 if(b.date!==form.date||["rejected","cancelled","completed"].includes(b.status))return false;
                 const sM=t2m(b.time),eM=sM+TRIP_DURATION; return totalMins>=sM-TRAVEL_PREP&&totalMins<eM;
               });
               const isDriverBlocked=(blockedSlots&&(blockedSlots[form.date]||[]).some(bt=>{const bm=t2m(bt);return totalMins>=bm-TRAVEL_PREP&&totalMins<bm+TRIP_DURATION;}));
-              const slotDt = new Date(`${form.date}T${slotTime}:00`);
-              const tooSoon = (slotDt - now) < MIN_CLIENT_ADVANCE_MINS * 60 * 1000;
-              const isFree=!occupied&&!isDriverBlocked&&!tooSoon;
+              const isFree=!occupied&&!isDriverBlocked;
               return (
                 <div key={slotTime} style={{display:"flex",alignItems:"center",borderBottom:`1px solid ${isHour?"#222":"#181818"}`,minHeight:isHour?40:28,
                   background:occupied?"linear-gradient(90deg,#1a0a00,#111)":isDriverBlocked?"linear-gradient(90deg,#2a0505,#111)":"transparent",
-                  opacity:tooSoon?0.35:1,
                 }}>
                   <div style={{width:52,flexShrink:0,padding:"0 10px",borderRight:`1px solid ${isHour?"#222":"#181818"}`,display:"flex",alignItems:"center"}}>
-                    <span style={{color:tooSoon?"#334155":isHour?"#ffffff":isHalfHour?"#e2e8f0":"#cbd5e1",fontSize:isHour?12:10,fontWeight:isHour?700:400}}>{slotTime}</span>
+                    <span style={{color:isHour?"#ffffff":isHalfHour?"#e2e8f0":"#cbd5e1",fontSize:isHour?12:10,fontWeight:isHour?700:400}}>{slotTime}</span>
                   </div>
                   <div style={{flex:1,padding:"0 10px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                     {occupied&&<span style={{color:"#c9a96e",fontSize:10}}>{t.occupied}</span>}
@@ -2021,13 +2108,26 @@ export default function NextTripClientApp() {
   const handleClientAcceptPrice=id=>_clientMutate(p=>p.map(b=>b.id===id?{...b,status:"confirmed",fare:b.proposedPrice}:b));
   const handleClientRejectPrice=id=>_clientMutate(p=>p.map(b=>b.id===id?{...b,status:"client_rejected"}:b));
   const handleClientCancelTrip=id=>_clientMutate(p=>p.map(b=>b.id===id?{...b,status:"cancelled",cancelReason:lang==="en"?"Cancelled by client":"Cancelado por el cliente"}:b));
-  const handleSendMessage=(bookingId,msg)=>{
+  const handleSendMessage=async(bookingId,msg)=>{
     const key=String(bookingId);
-    setMessages(prev=>{
-      const updated={...prev,[key]:[...(prev[key]||[]),msg]};
-      fbSet("nexttrip/messages", { data: updated });
-      return updated;
-    });
+    try {
+      let updated;
+      const docRef = doc(_db, "nexttrip", "messages");
+      await runTransaction(_db, async (tx) => {
+        const snap = await tx.get(docRef);
+        const current = snap.exists() && snap.data()?.data ? snap.data().data : {};
+        updated = {...current, [key]: [...(current[key]||[]), msg]};
+        tx.set(docRef, { data: updated });
+      });
+      setMessages(updated);
+    } catch(e) {
+      console.error("handleSendMessage error:", e);
+      setMessages(prev=>{
+        const updated={...prev,[key]:[...(prev[key]||[]),msg]};
+        fbSet("nexttrip/messages", { data: updated });
+        return updated;
+      });
+    }
   };
   const handleMarkRead=(bookingId,count)=>setReadCounts(prev=>({...prev,[String(bookingId)]:count}));
   const handleRate=(bookingId,stars)=>{
@@ -2043,6 +2143,8 @@ export default function NextTripClientApp() {
     const unsubStatus = fbListen("nexttrip/status", d=>{
       if(d?.driverStatus) setDriverStatus(d.driverStatus);
       if(d?.serviceStatus) setServiceStatus(d.serviceStatus);
+      if(d?.driverArrived) setArrivedBooking({id:d.driverArrived.bookingId, arrivedAt:d.driverArrived.arrivedAt});
+      else setArrivedBooking(null);
     });
     const unsubBlocks = fbListen("nexttrip/blocks", d=>{
       if(d?.data) { setBlockedSlots(d.data); try{localStorage.setItem(BLOCKS_KEY,JSON.stringify(d.data));}catch{} }

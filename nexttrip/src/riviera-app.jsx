@@ -382,7 +382,8 @@ function estimateTrip(origin, destination) {
 
 // ─── LUXURY PRICING ENGINE ────────────────────────────────────────────────────
 const PRICE_BASE_KM    = 15;   // base fare €
-const PRICE_PER_KM     = 2.20; // € per km (luxury VTC)
+const PRICE_PER_KM     = 3.15; // € per km (luxury VTC)
+const GMAPS_KEY = "AIzaSyDBpHd3eQLth0GhXeI50dT5JfefWfpQyAY";
 const MIN_FARE_CLIENT  = 30;   // absolute minimum €
 
 
@@ -959,7 +960,7 @@ function saveBookings(bookings) {
 }
 // Atomically mutate bookings using a Firestore transaction (prevents race conditions)
 const _bookingsDocRef = () => doc(_db, "nexttrip", "bookings");
-async function fbMutateBookings(mapFn, setBookings) {
+async function fbMutateBookings(mapFn, setBookings, onError) {
   try {
     let next;
     await runTransaction(_db, async (tx) => {
@@ -974,8 +975,8 @@ async function fbMutateBookings(mapFn, setBookings) {
     setBookings(next);
   } catch(e) {
     console.error("fbMutateBookings error:", e.code, e.message);
-    // Show error visually so it's not silent
-    alert("Error al sincronizar: " + (e.message || e));
+    if(onError) onError("⚠️ Error de sincronización: " + (e.message||e.code||"sin conexión"));
+    else console.warn("fbMutateBookings failed silently:", e);
   }
 }
 function clearAppData() {
@@ -1687,7 +1688,18 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
   const [noteModal,setNoteModal]=useState(null); // booking whose doc to show fullscreen
   const [filterHotel,setFilterHotel]=useState("all");
   const [calDate,setCalDate]=useState(new Date().toISOString().slice(0,10));
-  const [historyOpen,setHistoryOpen]=useState(true);
+  const [historyOpen,setHistoryOpen]=useState(false);
+  const [rejOpen,setRejOpen]=useState(false);
+  const [arrivedBookingId,setArrivedBookingId]=useState(null);
+  const [pendingOpen,setPendingOpen]=useState(false);
+  const [confirmedOpen,setConfirmedOpen]=useState(false);
+  const [todayTripsOpen,setTodayTripsOpen]=useState(false);
+  // Clock tick for countdown
+  const [nowTick,setNowTick]=useState(()=>new Date());
+  useEffect(()=>{
+    const t=setInterval(()=>setNowTick(new Date()),1000);
+    return()=>clearInterval(t);
+  },[]);
 
   const isOnRoute = driverStatus === "onroute";
   const isOffline = serviceStatus?.status === "offline";
@@ -1966,8 +1978,8 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
         )}
         {showActions&&(
           <div style={{display:"flex",gap:7,marginTop:9}}>
-            {b.isClientBooking ? (
-              /* Client booking — propose price instead of accept */
+            {b.isClientBooking && b.status==="pending" ? (
+              /* Client booking pending — propose price */
               <>
                 <button onClick={e=>{e.stopPropagation();setProposePriceModal(b);}} style={{
                   flex:2,background:"linear-gradient(135deg,#a78bfa,#7c3aed)",border:"none",borderRadius:8,
@@ -1978,13 +1990,18 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
                   color:"#fff",padding:"9px 0",cursor:"pointer",fontSize:12,fontWeight:600,
                 }}>✕ Rechazar</button>
               </>
-            ) : (
+            ) : b.isClientBooking && b.status==="confirmed" ? (
+              /* Client booking confirmed — no action needed */
+              <div style={{flex:1,background:"#0a2a0a",border:"1px solid #22c55e44",borderRadius:8,padding:"9px 0",textAlign:"center",color:"#22c55e",fontSize:12,fontWeight:700}}>
+                ✅ Confirmado por el cliente
+              </div>
+            ) : !b.isClientBooking ? (
               /* Hotel booking — normal accept/reject */
               <>
                 <button onClick={e=>{e.stopPropagation();onAccept(b.id);setToast(`✅ Viaje de ${b.guest} aceptado`);}} style={{flex:1,background:"linear-gradient(135deg,#22c55e,#16a34a)",border:"none",borderRadius:8,color:"#fff",padding:"9px 0",cursor:"pointer",fontSize:13,fontWeight:600}}>✓ Aceptar</button>
                 <button onClick={e=>{e.stopPropagation();setRejectModal(b);}} style={{flex:1,background:"linear-gradient(135deg,#ef4444,#b91c1c)",border:"none",borderRadius:8,color:"#fff",padding:"9px 0",cursor:"pointer",fontSize:13,fontWeight:600}}>✕ Rechazar</button>
               </>
-            )}
+            ) : null}
           </div>
         )}
       </div>
@@ -1993,44 +2010,320 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
 
   return (
     <div style={{paddingBottom:80}}>
-      {/* Stats */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:14}}>
-        {[{label:"Pendientes",val:pending.length,color:"#f59e0b"},{label:"Confirmados",val:confirmed.length,color:"#c9a96e"},{label:"Hoteles",val:Object.keys(byHotel).length,color:"#c9a96e"}].map(s=>(
-          <div key={s.label} style={{background:"#1e293b",borderRadius:12,padding:"12px 8px",textAlign:"center",border:`1px solid ${s.color}22`}}>
-            <div style={{color:s.color,fontSize:24,fontFamily:"'Cormorant Garamond',serif",fontWeight:700}}>{s.val}</div>
-            <div style={{color:"#a8b8cc",fontSize:10,letterSpacing:1}}>{s.label.toUpperCase()}</div>
+      {/* ── TOP BUTTONS: PENDIENTES + CONFIRMADOS ── */}
+      <div style={{display:"flex",gap:8,marginBottom:14}}>
+        <button onClick={()=>setPendingOpen(v=>!v)} style={{
+          flex:1,display:"flex",alignItems:"center",justifyContent:"space-between",
+          background:pendingOpen?"linear-gradient(135deg,#3a2200,#2a1800)":"linear-gradient(135deg,#2a1800,#1a1200)",
+          border:`2px solid ${fPend.length>0?"#f59e0b":"#4a3a1a"}`,
+          borderRadius:14,padding:"12px 14px",cursor:"pointer",transition:"all 0.2s",
+        }}>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            {fPend.length>0&&<div style={{width:8,height:8,borderRadius:"50%",background:"#f59e0b",animation:"pulse 1.5s infinite"}}/>}
+            <span style={{color:fPend.length>0?"#f59e0b":"#94a3b8",fontSize:11,fontWeight:700,letterSpacing:1}}>PENDIENTES</span>
           </div>
-        ))}
+          <span style={{
+            background:fPend.length>0?"#f59e0b":"#2a3a4a",
+            color:fPend.length>0?"#0a0a0a":"#94a3b8",
+            borderRadius:20,padding:"2px 10px",fontSize:12,fontWeight:700,minWidth:24,textAlign:"center",
+          }}>{fPend.length}</span>
+        </button>
+        <button onClick={()=>setConfirmedOpen(v=>!v)} style={{
+          flex:1,display:"flex",alignItems:"center",justifyContent:"space-between",
+          background:confirmedOpen?"linear-gradient(135deg,#1a1300,#1e293b)":"#0f0e00",
+          border:`2px solid ${fConf.length>0?"#c9a96e55":"#2a2a2a"}`,
+          borderRadius:14,padding:"12px 14px",cursor:"pointer",transition:"all 0.2s",
+        }}>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            {fConf.length>0&&<div style={{width:8,height:8,borderRadius:"50%",background:"#c9a96e"}}/>}
+            <span style={{color:fConf.length>0?"#c9a96e":"#475569",fontSize:11,fontWeight:700,letterSpacing:1}}>CONFIRMADOS</span>
+          </div>
+          <span style={{
+            background:fConf.length>0?"#c9a96e":"#1e293b",
+            color:fConf.length>0?"#0a0a0a":"#475569",
+            borderRadius:20,padding:"2px 10px",fontSize:12,fontWeight:700,minWidth:24,textAlign:"center",
+          }}>{fConf.length}</span>
+        </button>
       </div>
 
-      {/* ── RESUMEN DEL DÍA ── */}
+      {/* Pending drawer */}
+      {pendingOpen&&fPend.length>0&&(
+        <div style={{marginBottom:14,background:"#0f0a00",border:"1px solid #f59e0b33",borderRadius:14,padding:"12px"}}>
+          {fPend.map(b=><Card key={b.id} b={b} showActions/>)}
+        </div>
+      )}
+      {pendingOpen&&fPend.length===0&&(
+        <div style={{marginBottom:14,background:"linear-gradient(135deg,#2a1800,#1e293b)",border:"1.5px solid #f59e0b44",borderRadius:14,padding:"16px",textAlign:"center",color:"#f59e0b",fontSize:12}}>
+          No hay viajes pendientes
+        </div>
+      )}
+
+      {/* Confirmed drawer */}
+      {confirmedOpen&&fConf.length>0&&(
+        <div style={{marginBottom:14,background:"#0f0e00",border:"1px solid #c9a96e33",borderRadius:14,padding:"12px"}}>
+          {fInProgress.map(b=><Card key={b.id} b={b} showActions={false}/>)}
+          {[...fConf].sort((a,b)=>{
+            const dA=new Date(`${a.date}T${a.time}`),dB=new Date(`${b.date}T${b.time}`);
+            return dA-dB;
+          }).map(b=><Card key={b.id} b={b} showActions/>)}
+        </div>
+      )}
+      {confirmedOpen&&fConf.length===0&&(
+        <div style={{marginBottom:14,background:"#0f0e00",border:"1px solid #c9a96e22",borderRadius:14,padding:"16px",textAlign:"center",color:"#475569",fontSize:12}}>
+          No hay viajes confirmados
+        </div>
+      )}
+
+      {/* ── 1. PRÓXIMO VIAJE — CUENTA REGRESIVA ── */}
       {(()=>{
-        const today = new Date().toISOString().slice(0,10);
-        const todayBookings = bookings.filter(b=>b.date===today&&!["rejected","cancelled"].includes(b.status));
-        const todayDone     = bookings.filter(b=>b.date===today&&b.status==="completed");
-        const todayEarnings = todayDone.reduce((s,b)=>s+Number(b.fare||0),0);
-        const nextTrip      = todayBookings
+        const upcoming = [...bookings]
           .filter(b=>["confirmed","pending"].includes(b.status))
-          .sort((a,b2)=>a.time.localeCompare(b2.time))[0];
-        if(todayBookings.length===0&&todayDone.length===0) return null;
-        return (
+          .sort((a,b)=>{const dA=new Date(`${a.date}T${a.time}:00`),dB=new Date(`${b.date}T${b.time}:00`);return dA-dB;})
+          .find(b=>{const dt=new Date(`${b.date}T${b.time}:00`);return dt-nowTick>-TRIP_DURATION*60*1000;});
+        if(!upcoming) return null;
+        const tripDt=new Date(`${upcoming.date}T${upcoming.time}:00`);
+        const diffMs=tripDt-nowTick;
+        const isOngoing=diffMs<0&&diffMs>-TRIP_DURATION*60*1000;
+        const absDiff=Math.abs(diffMs);
+        const totalSecs=Math.floor(absDiff/1000);
+        const days=Math.floor(totalSecs/86400);
+        const hrs=Math.floor((totalSecs%86400)/3600);
+        const mins=Math.floor((totalSecs%3600)/60);
+        const secs=totalSecs%60;
+        const pad=n=>String(n).padStart(2,"0");
+        const countdownStr=days>0?`${days}d ${pad(hrs)}h ${pad(mins)}m`:`${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
+        const urgency=!isOngoing&&diffMs<30*60*1000;
+        const mapsUrl=upcoming.origin?`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(upcoming.origin)}`:"";
+        return(
           <div style={{
-            background:"linear-gradient(135deg,#0f172a,#1e293b)",
-            border:"1px solid #c9a96e44",borderRadius:14,
-            padding:"14px 16px",marginBottom:14,
+            marginBottom:16,
+            background:isOngoing?"linear-gradient(135deg,#0a2a0a,#1e293b)":urgency?"linear-gradient(135deg,#2a1500,#1e293b)":"linear-gradient(135deg,#0a1628,#1e293b)",
+            border:`2px solid ${isOngoing?"#22c55e":urgency?"#f59e0b":"#c9a96e44"}`,
+            borderRadius:18,overflow:"hidden",
+            boxShadow:isOngoing?"0 0 20px #22c55e33":urgency?"0 0 20px #f59e0b33":"none",
           }}>
+            <div style={{padding:"10px 16px 0",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+              <div style={{display:"flex",alignItems:"center",gap:7}}>
+                <div style={{width:8,height:8,borderRadius:"50%",background:isOngoing?"#22c55e":urgency?"#f59e0b":"#c9a96e",animation:"pulse 1s infinite",flexShrink:0}}/>
+                <span style={{color:"#a8b8cc",fontSize:10,letterSpacing:2,fontWeight:600}}>
+                  {isOngoing?"EN CURSO":urgency?"PRÓXIMO VIAJE — ¡PRONTO!":"PRÓXIMO VIAJE"}
+                </span>
+              </div>
+              <span style={{background:isOngoing?"#22c55e22":urgency?"#f59e0b22":"#c9a96e22",border:`1px solid ${isOngoing?"#22c55e44":urgency?"#f59e0b44":"#c9a96e44"}`,borderRadius:8,padding:"3px 10px",color:isOngoing?"#22c55e":urgency?"#f59e0b":"#c9a96e",fontSize:10,fontWeight:700}}>
+                {upcoming.status==="pending"?"⏳ Pendiente":"✅ Confirmado"}
+              </span>
+            </div>
+            <div style={{padding:"10px 16px 0"}}>
+              <div style={{color:"#f8fafc",fontSize:16,fontWeight:700,fontFamily:"'Cormorant Garamond',serif",marginBottom:2}}>{upcoming.guest}</div>
+              <div style={{color:"#a8b8cc",fontSize:11,marginBottom:4}}>{upcoming.date} · {upcoming.time} · {upcoming.passengers} pax</div>
+              <div style={{color:"#a8b8cc",fontSize:11,marginBottom:2}}><span style={{color:"#c9a96e"}}>▶ </span>{upcoming.origin}</div>
+              <div style={{color:"#a8b8cc",fontSize:11,marginBottom:12}}><span style={{color:"#3b82f6"}}>■ </span>{upcoming.destination}</div>
+            </div>
+            <div style={{margin:"0 12px",display:"flex",gap:8,marginBottom:12}}>
+              {/* Countdown */}
+              <div style={{flex:1,background:isOngoing?"#22c55e12":urgency?"#f59e0b12":"#c9a96e10",borderRadius:12,padding:"10px 14px"}}>
+                <div style={{color:"#a8b8cc",fontSize:9,letterSpacing:2,marginBottom:3}}>{isOngoing?"EN CURSO":"TIEMPO RESTANTE"}</div>
+                <div style={{color:isOngoing?"#22c55e":urgency?"#f59e0b":"#f8fafc",fontSize:26,fontFamily:"'Cormorant Garamond',serif",fontWeight:700,letterSpacing:2}}>{countdownStr}</div>
+              </div>
+              {upcoming.fare>0&&(
+                <div style={{background:"#c9a96e10",borderRadius:12,padding:"10px 14px",textAlign:"right"}}>
+                  <div style={{color:"#a8b8cc",fontSize:9,letterSpacing:2,marginBottom:3}}>TARIFA</div>
+                  <div style={{color:"#c9a96e",fontSize:22,fontFamily:"'Cormorant Garamond',serif",fontWeight:700}}>{fmt(upcoming.fare)} €</div>
+                </div>
+              )}
+            </div>
+            {/* Action buttons */}
+            <div style={{margin:"0 12px",display:"flex",flexDirection:"column",gap:8,marginBottom:12}}>
+              {/* Row: Maps + Chat — visible before arriving */}
+              {arrivedBookingId!==upcoming.id&&!isOngoing&&(
+                <div style={{display:"flex",gap:8}}>
+                  {mapsUrl&&(
+                    <a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{
+                      flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:7,
+                      background:"linear-gradient(135deg,#1a3a1a,#1e293b)",
+                      border:"1px solid #22c55e55",borderRadius:10,padding:"10px 0",
+                      color:"#22c55e",fontSize:12,fontWeight:700,textDecoration:"none",
+                    }}>🗺️ Punto recogida</a>
+                  )}
+                  <button onClick={()=>setChatBooking(upcoming)} style={{
+                    flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:7,
+                    background:"linear-gradient(135deg,#1e0a3e,#1e293b)",
+                    border:"1px solid #a78bfa55",borderRadius:10,padding:"10px 0",
+                    color:"#a78bfa",fontSize:12,fontWeight:700,cursor:"pointer",
+                  }}>💬 Chat</button>
+                </div>
+              )}
+              {/* HE LLEGADO button */}
+              {arrivedBookingId!==upcoming.id&&!isOngoing&&(
+                <button onClick={()=>{
+                  setArrivedBookingId(upcoming.id);
+                  // Calculate wait end time from trip time
+                  const waitEnd=new Date(new Date(`${upcoming.date}T${upcoming.time}:00`).getTime()+10*60*1000);
+                  const wH=String(waitEnd.getHours()).padStart(2,"0"),wM=String(waitEnd.getMinutes()).padStart(2,"0");
+                  // Broadcast to Firebase
+                  fbGet("nexttrip/status").then(cur=>{
+                    fbSet("nexttrip/status",{...(cur||{}),driverArrived:{bookingId:upcoming.id,arrivedAt:Date.now()},updatedAt:Date.now()});
+                  });
+                  // Auto-message
+                  onSendMessage&&onSendMessage(upcoming.id,{
+                    from:"driver",fromName:"Conductor",
+                    text:`🚗 He llegado al punto de recogida y estoy esperándote. El tiempo de espera de 10 minutos comienza a las ${upcoming.time} (hora de tu reserva) y finaliza a las ${wH}:${wM}.`,
+                    ts:Date.now(),
+                  });
+                  setToast("✅ Cliente notificado — esperando 10 minutos desde las "+upcoming.time);
+                }} style={{
+                  width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:10,
+                  background:"linear-gradient(135deg,#0a2a00,#1e293b)",
+                  border:"2px solid #22c55e",borderRadius:12,padding:"13px 0",
+                  color:"#22c55e",fontSize:14,fontWeight:700,cursor:"pointer",
+                  boxShadow:"0 0 16px #22c55e33",
+                }}>🚗 He llegado</button>
+              )}
+              {/* After He llegado — start trip button */}
+              {arrivedBookingId===upcoming.id&&!isOngoing&&(
+                <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                  <div style={{background:"#22c55e12",border:"1.5px solid #22c55e44",borderRadius:10,padding:"10px 14px",display:"flex",alignItems:"center",gap:8}}>
+                    <span>✅</span>
+                    <div>
+                      <div style={{color:"#22c55e",fontSize:12,fontWeight:700}}>Cliente notificado — esperando desde las {upcoming.time}</div>
+                      <div style={{color:"#a8b8cc",fontSize:10}}>10 min de espera desde la hora de reserva</div>
+                    </div>
+                  </div>
+                  {upcoming.destination&&(
+                    <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(upcoming.destination)}`}
+                      target="_blank" rel="noopener noreferrer"
+                      onClick={()=>{
+                        onStartTrip(upcoming.id);
+                        setDriverStatus("onroute");
+                        setArrivedBookingId(null);
+                        fbGet("nexttrip/status").then(cur=>{const u={...(cur||{})};delete u.driverArrived;fbSet("nexttrip/status",{...u,updatedAt:Date.now()});});
+                        setToast("🚗 Viaje iniciado — navegando al destino");
+                      }}
+                      style={{
+                        display:"flex",alignItems:"center",justifyContent:"center",gap:8,
+                        background:"linear-gradient(135deg,#0a1a3a,#1e293b)",
+                        border:"2px solid #3b82f6",borderRadius:12,padding:"13px 0",
+                        color:"#3b82f6",fontSize:13,fontWeight:700,textDecoration:"none",
+                        boxShadow:"0 0 16px #3b82f633",
+                      }}>🗺️ Iniciar viaje → Ir al destino</a>
+                  )}
+                  <button onClick={()=>setChatBooking(upcoming)} style={{
+                    display:"flex",alignItems:"center",justifyContent:"center",gap:7,
+                    background:"linear-gradient(135deg,#1e0a3e,#1e293b)",
+                    border:"1px solid #a78bfa55",borderRadius:10,padding:"10px 0",
+                    color:"#a78bfa",fontSize:12,fontWeight:700,cursor:"pointer",
+                  }}>💬 Chat con cliente</button>
+                </div>
+              )}
+              {/* Ongoing — end trip */}
+              {isOngoing&&upcoming.status==="inprogress"&&(
+                <button onClick={()=>{onEndTrip(upcoming.id);setDriverStatus("free");setToast("✅ Viaje completado");}} style={{
+                  width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:10,
+                  background:"linear-gradient(135deg,#2a0a00,#1e293b)",
+                  border:"2px solid #ef4444",borderRadius:12,padding:"13px 0",
+                  color:"#ef4444",fontSize:14,fontWeight:700,cursor:"pointer",
+                  boxShadow:"0 0 16px #ef444433",
+                }}>🏁 Terminar viaje</button>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ── PRECIO PROPUESTO — PENDIENTE CONFIRMACIÓN CLIENTE ── */}
+      {bookings.filter(b=>b.status==="price_proposed"&&new Date(`${b.date}T${b.time}:00`)>new Date()).length>0&&(
+        <section style={{marginBottom:16}}>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+            <div style={{width:7,height:7,borderRadius:"50%",background:"#a78bfa",animation:"pulse 1.5s infinite"}}/>
+            <span style={{color:"#a78bfa",fontSize:11,letterSpacing:2,fontWeight:700}}>
+              PENDIENTE CONFIRMACIÓN ({bookings.filter(b=>b.status==="price_proposed"&&new Date(`${b.date}T${b.time}:00`)>new Date()).length})
+            </span>
+          </div>
+          {bookings.filter(b=>b.status==="price_proposed"&&new Date(`${b.date}T${b.time}:00`)>new Date()).map(b=>(
+            <div key={b.id} style={{background:"linear-gradient(135deg,#1a0f2e,#1e293b)",border:"1.5px solid #a78bfa55",borderRadius:14,padding:"14px 16px",marginBottom:10}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
+                <div>
+                  <div style={{color:"#f8fafc",fontSize:14,fontWeight:600}}>{b.guest}</div>
+                  <div style={{color:"#a8b8cc",fontSize:11}}>{b.date} · {b.time}</div>
+                </div>
+                <div style={{textAlign:"right"}}>
+                  <div style={{color:"#a8b8cc",fontSize:9,letterSpacing:1}}>PRECIO PROPUESTO</div>
+                  <div style={{color:"#a78bfa",fontSize:20,fontFamily:"'Cormorant Garamond',serif",fontWeight:700}}>{fmt(b.proposedPrice)} €</div>
+                </div>
+              </div>
+              <div style={{background:"#a78bfa12",border:"1px solid #a78bfa33",borderRadius:8,padding:"7px 10px",marginBottom:10,display:"flex",alignItems:"center",gap:7}}>
+                <span>⏳</span><span style={{color:"#a78bfa",fontSize:11}}>Esperando confirmación del cliente...</span>
+              </div>
+              <button onClick={()=>setChatBooking(b)} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8,background:"linear-gradient(135deg,#1e0a3e,#2a1a4e)",border:"1px solid #a78bfa55",borderRadius:10,padding:"9px 0",color:"#a78bfa",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                💬 Chatear con el cliente
+              </button>
+            </div>
+          ))}
+        </section>
+      )}
+
+      {/* ── 2. DISPONIBLE / EN SERVICIO ── */}
+      <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:14}}>
+        {!isOffline&&<button
+          onClick={()=>setDriverStatus(isOnRoute?"free":"onroute")}
+          style={{
+            width:"100%",padding:"14px 18px",borderRadius:14,
+            border:`2px solid ${isOnRoute?"#ef4444":"#c9a96e"}`,
+            background:isOnRoute?"linear-gradient(135deg,#2a0808,#1a0505)":"linear-gradient(135deg,#1a130a,#1e293b)",
+            cursor:"pointer",transition:"all 0.25s",
+            display:"flex",alignItems:"center",justifyContent:"space-between",
+            boxShadow:isOnRoute?"0 0 20px rgba(239,68,68,0.2)":"0 0 20px rgba(201,169,110,0.1)",
+          }}>
+          <div style={{display:"flex",alignItems:"center",gap:12}}>
+            <div style={{width:14,height:14,borderRadius:"50%",background:isOnRoute?"#ef4444":"#c9a96e",boxShadow:isOnRoute?"0 0 10px #ef4444":"0 0 10px #c9a96e",animation:"pulse 1.5s infinite",flexShrink:0}}/>
+            <div style={{textAlign:"left"}}>
+              <div style={{color:isOnRoute?"#ef4444":"#c9a96e",fontSize:14,fontWeight:700,letterSpacing:1}}>{isOnRoute?"🚗 EN RUTA":"✅ DISPONIBLE"}</div>
+              <div style={{color:"#a8b8cc",fontSize:11,marginTop:1}}>{isOnRoute?"Los hoteles ven que estás en servicio":"Los hoteles pueden reservar viajes"}</div>
+            </div>
+          </div>
+          <div style={{width:50,height:26,borderRadius:13,background:isOnRoute?"#ef444430":"#c9a96e30",border:`1.5px solid ${isOnRoute?"#ef4444":"#c9a96e"}`,position:"relative",flexShrink:0,transition:"all 0.25s"}}>
+            <div style={{position:"absolute",top:3,left:isOnRoute?24:3,width:18,height:18,borderRadius:"50%",background:isOnRoute?"#ef4444":"#c9a96e",transition:"left 0.25s",boxShadow:`0 0 8px ${isOnRoute?"#ef4444":"#c9a96e"}`}}/>
+          </div>
+        </button>}
+        <button onClick={()=>{setReturnDateDraft(serviceStatus?.returnDate||"");setLastActiveDraft(serviceStatus?.lastActiveDate||"");setShowServiceModal(true);}} style={{
+          width:"100%",padding:"13px 18px",borderRadius:14,
+          border:`2px solid ${isOffline?"#ef4444":"#475569"}`,
+          background:isOffline?"linear-gradient(135deg,#2a0808,#1a0505)":"#1e293b",
+          cursor:"pointer",transition:"all 0.25s",
+          display:"flex",alignItems:"center",justifyContent:"space-between",
+          boxShadow:isOffline?"0 0 18px rgba(239,68,68,0.2)":"none",
+        }}>
+          <div style={{display:"flex",alignItems:"center",gap:12}}>
+            <span style={{fontSize:20}}>{isOffline?"🔴":"🟢"}</span>
+            <div style={{textAlign:"left"}}>
+              <div style={{color:isOffline?"#ef4444":"#94a3b8",fontSize:14,fontWeight:700}}>{isOffline?"FUERA DE SERVICIO":"EN SERVICIO"}</div>
+              <div style={{color:"#a8b8cc",fontSize:11,marginTop:1}}>{isOffline?"Toca para gestionar fechas":"Toca para gestionar disponibilidad"}</div>
+            </div>
+          </div>
+          <span style={{color:"#a8b8cc",fontSize:11,border:"1px solid #2a3a4a",borderRadius:6,padding:"3px 8px"}}>{isOffline?"Volver online":"Gestionar"}</span>
+        </button>
+      </div>
+
+      {/* ── 3. RESUMEN DE HOY ── */}
+      {(()=>{
+        const today=new Date().toISOString().slice(0,10);
+        const todayB=bookings.filter(b=>b.date===today&&!["rejected","cancelled"].includes(b.status));
+        const todayDone=bookings.filter(b=>b.date===today&&b.status==="completed");
+        const todayEarnings=todayDone.reduce((s,b)=>s+Number(b.fare||0),0);
+        const todayActive=todayB.filter(b=>["confirmed","pending","inprogress"].includes(b.status));
+        if(todayB.length===0&&todayDone.length===0) return null;
+        return(
+          <div style={{background:"linear-gradient(135deg,#0f172a,#1e293b)",border:"1px solid #c9a96e44",borderRadius:14,padding:"14px 16px",marginBottom:14}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
               <div style={{display:"flex",alignItems:"center",gap:7}}>
-                <span style={{fontSize:16}}>📅</span>
+                <span>📅</span>
                 <span style={{color:"#c9a96e",fontSize:11,fontWeight:700,letterSpacing:2}}>RESUMEN DE HOY</span>
               </div>
               <span style={{color:"#475569",fontSize:10}}>{new Date().toLocaleDateString("es-ES",{weekday:"short",day:"numeric",month:"short"})}</span>
             </div>
-
-            {/* Stats row */}
-            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:nextTrip?12:0}}>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:todayActive.length>0?10:0}}>
               <div style={{background:"#0f172a",borderRadius:10,padding:"10px 8px",textAlign:"center"}}>
-                <div style={{color:"#f8fafc",fontSize:22,fontFamily:"'Cormorant Garamond',serif",fontWeight:700}}>{todayBookings.length}</div>
+                <div style={{color:"#f8fafc",fontSize:22,fontFamily:"'Cormorant Garamond',serif",fontWeight:700}}>{todayB.length}</div>
                 <div style={{color:"#a8b8cc",fontSize:9,letterSpacing:1}}>VIAJES HOY</div>
               </div>
               <div style={{background:"#0f172a",borderRadius:10,padding:"10px 8px",textAlign:"center"}}>
@@ -2042,228 +2335,124 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
                 <div style={{color:"#a8b8cc",fontSize:9,letterSpacing:1}}>€ GANADOS</div>
               </div>
             </div>
-
-            {/* Next trip */}
-            {nextTrip&&(
-              <div style={{background:"#0f172a",borderRadius:10,padding:"10px 12px",display:"flex",gap:10,alignItems:"center"}}>
-                <div style={{
-                  width:36,height:36,borderRadius:8,flexShrink:0,
-                  background:"linear-gradient(135deg,#c9a96e22,#c9a96e11)",
-                  border:"1px solid #c9a96e44",
-                  display:"flex",alignItems:"center",justifyContent:"center",
-                }}>
-                  <span style={{fontSize:18}}>🕐</span>
-                </div>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{color:"#a8b8cc",fontSize:9,letterSpacing:2,marginBottom:2}}>PRÓXIMO VIAJE</div>
-                  <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
-                    <span style={{color:"#c9a96e",fontSize:15,fontFamily:"'Cormorant Garamond',serif",fontWeight:700}}>{nextTrip.time}</span>
-                    <span style={{color:"#f8fafc",fontSize:12,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{nextTrip.guest}</span>
-                  </div>
-                  <div style={{color:"#475569",fontSize:10,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-                    📍 {nextTrip.origin} → {nextTrip.destination}
-                  </div>
-                </div>
-                <div style={{
-                  flexShrink:0,padding:"3px 8px",borderRadius:6,fontSize:9,fontWeight:700,
-                  background:nextTrip.status==="confirmed"?"#c9a96e22":"#f59e0b22",
-                  color:nextTrip.status==="confirmed"?"#c9a96e":"#f59e0b",
-                  border:`1px solid ${nextTrip.status==="confirmed"?"#c9a96e44":"#f59e0b44"}`,
-                }}>{nextTrip.status==="confirmed"?"CONF.":"PEND."}</div>
-              </div>
+            {todayActive.length>0&&(
+              <button onClick={()=>setTodayTripsOpen(v=>!v)} style={{
+                width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8,
+                background:todayTripsOpen?"#1e293b":"linear-gradient(135deg,#1a1300,#1e293b)",
+                border:"1px solid #c9a96e33",borderRadius:10,padding:"9px 0",
+                color:"#c9a96e",fontSize:11,fontWeight:700,cursor:"pointer",marginTop:6,
+              }}>
+                {todayTripsOpen?"▲ Ocultar viajes de hoy":`▼ Ver ${todayActive.length} viaje${todayActive.length!==1?"s":""} de hoy`}
+              </button>
             )}
+            {todayTripsOpen&&todayActive.map(b=>(
+              <div key={b.id} onClick={()=>setSelected(b)} style={{
+                marginTop:8,background:"#0f172a",borderRadius:10,padding:"10px 12px",
+                border:"1px solid #c9a96e22",cursor:"pointer",
+              }}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+                  <span style={{color:"#c9a96e",fontSize:14,fontFamily:"'Cormorant Garamond',serif",fontWeight:700}}>{b.time}</span>
+                  <span style={{fontSize:9,fontWeight:700,padding:"2px 8px",borderRadius:10,
+                    background:b.status==="confirmed"?"#c9a96e22":"#f59e0b22",
+                    color:b.status==="confirmed"?"#c9a96e":"#f59e0b",
+                    border:`1px solid ${b.status==="confirmed"?"#c9a96e44":"#f59e0b44"}`,
+                  }}>{b.status==="confirmed"?"CONFIRMADO":"PENDIENTE"}</span>
+                </div>
+                <div style={{color:"#f8fafc",fontSize:13,fontWeight:600,marginBottom:2}}>{b.guest}</div>
+                <div style={{color:"#a8b8cc",fontSize:11,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                  📍 {b.origin} → {b.destination}
+                </div>
+              </div>
+            ))}
           </div>
         );
       })()}
 
-      {/* Vehicle card */}
+      {/* ── GRÁFICO DE INGRESOS POR MES ── */}
+      {(()=>{
+        // Build last 6 months of earnings from completed bookings
+        const months = [];
+        const now = new Date();
+        for(let i=5; i>=0; i--) {
+          const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+          const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+          const label = d.toLocaleDateString("es-ES",{month:"short"}).replace('.','');
+          const total = bookings
+            .filter(b=>b.status==="completed" && b.fare && b.date?.startsWith(key))
+            .reduce((s,b)=>s+Number(b.fare||0),0);
+          months.push({key,label,total});
+        }
+        const maxVal = Math.max(...months.map(m=>m.total), 1);
+        const totalAll = months.reduce((s,m)=>s+m.total,0);
+        if(totalAll===0) return null;
+        const currentMonth = months[5];
+        const prevMonth = months[4];
+        const trend = prevMonth.total > 0
+          ? Math.round(((currentMonth.total - prevMonth.total) / prevMonth.total) * 100)
+          : null;
 
-            {/* ── DRIVER STATUS TOGGLE — only when in service ── */}
-      {!isOffline&&<button
-        onClick={()=>setDriverStatus(isOnRoute?"free":"onroute")}
-        style={{
-          width:"100%", marginBottom:20, padding:"14px 18px",
-          borderRadius:14, border:`2px solid ${isOnRoute?"#ef4444":"#c9a96e"}`,
-          background:isOnRoute?"linear-gradient(135deg,#2a0808,#1a0505)":"linear-gradient(135deg,#1a130a,#1e293b)",
-          cursor:"pointer", transition:"all 0.25s",
-          display:"flex", alignItems:"center", justifyContent:"space-between",
-          boxShadow:isOnRoute?"0 0 20px rgba(239,68,68,0.2)":"0 0 20px rgba(201,169,110,0.1)",
-        }}
-        onMouseEnter={e=>e.currentTarget.style.transform="scale(1.01)"}
-        onMouseLeave={e=>e.currentTarget.style.transform="none"}
-      >
-        <div style={{display:"flex",alignItems:"center",gap:12}}>
-          <div style={{
-            width:14,height:14,borderRadius:"50%",flexShrink:0,
-            background:isOnRoute?"#ef4444":"#c9a96e",
-            boxShadow:isOnRoute?"0 0 10px #ef4444":"0 0 10px #c9a96e",
-            animation:"pulse 1.5s infinite",
-          }}/>
-          <div style={{textAlign:"left"}}>
-            <div style={{color:isOnRoute?"#ef4444":"#c9a96e",fontSize:14,fontWeight:700,letterSpacing:1}}>
-              {isOnRoute?"🚗 EN RUTA":"✅ DISPONIBLE"}
-            </div>
-            <div style={{color:"#a8b8cc",fontSize:11,marginTop:1}}>
-              {isOnRoute?"Los hoteles ven que estás en servicio":"Los hoteles pueden reservar viajes"}
-            </div>
-          </div>
-        </div>
-        {/* Toggle switch */}
-        <div style={{
-          width:50,height:26,borderRadius:13,
-          background:isOnRoute?"#ef444430":"#c9a96e30",
-          border:`1.5px solid ${isOnRoute?"#ef4444":"#c9a96e"}`,
-          position:"relative",flexShrink:0,transition:"all 0.25s",
-        }}>
-          <div style={{
-            position:"absolute",top:3,
-            left:isOnRoute?24:3,
-            width:18,height:18,borderRadius:"50%",
-            background:isOnRoute?"#ef4444":"#c9a96e",
-            transition:"left 0.25s",
-            boxShadow:`0 0 8px ${isOnRoute?"#ef4444":"#c9a96e"}`,
-          }}/>
-        </div>
-      </button>}
-
-      {/* ── SERVICE STATUS TOGGLE ── */}
-      <button onClick={()=>{setReturnDateDraft(serviceStatus?.returnDate||"");setLastActiveDraft(serviceStatus?.lastActiveDate||"");setShowServiceModal(true);}} style={{
-        width:"100%", marginBottom:20, padding:"13px 18px",
-        borderRadius:14, border:`2px solid ${isOffline?"#ef4444":"#475569"}`,
-        background:isOffline?"linear-gradient(135deg,#2a0808,#1a0505)":"#1e293b",
-        cursor:"pointer", transition:"all 0.25s",
-        display:"flex", alignItems:"center", justifyContent:"space-between",
-        boxShadow:isOffline?"0 0 18px rgba(239,68,68,0.2)":"none",
-      }}>
-        <div style={{display:"flex",alignItems:"center",gap:12}}>
-          <span style={{fontSize:20}}>{isOffline?"🔴":"🟢"}</span>
-          <div style={{textAlign:"left"}}>
-            <div style={{color:isOffline?"#ef4444":"#94a3b8",fontSize:14,fontWeight:700}}>
-              {isOffline?"FUERA DE SERVICIO":"EN SERVICIO"}
-            </div>
-            <div style={{color:"#a8b8cc",fontSize:11,marginTop:1}}>
-              {isOffline
-                ? serviceStatus?.lastActiveDate
-                  ? `Último día operativo: ${serviceStatus.lastActiveDate}${serviceStatus?.returnDate?" · Regreso: "+serviceStatus.returnDate:""}`
-                  : serviceStatus?.returnDate
-                    ? `Regreso previsto: ${serviceStatus.returnDate}`
-                    : "Sin fecha de regreso establecida"
-                : "Los hoteles pueden hacer reservas"}
-            </div>
-          </div>
-        </div>
-        <span style={{color:"#a8b8cc",fontSize:11,border:"1px solid #2a3a4a",borderRadius:6,padding:"3px 8px"}}>
-          {isOffline?"Volver online":"Gestionar"}
-        </span>
-      </button>
-
-      {/* Service Modal */}
-      {showServiceModal&&(
-        <div onClick={()=>setShowServiceModal(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.88)",zIndex:300,display:"flex",alignItems:"flex-end"}}>
-          <div onClick={e=>e.stopPropagation()} style={{
-            background:"linear-gradient(180deg,#1e293b,#0f172a)",
-            borderRadius:"22px 22px 0 0",padding:"20px 20px 40px",width:"100%",
-            border:`1px solid ${isOffline?"#ef444444":"#c9a96e33"}`,borderBottom:"none",
-            animation:"slideUp 0.3s ease",
-          }}>
-            <div style={{width:40,height:4,background:"#2a3a4a",borderRadius:2,margin:"0 auto 14px"}}/>
-            <button onClick={()=>setShowServiceModal(false)} style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",color:"#a8b8cc",fontSize:13,cursor:"pointer",padding:"0 0 14px",fontFamily:"inherit"}}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a8b8cc" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-              Volver
-            </button>
-
-            {isOffline ? (
-              <div>
-                <div style={{color:"#ef4444",fontSize:11,letterSpacing:3,marginBottom:6}}>FUERA DE SERVICIO</div>
-                <div style={{color:"#f8fafc",fontSize:16,fontFamily:"'Cormorant Garamond',serif",marginBottom:16}}>
-                  Los hoteles ven que no estás disponible
-                </div>
-                {/* Last active date */}
-                {serviceStatus?.lastActiveDate&&(
-                  <div style={{background:"#1a0505",border:"1px solid #ef444433",borderRadius:10,padding:"10px 14px",marginBottom:14}}>
-                    <div style={{color:"#a8b8cc",fontSize:10,letterSpacing:2,marginBottom:3}}>ÚLTIMO DÍA OPERATIVO</div>
-                    <div style={{color:"#f8fafc",fontSize:14,fontWeight:600}}>{serviceStatus.lastActiveDate}</div>
-                  </div>
-                )}
-                {/* Return date */}
-                <div style={{marginBottom:14}}>
-                  <label style={{color:"#a8b8cc",fontSize:11,letterSpacing:2,display:"block",marginBottom:6}}>FECHA DE REINCORPORACIÓN</label>
-                  <input type="date" value={returnDateDraft} onChange={e=>setReturnDateDraft(e.target.value)}
-                    style={{background:"#1e293b",border:"1px solid #ef444444",borderRadius:10,color:"#f8fafc",fontSize:14,padding:"12px 14px",outline:"none",colorScheme:"dark",width:"100%",boxSizing:"border-box"}}/>
-                  <div style={{color:"#a8b8cc",fontSize:11,marginTop:6}}>
-                    Los hoteles verán esta fecha en su aviso de fuera de servicio
-                  </div>
-                </div>
-                {/* Last active update */}
-                <div style={{marginBottom:14}}>
-                  <label style={{color:"#a8b8cc",fontSize:11,letterSpacing:2,display:"block",marginBottom:6}}>ÚLTIMO DÍA OPERATIVO</label>
-                  <input type="date" value={lastActiveDraft} onChange={e=>setLastActiveDraft(e.target.value)}
-                    style={{background:"#1e293b",border:"1px solid #ef444444",borderRadius:10,color:"#f8fafc",fontSize:14,padding:"12px 14px",outline:"none",colorScheme:"dark",width:"100%",boxSizing:"border-box"}}/>
-                </div>
-                <button onClick={()=>{
-                  onSetService({status:"offline",returnDate:returnDateDraft,lastActiveDate:lastActiveDraft});
-                  setShowServiceModal(false);
-                  setToast("📅 Fechas actualizadas");
-                }} style={{width:"100%",background:"#1e293b",border:"1px solid #ef444433",borderRadius:12,padding:"12px 0",color:"#ef4444",fontSize:14,fontWeight:700,cursor:"pointer",marginBottom:10}}>
-                  Actualizar fechas
-                </button>
-                <button onClick={()=>{
-                  onSetService({status:"online",returnDate:"",lastActiveDate:""});
-                  setShowServiceModal(false);
-                  setToast("✅ Conductor EN SERVICIO — los hoteles pueden reservar");
-                }} style={{width:"100%",background:"linear-gradient(135deg,#16a34a,#15803d)",border:"none",borderRadius:12,padding:"14px 0",color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer"}}>
-                  🟢 Volver a estar EN SERVICIO
-                </button>
+        return (
+          <section style={{marginBottom:22}}>
+            <div style={{color:"#a8b8cc",fontSize:11,letterSpacing:3,marginBottom:12,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                📊 INGRESOS POR MES
               </div>
-            ) : (
-              <div>
-                <div style={{color:"#c9a96e",fontSize:11,letterSpacing:3,marginBottom:6}}>GESTIÓN DE SERVICIO</div>
-                <div style={{color:"#f8fafc",fontSize:16,fontFamily:"'Cormorant Garamond',serif",marginBottom:8}}>
-                  ¿Hasta cuándo estarás disponible?
-                </div>
-                <div style={{color:"#a8b8cc",fontSize:12,marginBottom:18,lineHeight:1.5}}>
-                  Los hoteles verán un aviso con la fecha límite para hacer reservas. Seguirás en servicio normalmente.
-                </div>
-
-                {/* Last active date */}
-                <label style={{color:"#c9a96e",fontSize:11,letterSpacing:2,display:"block",marginBottom:6}}>📅 ÚLTIMO DÍA OPERATIVO</label>
-                <input type="date" value={lastActiveDraft} onChange={e=>setLastActiveDraft(e.target.value)}
-                  style={{background:"#1e293b",border:"1px solid #c9a96e66",borderRadius:10,color:"#f8fafc",fontSize:14,padding:"12px 14px",outline:"none",colorScheme:"dark",width:"100%",boxSizing:"border-box",marginBottom:6}}/>
-                <div style={{color:"#a8b8cc",fontSize:11,marginBottom:18}}>
-                  Ej: si hoy y mañana trabajas pero pasado no, pon mañana como último día.
-                </div>
-
-                {/* Return date */}
-                <label style={{color:"#a8b8cc",fontSize:11,letterSpacing:2,display:"block",marginBottom:6}}>FECHA DE REGRESO (opcional)</label>
-                <input type="date" value={returnDateDraft} onChange={e=>setReturnDateDraft(e.target.value)}
-                  style={{background:"#1e293b",border:"1px solid #c9a96e44",borderRadius:10,color:"#f8fafc",fontSize:14,padding:"12px 14px",outline:"none",colorScheme:"dark",width:"100%",boxSizing:"border-box",marginBottom:18}}/>
-
-                {/* SAVE while staying online */}
-                <button onClick={()=>{
-                  onSetService({status:"online",returnDate:returnDateDraft,lastActiveDate:lastActiveDraft});
-                  setShowServiceModal(false);
-                  setToast(lastActiveDraft?`📅 Fecha límite publicada: ${lastActiveDraft}`:"📅 Fechas guardadas");
-                }} style={{
-                  width:"100%",background:"linear-gradient(135deg,#c9a96e,#a07840)",
-                  border:"none",borderRadius:12,padding:"14px 0",
-                  color:"#0a0a0a",fontSize:14,fontWeight:700,cursor:"pointer",marginBottom:10,
+              {trend!==null&&(
+                <span style={{
+                  fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:10,
+                  background:trend>=0?"#22c55e18":"#ef444418",
+                  color:trend>=0?"#22c55e":"#ef4444",
+                  border:`1px solid ${trend>=0?"#22c55e33":"#ef444433"}`,
                 }}>
-                  💾 Publicar fecha para los hoteles
-                </button>
-
-                <button onClick={()=>{
-                  onSetService({status:"offline",returnDate:returnDateDraft,lastActiveDate:lastActiveDraft});
-                  setShowServiceModal(false);
-                  setToast("🔴 Conductor FUERA DE SERVICIO");
-                  sendNotification("🔴 Conductor fuera de servicio", lastActiveDraft?`Último día operativo: ${lastActiveDraft}`:"Sin fecha de regreso establecida","service-offline");
-                }} style={{width:"100%",background:"#1e293b",border:"1px solid #ef444433",borderRadius:12,padding:"12px 0",color:"#ef4444",fontSize:13,fontWeight:700,cursor:"pointer"}}>
-                  🔴 Marcar FUERA DE SERVICIO ahora
-                </button>
+                  {trend>=0?"↑":"↓"} {Math.abs(trend)}% vs mes anterior
+                </span>
+              )}
+            </div>
+            <div style={{background:"#111",borderRadius:14,padding:"16px 16px 8px",border:"1px solid #1e293b"}}>
+              {/* Bar chart */}
+              <div style={{display:"flex",alignItems:"flex-end",gap:8,height:80,marginBottom:8}}>
+                {months.map((m,i)=>{
+                  const pct = maxVal > 0 ? (m.total/maxVal)*100 : 0;
+                  const isLast = i===5;
+                  return (
+                    <div key={m.key} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+                      {m.total>0&&(
+                        <div style={{color:"#a8b8cc",fontSize:8,marginBottom:2}}>
+                          {m.total>=1000?`${(m.total/1000).toFixed(1)}k`:fmt(m.total)}
+                        </div>
+                      )}
+                      <div style={{
+                        width:"100%",borderRadius:"4px 4px 0 0",
+                        height:`${Math.max(pct,2)}%`,
+                        background:isLast
+                          ?"linear-gradient(180deg,#e8d5a3,#c9a96e)"
+                          :"linear-gradient(180deg,#2a3a4a,#1e293b)",
+                        border:isLast?"1px solid #c9a96e44":"1px solid #2a3a4a",
+                        transition:"height 0.3s ease",
+                        minHeight:m.total>0?6:2,
+                      }}/>
+                    </div>
+                  );
+                })}
               </div>
-            )}
-          </div>
-        </div>
-      )}
+              {/* Month labels */}
+              <div style={{display:"flex",gap:8}}>
+                {months.map((m,i)=>(
+                  <div key={m.key} style={{flex:1,textAlign:"center",color:i===5?"#c9a96e":"#475569",fontSize:9,fontWeight:i===5?700:400,letterSpacing:0.5}}>
+                    {m.label.toUpperCase()}
+                  </div>
+                ))}
+              </div>
+              {/* Total */}
+              <div style={{borderTop:"1px solid #1e293b",marginTop:10,paddingTop:10,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <span style={{color:"#a8b8cc",fontSize:10}}>Total 6 meses</span>
+                <span style={{color:"#c9a96e",fontSize:16,fontFamily:"'Cormorant Garamond',serif",fontWeight:700}}>{fmt(totalAll)} €</span>
+              </div>
+            </div>
+          </section>
+        );
+      })()}
+
       {withFare.length>0&&(
         <div style={{marginBottom:20}}>
           <button onClick={()=>setHotelIncomeOpen(o=>!o)} style={{
@@ -2613,103 +2802,99 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
         );
       })()}
 
-      {/* ── MY CALENDAR — Block/Unblock hours ── */}
-      <div style={{marginBottom:20}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-          <div style={{color:"#a8b8cc",fontSize:10,letterSpacing:3}}>MI CALENDARIO</div>
-          <input type="date" value={calDate} onChange={e=>setCalDate(e.target.value)}
-            style={{background:"#1e293b",border:"1px solid #1e3a5f",borderRadius:8,color:"#f8fafc",fontSize:12,padding:"4px 8px",outline:"none",colorScheme:"dark"}}/>
+      {/* ── MI CALENDARIO ── */}
+      <div style={{marginBottom:22}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <span style={{fontSize:15}}>📅</span>
+            <span style={{color:"#a8b8cc",fontSize:10,letterSpacing:3}}>MI CALENDARIO</span>
+          </div>
+          <button onClick={()=>setCalDate(new Date().toISOString().slice(0,10))} style={{
+            background:calDate===new Date().toISOString().slice(0,10)?"linear-gradient(135deg,#c9a96e,#a07840)":"#1e293b",
+            border:"none",borderRadius:8,padding:"5px 12px",
+            color:calDate===new Date().toISOString().slice(0,10)?"#0a0a0a":"#a8b8cc",
+            fontSize:10,fontWeight:700,cursor:"pointer",letterSpacing:1,
+          }}>HOY</button>
         </div>
-        {/* Legend */}
-        <div style={{display:"flex",gap:14,marginBottom:10,flexWrap:"wrap"}}>
-          {[
-            {color:"#c9a96e",label:"Reservado"},
-            {color:"#ef4444",label:"Bloqueado por ti"},
-            {color:"#1e293b",label:"Libre"},
-          ].map(l=>(
-            <div key={l.label} style={{display:"flex",alignItems:"center",gap:5}}>
-              <div style={{width:10,height:10,borderRadius:3,background:l.color}}/>
-              <span style={{color:"#a8b8cc",fontSize:10}}>{l.label}</span>
-            </div>
-          ))}
-        </div>
-        <div style={{background:"#111",borderRadius:12,overflow:"hidden",border:"1px solid #1e3a5f"}}>
+        <input type="date" value={calDate} onChange={e=>setCalDate(e.target.value)}
+          style={{background:"#1e293b",border:"1px solid #1e3a5f",borderRadius:10,color:"#f8fafc",fontSize:13,padding:"9px 14px",outline:"none",colorScheme:"dark",width:"100%",boxSizing:"border-box",marginBottom:12}}/>
+        <div style={{background:"#111",borderRadius:14,overflow:"hidden",border:"1px solid #1e3a5f"}}>
           {Array.from({length:65},(_,i)=>i).map(i=>{
             const totalMins = 6*60 + i*15;
             if(totalMins > 22*60) return null;
             const slotTime = m2t(totalMins);
+            // Hide past slots for today
+            const isCalToday = calDate===new Date().toISOString().slice(0,10);
+            if(isCalToday){
+              const slotDt=new Date(`${calDate}T${slotTime}:00`);
+              if(slotDt-new Date()<0) return null;
+            }
             const isHour = totalMins%60===0;
             const isHalfHour = totalMins%30===0;
-
-            // Find booking that starts at this exact slot
             const bookingHere = bookings.find(b=>{
               if(b.date!==calDate || ["rejected","cancelled","completed"].includes(b.status)) return false;
               return b.time === slotTime;
             });
-            // Check if any booking covers this slot (for background coloring)
             const hasBooking = bookings.some(b=>{
               if(b.date!==calDate || ["rejected","cancelled","completed"].includes(b.status)) return false;
               const sM = t2m(b.time), eM = sM + TRIP_DURATION;
               return totalMins >= sM - TRAVEL_PREP && totalMins < eM;
             });
-            const isBlocked = (blockedSlots[calDate]||[]).includes(slotTime);
-
+            // Blocked range logic
+            const isBlockStart = (blockedSlots[calDate]||[]).includes(slotTime);
+            const blockingSlot = (blockedSlots[calDate]||[]).find(bt=>{
+              const bm=t2m(bt);
+              return totalMins>=bm-TRAVEL_PREP && totalMins<bm+TRIP_DURATION;
+            });
+            const isInBlockedRange = !!blockingSlot;
+            const isBlockRangeStart = isInBlockedRange && totalMins===t2m(blockingSlot)-TRAVEL_PREP;
             return (
-              <div key={slotTime} style={{
+              <div key={slotTime} onClick={()=>{ if(bookingHere) setCalModal(bookingHere); }} style={{
                 display:"flex", alignItems:"center",
                 borderBottom:`1px solid ${isHour?"#2a2a2a":"#181818"}`,
-                minHeight: isHour ? 44 : 30,
-                background: hasBooking ? "linear-gradient(90deg,#1a0d00,#111)"
-                  : isBlocked ? "linear-gradient(90deg,#2a0505,#111)"
-                  : "transparent",
-                transition:"background 0.15s",
+                minHeight:isHour?44:28,
+                background:hasBooking?"linear-gradient(90deg,#2a1000,#1a0800)":isInBlockedRange?"linear-gradient(90deg,#2a0505,#1a0000)":"transparent",
+                borderLeft:isInBlockedRange?"3px solid #ef444466":"3px solid transparent",
+                cursor:bookingHere?"pointer":"default",
               }}>
-                {/* Time label — always white/visible */}
-                <div style={{width:52,flexShrink:0,padding:"0 10px",
-                  borderRight:`1px solid ${isHour?"#2a2a2a":"#181818"}`,
-                  display:"flex",alignItems:"center"}}>
-                  <span style={{
-                    color: isHour ? "#ffffff" : isHalfHour ? "#e2e8f0" : "#cbd5e1",
-                    fontSize: isHour ? 12 : 10,
-                    fontWeight: isHour ? 700 : 400,
-                  }}>{slotTime}</span>
+                <div style={{width:52,padding:"0 10px",borderRight:`1px solid ${isHour?"#2a2a2a":"#181818"}`,flexShrink:0,display:"flex",alignItems:"center",minHeight:"inherit"}}>
+                  <span style={{color:isInBlockedRange?"#ef444488":"#ffffff",fontSize:isHour?13:10,fontWeight:isHour?700:400}}>{slotTime}</span>
                 </div>
-
-                {/* Middle: booking info or status */}
-                <div style={{flex:1, padding:"0 10px", display:"flex", alignItems:"center"}}>
-                  {bookingHere ? (
-                    <div style={{display:"flex",alignItems:"center",gap:6,
-                      background:"#c9a96e18",borderRadius:6,padding:"3px 8px",
-                      border:"1px solid #c9a96e33",cursor:"pointer"}}
-                      onClick={()=>setCalModal(bookingHere)}>
-                      <span style={{width:6,height:6,borderRadius:"50%",background:"#c9a96e",flexShrink:0}}/>
-                      <span style={{color:"#c9a96e",fontSize:11,fontWeight:600}}>{bookingHere.guest}</span>
-                      <span style={{color:"#a8b8cc",fontSize:10}}>· {bookingHere.hotel.replace("Hotel ","")}</span>
+                <div style={{flex:1,padding:"0 10px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                  {bookingHere&&(
+                    <div style={{display:"flex",alignItems:"center",gap:7}}>
+                      <div style={{width:6,height:6,borderRadius:"50%",background:"#c9a96e",animation:"pulse 1.5s infinite",flexShrink:0}}/>
+                      <div>
+                        <div style={{color:"#e8d5a3",fontSize:11,fontWeight:700}}>{bookingHere.guest}</div>
+                        <div style={{color:"#c9a96e",fontSize:10}}>{bookingHere.time} — {m2t(t2m(bookingHere.time)+TRIP_DURATION)} · {bookingHere.hotel}</div>
+                      </div>
                     </div>
-                  ) : hasBooking ? (
-                    <span style={{color:"#c9a96e",fontSize:9,opacity:0.5}}>── en curso ──</span>
-                  ) : isBlocked ? (
-                    <div style={{display:"flex",alignItems:"center",gap:5}}>
-                      <span style={{width:5,height:5,borderRadius:"50%",background:"#ef4444",display:"inline-block"}}/>
-                      <span style={{color:"#ef4444",fontSize:10}}>Bloqueado</span>
+                  )}
+                  {!bookingHere&&hasBooking&&(
+                    <span style={{color:"#f97316",fontSize:10,fontWeight:600}}>▓ ocupado</span>
+                  )}
+                  {!bookingHere&&!hasBooking&&isInBlockedRange&&(isBlockRangeStart||isBlockStart)&&(
+                    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%"}}>
+                      <div style={{display:"flex",alignItems:"center",gap:6}}>
+                        <span style={{color:"#ef4444",fontSize:10,fontWeight:700}}>
+                          {isBlockStart?"🔒 Bloqueado":"⬆ inicio bloqueo"}
+                        </span>
+                        <span style={{color:"#ef444488",fontSize:9}}>{blockingSlot} — {m2t(t2m(blockingSlot)+TRIP_DURATION)}</span>
+                      </div>
+                      <button onClick={e=>{e.stopPropagation();onToggleBlock(calDate,blockingSlot);}} style={{
+                        background:"#0a2a0a",border:"1px solid #22c55e66",borderRadius:6,
+                        color:"#22c55e",fontSize:9,fontWeight:700,padding:"3px 8px",cursor:"pointer",flexShrink:0,
+                      }}>✓ Desbloquear</button>
                     </div>
-                  ) : null}
-                </div>
-
-                {/* Right: block/unblock button — always on the right, never for booked slots */}
-                <div style={{flexShrink:0, padding:"0 8px"}}>
-                  {!hasBooking && (
-                    <button onClick={()=>onToggleBlock(calDate, slotTime)} style={{
-                      background: isBlocked ? "#22c55e15" : "#ef444412",
-                      border: `1px solid ${isBlocked ? "#22c55e55" : "#ef444433"}`,
-                      borderRadius: 6, padding: "3px 10px", cursor: "pointer",
-                      color: isBlocked ? "#22c55e" : "#ef4444",
-                      fontSize: 9, fontWeight: 700, letterSpacing: 0.3,
-                      display: isHour||isHalfHour||isBlocked ? "block" : "none",
-                      transition:"all 0.15s",
-                    }}>
-                      {isBlocked ? "✓ Desbloquear" : "⊘ Bloquear"}
-                    </button>
+                  )}
+                  {!bookingHere&&!hasBooking&&isInBlockedRange&&!isBlockRangeStart&&!isBlockStart&&(isHour||isHalfHour)&&(
+                    <span style={{color:"#ef444455",fontSize:9}}>▓ bloqueado</span>
+                  )}
+                  {!hasBooking&&!isInBlockedRange&&(isHour||isHalfHour)&&(
+                    <button onClick={e=>{e.stopPropagation();onToggleBlock(calDate,slotTime);}} style={{
+                      background:"#2a0808",border:"1px solid #ef444466",borderRadius:6,
+                      color:"#ef4444",fontSize:9,fontWeight:700,padding:"3px 8px",cursor:"pointer",letterSpacing:0.3,
+                    }}>⊘ Bloquear</button>
                   )}
                 </div>
               </div>
@@ -2717,73 +2902,11 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
           })}
         </div>
         <div style={{color:"#475569",fontSize:10,marginTop:8,textAlign:"center"}}>
-          Toca ⊘ Bloquear en cualquier hora para impedir reservas en ese horario
+          Toca ⊘ Bloquear para impedir reservas en ese horario
         </div>
       </div>
 
-      {/* Quick nav buttons */}
-      {(fPend.length>0||fConf.length>0)&&(
-        <div style={{display:"flex",gap:8,marginBottom:12}}>
-          {fPend.length>0&&<button onClick={()=>document.getElementById("section-pending")?.scrollIntoView({behavior:"smooth"})} style={{
-            background:"linear-gradient(135deg,#2a1800,#1e293b)",border:"2px solid #f59e0b",
-            borderRadius:12,padding:"8px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:6,
-          }}>
-            <span style={{width:7,height:7,borderRadius:"50%",background:"#f59e0b",display:"inline-block",animation:"pulse 1.5s infinite"}}/>
-            <span style={{color:"#f59e0b",fontSize:11,fontWeight:700,letterSpacing:1}}>PENDIENTES ({fPend.length})</span>
-          </button>}
-          {fConf.length>0&&<button onClick={()=>document.getElementById("section-confirmed")?.scrollIntoView({behavior:"smooth"})} style={{
-            background:"linear-gradient(135deg,#0a1628,#1e293b)",border:"2px solid #c9a96e55",
-            borderRadius:12,padding:"8px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:6,
-          }}>
-            <span style={{color:"#c9a96e",fontSize:11,fontWeight:700,letterSpacing:1}}>CONFIRMADOS ({fConf.length})</span>
-          </button>}
-        </div>
-      )}
 
-      {/* Hotel filter */}
-      <div style={{display:"flex",gap:7,overflowX:"auto",paddingBottom:4,marginBottom:14}}>
-        {["all",...HOTELS].map(h=>(
-          <button key={h} onClick={()=>setFilterHotel(h)} style={{flexShrink:0,
-            background:filterHotel===h?"linear-gradient(135deg,#c9a96e,#a07840)":"#1e293b",
-            border:`1px solid ${filterHotel===h?"#c9a96e":"#1e3a5f"}`,borderRadius:20,padding:"5px 14px",
-            cursor:"pointer",color:filterHotel===h?"#0a0a0a":"#a8b8cc",fontSize:11,fontWeight:600}}>
-            {h==="all"?"Todos":h.replace("Hotel ","")}
-          </button>
-        ))}
-      </div>
-
-      {fInProgress.length>0&&<section style={{marginBottom:22}}>
-        <div style={{color:"#3b82f6",fontSize:11,letterSpacing:3,marginBottom:10,display:"flex",alignItems:"center",gap:6}}>
-          <span style={{width:8,height:8,borderRadius:"50%",background:"#3b82f6",display:"inline-block",animation:"pulse 1s infinite"}}/>
-          VIAJE EN CURSO
-        </div>
-        {fInProgress.map(b=><Card key={b.id} b={b} showActions={false}/>)}
-      </section>}
-
-      {fPend.length>0&&<section id="section-pending" style={{marginBottom:22}}>
-        <div style={{color:"#f59e0b",fontSize:11,letterSpacing:3,marginBottom:10,display:"flex",alignItems:"center",gap:6}}>
-          <span style={{width:6,height:6,borderRadius:"50%",background:"#f59e0b",display:"inline-block",animation:"pulse 1.5s infinite"}}/>
-          SOLICITUDES PENDIENTES
-        </div>
-        {fPend.map(b=><Card key={b.id} b={b} showActions/>)}
-      </section>}
-
-      {fConf.length>0&&<section id="section-confirmed" style={{marginBottom:22}}>
-        <div style={{color:"#a8b8cc",fontSize:11,letterSpacing:3,marginBottom:10}}>CONFIRMADOS</div>
-        {[...fConf].sort((a,b)=>{
-          const now=new Date();
-          const aDate=new Date(a.date+"T"+a.time);
-          const bDate=new Date(b.date+"T"+b.time);
-          const aDiff=Math.abs(aDate-now);
-          const bDiff=Math.abs(bDate-now);
-          return aDiff-bDiff;
-        }).map(b=><Card key={b.id} b={b} showActions={false}/>)}
-      </section>}
-
-      {fRej.length>0&&<section style={{marginBottom:22}}>
-        <div style={{color:"#a8b8cc",fontSize:11,letterSpacing:3,marginBottom:10}}>RECHAZADOS</div>
-        {fRej.map(b=><Card key={b.id} b={b} showActions={false}/>)}
-      </section>}
 
       {/* ── GRÁFICO DE INGRESOS POR MES ── */}
       {(()=>{
@@ -2872,11 +2995,14 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
 
       {fHistory.length>0&&(
         <section style={{marginBottom:22}}>
-          <div style={{color:"#a8b8cc",fontSize:11,letterSpacing:3,marginBottom:12,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-            <div style={{display:"flex",alignItems:"center",gap:8}}>
-              🗂 HISTORIAL DE VIAJES
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:historyOpen?12:0}}>
+            <button onClick={()=>setHistoryOpen(v=>!v)} style={{
+              display:"flex",alignItems:"center",gap:8,background:"none",border:"none",cursor:"pointer",padding:0,
+            }}>
+              <span style={{color:"#a8b8cc",fontSize:11,letterSpacing:3}}>🗂 HISTORIAL DE VIAJES</span>
               <span style={{background:"#1e293b",borderRadius:10,padding:"2px 8px",fontSize:10,color:"#a8b8cc"}}>{fHistory.length}</span>
-            </div>
+              <span style={{color:"#475569",fontSize:14,transition:"transform 0.2s",display:"inline-block",transform:historyOpen?"rotate(180deg)":"none"}}>▾</span>
+            </button>
             {/* Export to PDF */}
             <button onClick={()=>{
               const completed = fHistory.filter(b=>b.status==="completed");
@@ -2948,10 +3074,61 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
             return Object.entries(groups).map(([g,ts])=><HistoryGroup key={g} guest={g} trips={ts} fmt={fmt} COMMISSION_RATE={COMMISSION_RATE} initials={initials} EMPLOYEES={EMPLOYEES} loadUsers={loadUsers} setDocModal={setDocModal}/>);
           })()}
 
+          {/* ── RECHAZADOS inside history ── */}
+          {fRej.length>0&&(
+            <div style={{marginTop:16,borderTop:"1px solid #1e293b",paddingTop:12}}>
+              <button onClick={()=>setRejOpen(v=>!v)} style={{
+                width:"100%",display:"flex",alignItems:"center",gap:8,
+                background:"none",border:"none",cursor:"pointer",padding:"0 0 10px",
+              }}>
+                <span style={{color:"#a8b8cc",fontSize:11,letterSpacing:3}}>✕ RECHAZADOS</span>
+                <span style={{background:"#1e293b",borderRadius:10,padding:"2px 8px",fontSize:10,color:"#a8b8cc"}}>{fRej.length}</span>
+                <span style={{color:"#475569",fontSize:14,display:"inline-block",transform:rejOpen?"rotate(180deg)":"none",transition:"transform 0.2s"}}>▾</span>
+              </button>
+              {rejOpen&&fRej.map(b=><Card key={b.id} b={b} showActions={false}/>)}
+            </div>
+          )}
         </section>
       )}
 
       {/* Calendar modal */}
+      {/* Service Modal */}
+      {showServiceModal&&(
+        <div onClick={()=>setShowServiceModal(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.88)",zIndex:300,display:"flex",alignItems:"flex-end"}}>
+          <div onClick={e=>e.stopPropagation()} style={{background:"linear-gradient(180deg,#1e293b,#0f172a)",borderRadius:"22px 22px 0 0",padding:"20px 20px 40px",width:"100%",border:`1px solid ${isOffline?"#ef444444":"#c9a96e33"}`,borderBottom:"none",animation:"slideUp 0.3s ease"}}>
+            <div style={{width:40,height:4,background:"#2a3a4a",borderRadius:2,margin:"0 auto 14px"}}/>
+            <button onClick={()=>setShowServiceModal(false)} style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",color:"#a8b8cc",fontSize:13,cursor:"pointer",padding:"0 0 14px",fontFamily:"inherit"}}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a8b8cc" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Volver
+            </button>
+            {isOffline ? (
+              <div>
+                <div style={{color:"#ef4444",fontSize:11,letterSpacing:3,marginBottom:6}}>FUERA DE SERVICIO</div>
+                <div style={{marginBottom:14}}>
+                  <label style={{color:"#a8b8cc",fontSize:11,letterSpacing:2,display:"block",marginBottom:6}}>FECHA DE REINCORPORACIÓN</label>
+                  <input type="date" value={returnDateDraft} onChange={e=>setReturnDateDraft(e.target.value)} style={{background:"#1e293b",border:"1px solid #ef444444",borderRadius:10,color:"#f8fafc",fontSize:14,padding:"12px 14px",outline:"none",colorScheme:"dark",width:"100%",boxSizing:"border-box"}}/>
+                </div>
+                <div style={{marginBottom:14}}>
+                  <label style={{color:"#a8b8cc",fontSize:11,letterSpacing:2,display:"block",marginBottom:6}}>ÚLTIMO DÍA OPERATIVO</label>
+                  <input type="date" value={lastActiveDraft} onChange={e=>setLastActiveDraft(e.target.value)} style={{background:"#1e293b",border:"1px solid #ef444444",borderRadius:10,color:"#f8fafc",fontSize:14,padding:"12px 14px",outline:"none",colorScheme:"dark",width:"100%",boxSizing:"border-box"}}/>
+                </div>
+                <button onClick={()=>{onSetService({status:"offline",returnDate:returnDateDraft,lastActiveDate:lastActiveDraft});setShowServiceModal(false);setToast("📅 Fechas actualizadas");}} style={{width:"100%",background:"#1e293b",border:"1px solid #ef444433",borderRadius:12,padding:"12px 0",color:"#ef4444",fontSize:14,fontWeight:700,cursor:"pointer",marginBottom:10}}>Actualizar fechas</button>
+                <button onClick={()=>{onSetService({status:"online",returnDate:"",lastActiveDate:""});setShowServiceModal(false);setToast("✅ Conductor EN SERVICIO");}} style={{width:"100%",background:"linear-gradient(135deg,#16a34a,#15803d)",border:"none",borderRadius:12,padding:"14px 0",color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer"}}>🟢 Volver a EN SERVICIO</button>
+              </div>
+            ):(
+              <div>
+                <div style={{color:"#c9a96e",fontSize:11,letterSpacing:3,marginBottom:6}}>GESTIÓN DE SERVICIO</div>
+                <label style={{color:"#c9a96e",fontSize:11,letterSpacing:2,display:"block",marginBottom:6}}>📅 ÚLTIMO DÍA OPERATIVO</label>
+                <input type="date" value={lastActiveDraft} onChange={e=>setLastActiveDraft(e.target.value)} style={{background:"#1e293b",border:"1px solid #c9a96e66",borderRadius:10,color:"#f8fafc",fontSize:14,padding:"12px 14px",outline:"none",colorScheme:"dark",width:"100%",boxSizing:"border-box",marginBottom:14}}/>
+                <label style={{color:"#a8b8cc",fontSize:11,letterSpacing:2,display:"block",marginBottom:6}}>FECHA DE REGRESO (opcional)</label>
+                <input type="date" value={returnDateDraft} onChange={e=>setReturnDateDraft(e.target.value)} style={{background:"#1e293b",border:"1px solid #c9a96e44",borderRadius:10,color:"#f8fafc",fontSize:14,padding:"12px 14px",outline:"none",colorScheme:"dark",width:"100%",boxSizing:"border-box",marginBottom:18}}/>
+                <button onClick={()=>{onSetService({status:"online",returnDate:returnDateDraft,lastActiveDate:lastActiveDraft});setShowServiceModal(false);setToast(lastActiveDraft?`📅 Fecha límite: ${lastActiveDraft}`:"📅 Guardado");}} style={{width:"100%",background:"linear-gradient(135deg,#c9a96e,#a07840)",border:"none",borderRadius:12,padding:"14px 0",color:"#0a0a0a",fontSize:14,fontWeight:700,cursor:"pointer",marginBottom:10}}>💾 Publicar fecha</button>
+                <button onClick={()=>{onSetService({status:"offline",returnDate:returnDateDraft,lastActiveDate:lastActiveDraft});setShowServiceModal(false);setToast("🔴 FUERA DE SERVICIO");}} style={{width:"100%",background:"#1e293b",border:"1px solid #ef444433",borderRadius:12,padding:"12px 0",color:"#ef4444",fontSize:13,fontWeight:700,cursor:"pointer"}}>🔴 Marcar FUERA DE SERVICIO</button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {calModal&&(
         <BookingDetailModal booking={calModal} onClose={()=>setCalModal(null)} onAccept={handleAcceptLocal} onReject={handleRejectLocal} onUpdateFare={handleFareLocal} isDriver={true}/>
       )}
@@ -3064,6 +3241,8 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
 // ─── RECEPTIONIST VIEW ────────────────────────────────────────────────────────
 function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, messages, onSendMessage, onMarkRead, driverStatus, blockedSlots, serviceStatus }) {
   const [tab,setTab]=useState("avail");
+  const [nowTick,setNowTick]=useState(()=>new Date());
+  useEffect(()=>{const t=setInterval(()=>setNowTick(new Date()),1000);return()=>clearInterval(t);},[]);
   const [calModal,setCalModal]=useState(null);
   const [chatBooking,setChatBooking]=useState(null);
   const [showOriginSettings,setShowOriginSettings]=useState(false);
@@ -3328,6 +3507,58 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
         </div>
       )}
 
+      {/* ── PRÓXIMO VIAJE — RECEPCIÓN ── */}
+      {(()=>{
+        const now=nowTick;
+        const upcoming=[...bookings]
+          .filter(b=>["confirmed","pending"].includes(b.status))
+          .sort((a,b)=>new Date(`${a.date}T${a.time}:00`)-new Date(`${b.date}T${b.time}:00`))
+          .find(b=>new Date(`${b.date}T${b.time}:00`)-now>-TRIP_DURATION*60*1000);
+        if(!upcoming) return null;
+        const tripDt=new Date(`${upcoming.date}T${upcoming.time}:00`);
+        const diffMs=tripDt-now;
+        const isOngoing=diffMs<0&&diffMs>-TRIP_DURATION*60*1000;
+        const totalSecs=Math.max(0,Math.floor(Math.abs(diffMs)/1000));
+        const days=Math.floor(totalSecs/86400);
+        const hrs=Math.floor((totalSecs%86400)/3600);
+        const mins=Math.floor((totalSecs%3600)/60);
+        const secs=totalSecs%60;
+        const pad=n=>String(n).padStart(2,"0");
+        const countdownStr=days>0?`${days}d ${pad(hrs)}h ${pad(mins)}m`:`${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
+        const urgency=!isOngoing&&diffMs>0&&diffMs<30*60*1000;
+        return(
+          <div style={{
+            marginBottom:16,
+            background:isOngoing?"linear-gradient(135deg,#0a2a0a,#1e293b)":urgency?"linear-gradient(135deg,#2a1500,#1e293b)":"linear-gradient(135deg,#0a1628,#1e293b)",
+            border:`2px solid ${isOngoing?"#22c55e":urgency?"#f59e0b":"#c9a96e44"}`,
+            borderRadius:16,overflow:"hidden",
+            boxShadow:isOngoing?"0 0 20px #22c55e33":urgency?"0 0 20px #f59e0b33":"none",
+          }}>
+            <div style={{padding:"10px 16px 0",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+              <div style={{display:"flex",alignItems:"center",gap:7}}>
+                <div style={{width:8,height:8,borderRadius:"50%",background:isOngoing?"#22c55e":urgency?"#f59e0b":"#c9a96e",animation:"pulse 1s infinite",flexShrink:0}}/>
+                <span style={{color:"#a8b8cc",fontSize:10,letterSpacing:2,fontWeight:600}}>
+                  {isOngoing?"EN CURSO":urgency?"PRÓXIMO VIAJE — ¡PRONTO!":"PRÓXIMO VIAJE"}
+                </span>
+              </div>
+              <span style={{background:isOngoing?"#22c55e22":urgency?"#f59e0b22":"#c9a96e22",border:`1px solid ${isOngoing?"#22c55e44":urgency?"#f59e0b44":"#c9a96e44"}`,borderRadius:8,padding:"3px 10px",color:isOngoing?"#22c55e":urgency?"#f59e0b":"#c9a96e",fontSize:10,fontWeight:700}}>
+                {upcoming.status==="confirmed"?"✅ Confirmado":"⏳ Pendiente"}
+              </span>
+            </div>
+            <div style={{padding:"10px 16px"}}>
+              <div style={{color:"#f8fafc",fontSize:15,fontFamily:"'Cormorant Garamond',serif",fontWeight:700,marginBottom:2}}>{upcoming.guest}</div>
+              <div style={{color:"#a8b8cc",fontSize:11,marginBottom:1}}>{upcoming.date} · {upcoming.time} · {upcoming.passengers} pax · {upcoming.hotel}</div>
+              <div style={{color:"#a8b8cc",fontSize:11,marginBottom:1}}><span style={{color:"#c9a96e"}}>▶ </span>{upcoming.origin}</div>
+              <div style={{color:"#a8b8cc",fontSize:11,marginBottom:10}}><span style={{color:"#3b82f6"}}>■ </span>{upcoming.destination}</div>
+              <div style={{background:isOngoing?"#22c55e12":urgency?"#f59e0b12":"#c9a96e10",borderRadius:10,padding:"8px 12px",display:"inline-block"}}>
+                <div style={{color:"#a8b8cc",fontSize:9,letterSpacing:2,marginBottom:2}}>{isOngoing?"EN CURSO":"TIEMPO RESTANTE"}</div>
+                <div style={{color:isOngoing?"#22c55e":urgency?"#f59e0b":"#f8fafc",fontSize:24,fontFamily:"'Cormorant Garamond',serif",fontWeight:700,letterSpacing:2}}>{countdownStr}</div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Tab bar */}
       <div style={{display:"flex",background:"#1e293b",borderRadius:12,padding:3,marginBottom:18,gap:2}}>
         {[{id:"avail",label:"🕐 Disponib."},{id:"mine",label:"📋 Mis Reservas"},{id:"earnings",label:"💶 Comisiones"}].map(t=>(
@@ -3363,7 +3594,15 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
               </div>
             </div>
           </div>
-          <div style={{color:"#a8b8cc",fontSize:10,letterSpacing:3,marginBottom:14}}>DISPONIBILIDAD DEL CONDUCTOR</div>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+            <div style={{color:"#a8b8cc",fontSize:10,letterSpacing:3}}>DISPONIBILIDAD DEL CONDUCTOR</div>
+            <button onClick={()=>setForm(f=>({...f,date:new Date().toISOString().slice(0,10),time:""}))} style={{
+              background:form.date===new Date().toISOString().slice(0,10)?"linear-gradient(135deg,#c9a96e,#a07840)":"#1e293b",
+              border:"none",borderRadius:8,padding:"4px 10px",
+              color:form.date===new Date().toISOString().slice(0,10)?"#0a0a0a":"#a8b8cc",
+              fontSize:10,fontWeight:700,cursor:"pointer",
+            }}>HOY</button>
+          </div>
           <div style={{marginBottom:16}}>
             <input type="date" value={form.date} onChange={e=>setForm({...form,date:e.target.value,time:""})}
               style={{background:"#1e293b",border:"1px solid #1e3a5f",borderRadius:10,color:"#f8fafc",fontSize:13,padding:"9px 14px",outline:"none",colorScheme:"dark",width:"100%",boxSizing:"border-box"}}/>
@@ -3382,6 +3621,9 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
               const totalMins=6*60+i*15;
               if(totalMins>22*60) return null;
               const slotTime=m2t(totalMins);
+              // Hide past slots for today
+              const isFormToday=form.date===new Date().toISOString().slice(0,10);
+              if(isFormToday){const sd=new Date(`${form.date}T${slotTime}:00`);if(sd-new Date()<0)return null;}
               const isHour=totalMins%60===0;
               const isHalfHour=totalMins%30===0;
               const occupied=bookings.filter(b=>{
@@ -3742,26 +3984,6 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
             </div>
             {/* no geo error here anymore */}
             {false&&null}
-            {/* Quick templates */}
-            <div style={{display:"flex",gap:6,marginBottom:8,flexWrap:"wrap"}}>
-              {[
-                {label:"✈️ T4 Barajas",dest:"Aeropuerto Adolfo Suárez Madrid-Barajas T4, Madrid"},
-                {label:"✈️ T1 Barajas",dest:"Aeropuerto Adolfo Suárez Madrid-Barajas T1, Madrid"},
-                {label:"🚂 Atocha",dest:"Estación de Atocha, Madrid"},
-                {label:"🚂 Chamartín",dest:"Estación de Chamartín, Madrid"},
-                {label:"🏙️ Madrid",dest:"Madrid Centro, Madrid"},
-                {label:"🏛️ Toledo",dest:"Toledo Centro, Toledo"},
-              ].map(tpl=>(
-                <button key={tpl.label} onClick={()=>setForm(f=>({...f,destination:tpl.dest}))} style={{
-                  background:form.destination===tpl.dest?"linear-gradient(135deg,#c9a96e,#a07840)":"#1e293b",
-                  border:`1px solid ${form.destination===tpl.dest?"#c9a96e":"#2a3a4a"}`,
-                  borderRadius:20,padding:"5px 10px",cursor:"pointer",
-                  color:form.destination===tpl.dest?"#0a0a0a":"#a8b8cc",
-                  fontSize:11,fontWeight:form.destination===tpl.dest?700:400,
-                  transition:"all 0.15s",whiteSpace:"nowrap",
-                }}>{tpl.label}</button>
-              ))}
-            </div>
             <input type="text" value={form.destination} placeholder="Dirección de destino" onChange={e=>setForm({...form,destination:e.target.value})} style={inputStyle}/>
           </div>
           <TripEstimateBox origin={form.origin} destination={form.destination}/>
@@ -3776,6 +3998,17 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
           </div>
           <div style={{marginBottom:14}}>
             <label style={{color:"#a8b8cc",fontSize:11,letterSpacing:2,display:"block",marginBottom:5}}>TARIFA (€)</label>
+            {/* COMFORT only warning */}
+            <div style={{background:"linear-gradient(135deg,#2a1000,#1e293b)",border:"2.5px solid #f59e0b",borderRadius:12,padding:"12px 14px",marginBottom:10}}>
+              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
+                <span style={{fontSize:22,flexShrink:0}}>⚠️</span>
+                <div style={{color:"#f59e0b",fontSize:13,fontWeight:700,letterSpacing:0.5}}>SOLO PRECIOS BOLT COMFORT</div>
+              </div>
+              <div style={{color:"#f8fafc",fontSize:11,lineHeight:1.5,background:"#f59e0b12",borderRadius:8,padding:"8px 10px"}}>
+                Introduce <strong style={{color:"#f59e0b"}}>únicamente</strong> el precio de la categoría <strong style={{color:"#f59e0b"}}>Comfort</strong> de la app Bolt.<br/>
+                <span style={{color:"#ef4444",fontWeight:700}}>❌ No usar:</span> Económico, XL, Moto, ni ninguna otra categoría.
+              </div>
+            </div>
             <input type="number" value={form.fare} placeholder="0.00" min="30" onChange={e=>{setForm({...form,fare:e.target.value});setBoltError("");}}
               style={{...inputStyle,border:form.fare&&Number(form.fare)<30?"1px solid #ef4444":inputStyle.border}}/>
             {form.fare&&Number(form.fare)>0&&Number(form.fare)<30&&(
@@ -3784,6 +4017,7 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
               </div>
             )}
           </div>
+          <DistancePriceCalc origin={form.origin} destination={form.destination} onPriceCalculated={price=>setForm(f=>({...f,fare:String(price)}))}/>
           <BoltPriceGuide/>
           {form.fare&&Number(form.fare)>0&&(
             <div style={{background:"#0f172a",border:"1px solid #c9a96e22",borderRadius:10,padding:"12px 14px",marginBottom:14}}>
@@ -4120,6 +4354,37 @@ function CancelTripModal({ booking, onCancel, onClose }) {
 // ─── BOLT PRICE GUIDE ────────────────────────────────────────────────────────
 // ─── BOLT SCREENSHOT UPLOAD ──────────────────────────────────────────────────
 
+function DistancePriceCalc({ origin, destination, onPriceCalculated }) {
+  const [state, setState] = useState({ status:"idle", km:null, duration:null, price:null });
+  useEffect(() => {
+    if (!origin || !destination || origin.length < 5 || destination.length < 5) {
+      setState({ status:"idle", km:null, duration:null, price:null }); return;
+    }
+    const timer = setTimeout(async () => {
+      setState({ status:"loading", km:null, duration:null, price:null });
+      try {
+        const res = await fetch(`/api/distance?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}`);
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        const price = Math.max(30, Math.round(data.km * PRICE_PER_KM * 100) / 100);
+        setState({ status:"ok", km:data.km, duration:data.duration, price });
+        onPriceCalculated(price);
+      } catch(e) {
+        setState({ status:"error", km:null, duration:null, price:null });
+      }
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [origin, destination]);
+  if (state.status === "idle") return null;
+  return (
+    <div style={{marginBottom:14}}>
+      {state.status==="loading"&&<div style={{background:"#1e293b",borderRadius:10,padding:"10px 14px",display:"flex",alignItems:"center",gap:8}}><div style={{width:10,height:10,borderRadius:"50%",border:"2px solid #c9a96e",borderTopColor:"transparent",animation:"spin 0.8s linear infinite"}}/><span style={{color:"#a8b8cc",fontSize:11}}>🗺️ Calculando ruta...</span></div>}
+      {state.status==="ok"&&<div style={{background:"linear-gradient(135deg,#0f1a00,#1e293b)",border:"1.5px solid #c9a96e55",borderRadius:12,padding:"12px 14px"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}><div><span style={{color:"#f8fafc",fontSize:13,fontWeight:700}}>🗺️ {state.km} km</span>{state.duration&&<span style={{color:"#a8b8cc",fontSize:11,marginLeft:8}}>· {state.duration}</span>}</div><span style={{color:"#22c55e",fontSize:20,fontFamily:"'Cormorant Garamond',serif",fontWeight:700}}>{state.price} €</span></div><div style={{color:"#475569",fontSize:9,textAlign:"right"}}>{PRICE_PER_KM} €/km · mín. 30 €</div></div>}
+      {state.status==="error"&&<div style={{background:"#1a0808",border:"1px solid #ef444433",borderRadius:10,padding:"8px 12px",color:"#ef4444",fontSize:11}}>⚠️ No se pudo calcular — introduce el precio manualmente</div>}
+    </div>
+  );
+}
+
 function BoltPriceGuide() {
   const [open, setOpen] = useState(false);
   return (
@@ -4146,20 +4411,25 @@ function BoltPriceGuide() {
         }}>
           <div style={{color:"#a8b8cc",fontSize:11,letterSpacing:2,marginBottom:14}}>CÓMO OBTENER EL PRECIO CORRECTO</div>
           {[
-            {n:1, text:"Descarga la app", sub:"Busca BOLT en App Store o Google Play e instálala"},
-            {n:2, text:"Crea un usuario",  sub:"Regístrate como si fueras tú el pasajero que realizará el viaje"},
-            {n:3, text:"Simula el viaje",  sub:"Introduce el punto de partida del cliente y el destino final"},
-            {n:4, text:"Copia el precio",  sub:"Bolt te mostrará el precio estimado. Cópialo e introdúcelo en la tarifa de NextTrip"},
+            {n:1, text:"Descarga la app", sub:"Busca BOLT en App Store o Google Play e instálala", warn:false},
+            {n:2, text:"Crea un usuario",  sub:"Regístrate como si fueras tú el pasajero que realizará el viaje", warn:false},
+            {n:3, text:"Simula el viaje",  sub:"Introduce el punto de partida del cliente y el destino final", warn:false},
+            {n:4, text:"⚠️ SOLO precio COMFORT de Bolt", sub:"Bolt muestra varias categorías (Económico, XL…). Debes seleccionar y copiar ÚNICAMENTE el precio de la categoría COMFORT. Cualquier otro precio es incorrecto.", warn:true},
+            {n:5, text:"✅ El conductor verificará el precio", sub:"Antes de aceptar el viaje, el conductor revisará que el precio introducido coincide con Bolt Comfort. Si hay discrepancia, el conductor propondrá el precio correcto.", warn:true},
           ].map(s=>(
-            <div key={s.n} style={{display:"flex",gap:12,marginBottom:12,alignItems:"flex-start"}}>
+            <div key={s.n} style={{display:"flex",gap:12,marginBottom:12,alignItems:"flex-start",
+              background:s.warn?"linear-gradient(135deg,#2a1500,#1e293b)":"transparent",
+              border:s.warn?"1.5px solid #f59e0b":"none",borderRadius:s.warn?10:0,
+              padding:s.warn?"10px":"0",
+            }}>
               <div style={{
                 width:26,height:26,borderRadius:"50%",flexShrink:0,
-                background:"#c9a96e20",border:"1px solid #c9a96e55",
+                background:s.warn?"#f59e0b22":"#c9a96e20",border:`1px solid ${s.warn?"#f59e0b":"#c9a96e55"}`,
                 display:"flex",alignItems:"center",justifyContent:"center",
-                color:"#c9a96e",fontSize:12,fontWeight:700,
+                color:s.warn?"#f59e0b":"#c9a96e",fontSize:12,fontWeight:700,
               }}>{s.n}</div>
               <div>
-                <div style={{color:"#f8fafc",fontSize:13,fontWeight:600,marginBottom:2}}>{s.text}</div>
+                <div style={{color:s.warn?"#f59e0b":"#f8fafc",fontSize:13,fontWeight:700,marginBottom:2}}>{s.text}</div>
                 <div style={{color:"#a8b8cc",fontSize:11,lineHeight:1.4}}>{s.sub}</div>
               </div>
             </div>
@@ -4473,10 +4743,23 @@ export default function RivieraApp() {
       if (!data || !data.data) return;
       const remote = sanitizeBookings(data.data);
       if (!remote) return;
+      // Auto-cancel expired price_proposed bookings
+      const now = new Date();
+      const cleaned = remote.map(b => {
+        if (b.status === "price_proposed" && new Date(`${b.date}T${b.time}:00`) < now) {
+          return {...b, status: "cancelled", cancelReason: "Expirado — sin confirmación del cliente"};
+        }
+        return b;
+      });
+      const hasChanges = cleaned.some((b,i) => b.status !== remote[i].status);
+      if (hasChanges) {
+        fbSet("nexttrip/bookings", { data: cleaned, updatedAt: Date.now() });
+      }
+      const final = hasChanges ? cleaned : remote;
       setBookings(prev => {
-        if (JSON.stringify(prev) === JSON.stringify(remote)) return prev;
-        try { localStorage.setItem(BOOKINGS_KEY, JSON.stringify(remote)); } catch {}
-        return remote;
+        if (JSON.stringify(prev) === JSON.stringify(final)) return prev;
+        try { localStorage.setItem(BOOKINGS_KEY, JSON.stringify(final)); } catch {}
+        return final;
       });
     });
     return () => unsub();
@@ -4572,7 +4855,7 @@ export default function RivieraApp() {
     prevPendingRef.current=pendingCount;
   },[pendingCount]);
 
-  const handleAccept    =id=>fbMutateBookings(p=>p.map(b=>b.id===id?{...b,status:"confirmed"}:b),setBookings);
+  const handleAccept    =id=>fbMutateBookings(p=>p.map(b=>b.id===id?{...b,status:"confirmed"}:b),setBookings,(err)=>setToast(err));
   const handleReject    =(id,reason)=>fbMutateBookings(p=>p.map(b=>b.id===id?{...b,status:"rejected",rejectionReason:reason||""}:b),setBookings);
   const handleUpdateFare=(id,fare)=>fbMutateBookings(p=>p.map(b=>b.id===id?{...b,fare}:b),setBookings);
   const handlePayCommission=(id,proof)=>fbMutateBookings(p=>p.map(b=>b.id===id?{...b,commissionStatus:"paid",commissionProof:proof}:b),setBookings);
@@ -4591,7 +4874,11 @@ export default function RivieraApp() {
   const handleUploadDoc=(id,doc)=>fbMutateBookings(p=>p.map(b=>b.id===id?{...b,routeDoc:doc}:b),setBookings);
   const handleSaveNote=(id,note)=>fbMutateBookings(p=>p.map(b=>b.id===id?{...b,driverNote:note}:b),setBookings);
   const handleProposePrice=(id,price,note)=>{
-    fbMutateBookings(p=>p.map(b=>b.id===id?{...b,status:"price_proposed",proposedPrice:price,proposedNote:note||""}:b),setBookings);
+    fbMutateBookings(
+      p=>p.map(b=>b.id===id?{...b,status:"price_proposed",proposedPrice:price,proposedNote:note||""}:b),
+      setBookings,
+      (err)=>setToast(err)
+    );
     sendNotification("💜 Precio recibido para tu viaje",`El conductor propone ${price} €`,"price-"+id);
     setToast(`💜 Precio de ${price} € enviado al cliente`);
   };
@@ -4633,13 +4920,27 @@ export default function RivieraApp() {
     sendNotification("Nueva reserva",data.guest+" - "+data.time+" - "+data.hotel,"new-booking-"+Date.now());
     if(data.isClientBooking){setDriverAlert({type:"new_booking",booking:newBooking});}
   };
-  const handleSendMessage=(bookingId, msg)=>{
+  const handleSendMessage=async(bookingId, msg)=>{
     const key = String(bookingId);
-    setMessages(prev=>{
-      const updated={...prev,[key]:[...(prev[key]||[]),msg]};
-      fbSet("nexttrip/messages", { data: updated });
-      return updated;
-    });
+    try {
+      let updated;
+      const docRef = doc(_db, "nexttrip", "messages");
+      await runTransaction(_db, async (tx) => {
+        const snap = await tx.get(docRef);
+        const current = snap.exists() && snap.data()?.data ? snap.data().data : {};
+        updated = {...current, [key]: [...(current[key]||[]), msg]};
+        tx.set(docRef, { data: updated });
+      });
+      setMessages(updated);
+    } catch(e) {
+      console.error("handleSendMessage error:", e);
+      // fallback
+      setMessages(prev=>{
+        const updated={...prev,[key]:[...(prev[key]||[]),msg]};
+        fbSet("nexttrip/messages", { data: updated });
+        return updated;
+      });
+    }
     const booking = bookings.find(b=>String(b.id)===key);
     const title = msg.from==="driver" ? "💬 Mensaje del conductor" : `💬 ${msg.fromName}`;
     const body = booking ? `${booking.guest} · ${msg.text}` : msg.text;
