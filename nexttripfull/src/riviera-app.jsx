@@ -2112,7 +2112,15 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
               {upcoming.fare>0&&(
                 <div style={{background:"#c9a96e10",borderRadius:12,padding:"10px 14px",textAlign:"right"}}>
                   <div style={{color:"#a8b8cc",fontSize:9,letterSpacing:2,marginBottom:3}}>TARIFA</div>
-                  <div style={{color:"#c9a96e",fontSize:22,fontFamily:"'Cormorant Garamond',serif",fontWeight:700}}>{fmt(upcoming.fare)} €</div>
+                  {upcoming.isClientBooking?(
+                    <>
+                      <div style={{color:"#a8b8cc",fontSize:11,textDecoration:"line-through"}}>{fmt(upcoming.fare)} €</div>
+                      <div style={{color:"#22c55e",fontSize:18,fontFamily:"'Cormorant Garamond',serif",fontWeight:700}}>{fmt(Math.round(upcoming.fare*0.85*100)/100)} €</div>
+                      <div style={{color:"#22c55e",fontSize:9,fontWeight:700}}>VIP -15%</div>
+                    </>
+                  ):(
+                    <div style={{color:"#c9a96e",fontSize:22,fontFamily:"'Cormorant Garamond',serif",fontWeight:700}}>{fmt(upcoming.fare)} €</div>
+                  )}
                 </div>
               )}
             </div>

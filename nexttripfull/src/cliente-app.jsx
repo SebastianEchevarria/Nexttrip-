@@ -1607,15 +1607,46 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
                     <span style={{color:"#a8b8cc",fontSize:12,textDecoration:"line-through"}}>{fmt(b.fare)} €</span>
                   </div>
                   <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-                    <span style={{color:"#c9a96e",fontSize:11}}>🏷️ Descuento 15%</span>
+                    <span style={{color:"#c9a96e",fontSize:11}}>{lang==="en"?"🏷️ 15% VIP discount":"🏷️ Descuento 15% VIP"}</span>
                     <span style={{color:"#c9a96e",fontSize:12}}>-{fmt(b.fare*DISCOUNT_RATE)} €</span>
                   </div>
-                  <div style={{display:"flex",justifyContent:"space-between",paddingTop:4,borderTop:"1px solid #1e3a5f"}}>
-                    <span style={{color:"#e8d5a3",fontSize:13,fontWeight:700}}>💶 Tu precio</span>
-                    <span style={{color:"#e8d5a3",fontSize:16,fontWeight:700,fontFamily:"'Cormorant Garamond',serif"}}>{fmt(b.fare*(1-DISCOUNT_RATE))} €</span>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:6,borderTop:"1px solid #22c55e33",marginTop:4,background:"#22c55e0d",borderRadius:8,padding:"8px 8px"}}>
+                    <span style={{color:"#22c55e",fontSize:14,fontWeight:800,letterSpacing:0.3}}>{lang==="en"?"💶 YOUR PRICE":"💶 TU PRECIO"}</span>
+                    <span style={{color:"#22c55e",fontSize:22,fontFamily:"'Cormorant Garamond',serif",fontWeight:800}}>{fmt(b.fare*(1-DISCOUNT_RATE))} €</span>
                   </div>
                 </div>
               )}
+              {/* ── ROUTE MAP ── */}
+              {b.origin&&b.destination&&b.fare>0&&(()=>{
+                const mapUrl=`https://maps.googleapis.com/maps/api/staticmap?size=600x200&maptype=roadmap&markers=color:green%7Clabel:A%7C${encodeURIComponent(b.origin)}&markers=color:red%7Clabel:B%7C${encodeURIComponent(b.destination)}&path=enc:&key=AIzaSyDBpHd3eQLth0GhXeI50dT5JfefWfpQyAY&style=element:geometry%7Ccolor:0x1e293b&style=element:labels.text.fill%7Ccolor:0xc9a96e&style=element:labels.text.stroke%7Ccolor:0x0a0a0a&style=feature:road%7Celement:geometry%7Ccolor:0x2a3a4a&style=feature:water%7Ccolor:0x0a1628`;
+                const durationMin = b.fare ? Math.round(b.fare/3.15*2) : null;
+                const arrivalTime = b.time && durationMin ? (()=>{
+                  const [h,m]=b.time.split(":").map(Number);
+                  const arr=new Date(0,0,0,h,m+durationMin);
+                  return `${String(arr.getHours()).padStart(2,"0")}:${String(arr.getMinutes()).padStart(2,"0")}`;
+                })() : null;
+                return(
+                  <div style={{marginTop:10,borderRadius:12,overflow:"hidden",border:"1px solid #1e3a5f"}}>
+                    <img src={mapUrl} alt="route map" style={{width:"100%",height:140,objectFit:"cover",display:"block"}}
+                      onError={e=>{e.target.style.display="none";}}/>
+                    <div style={{background:"#0f172a",padding:"8px 12px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                      <div style={{display:"flex",alignItems:"center",gap:6}}>
+                        <span style={{fontSize:12}}>🗺️</span>
+                        <span style={{color:"#a8b8cc",fontSize:11}}>{Math.round(b.fare/3.15*10)/10} km</span>
+                      </div>
+                      {durationMin&&<div style={{display:"flex",alignItems:"center",gap:6}}>
+                        <span style={{fontSize:12}}>⏱️</span>
+                        <span style={{color:"#a8b8cc",fontSize:11}}>~{durationMin} min</span>
+                      </div>}
+                      {arrivalTime&&<div style={{display:"flex",alignItems:"center",gap:6}}>
+                        <span style={{fontSize:12}}>🏁</span>
+                        <span style={{color:"#c9a96e",fontSize:11,fontWeight:700}}>Llegada ~{arrivalTime}</span>
+                      </div>}
+                    </div>
+                  </div>
+                );
+              })()}
+
               {b.status==="pending"&&(
                 <div style={{
                   background:"linear-gradient(135deg,#1a1000,#1e293b)",
