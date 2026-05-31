@@ -1511,14 +1511,7 @@ function BookingDetailModal({ booking, onClose, onAccept, onReject, onUpdateFare
             )}
           </div>
         )}
-        {isDriver && !b.boltScreenshot && b.status==="pending" && (
-          <div style={{padding:"10px 0",borderBottom:"1px solid #1e3a5f"}}>
-            <div style={{background:"#2a1500",border:"1px solid #f59e0b44",borderRadius:8,padding:"9px 12px",display:"flex",alignItems:"center",gap:8}}>
-              <span style={{fontSize:16}}>⚠️</span>
-              <span style={{color:"#f59e0b",fontSize:11}}>Esta reserva no incluye captura de Bolt. El precio no ha sido verificado.</span>
-            </div>
-          </div>
-        )}
+        
 
         {/* Driver-only action buttons (pending trips) */}
         {isDriver && b.status==="pending" && onAccept && onReject && (
@@ -1979,12 +1972,12 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
         {showActions&&(
           <div style={{display:"flex",gap:7,marginTop:9}}>
             {b.isClientBooking && b.status==="pending" ? (
-              /* Client booking pending — propose price */
+              /* Client booking — accept directly */
               <>
-                <button onClick={e=>{e.stopPropagation();setProposePriceModal(b);}} style={{
-                  flex:2,background:"linear-gradient(135deg,#a78bfa,#7c3aed)",border:"none",borderRadius:8,
+                <button onClick={e=>{e.stopPropagation();onAccept(b.id);}} style={{
+                  flex:2,background:"linear-gradient(135deg,#22c55e,#16a34a)",border:"none",borderRadius:8,
                   color:"#fff",padding:"9px 0",cursor:"pointer",fontSize:12,fontWeight:700,
-                }}>💜 Proponer precio</button>
+                }}>✅ Aceptar viaje</button>
                 <button onClick={e=>{e.stopPropagation();setRejectModal(b);}} style={{
                   flex:1,background:"linear-gradient(135deg,#ef4444,#b91c1c)",border:"none",borderRadius:8,
                   color:"#fff",padding:"9px 0",cursor:"pointer",fontSize:12,fontWeight:600,
@@ -2229,38 +2222,6 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
           </div>
         );
       })()}
-
-      {/* ── PRECIO PROPUESTO — PENDIENTE CONFIRMACIÓN CLIENTE ── */}
-      {bookings.filter(b=>b.status==="price_proposed"&&new Date(`${b.date}T${b.time}:00`)>new Date()).length>0&&(
-        <section style={{marginBottom:16}}>
-          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
-            <div style={{width:7,height:7,borderRadius:"50%",background:"#a78bfa",animation:"pulse 1.5s infinite"}}/>
-            <span style={{color:"#a78bfa",fontSize:11,letterSpacing:2,fontWeight:700}}>
-              PENDIENTE CONFIRMACIÓN ({bookings.filter(b=>b.status==="price_proposed"&&new Date(`${b.date}T${b.time}:00`)>new Date()).length})
-            </span>
-          </div>
-          {bookings.filter(b=>b.status==="price_proposed"&&new Date(`${b.date}T${b.time}:00`)>new Date()).map(b=>(
-            <div key={b.id} style={{background:"linear-gradient(135deg,#1a0f2e,#1e293b)",border:"1.5px solid #a78bfa55",borderRadius:14,padding:"14px 16px",marginBottom:10}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
-                <div>
-                  <div style={{color:"#f8fafc",fontSize:14,fontWeight:600}}>{b.guest}</div>
-                  <div style={{color:"#a8b8cc",fontSize:11}}>{b.date} · {b.time}</div>
-                </div>
-                <div style={{textAlign:"right"}}>
-                  <div style={{color:"#a8b8cc",fontSize:9,letterSpacing:1}}>PRECIO PROPUESTO</div>
-                  <div style={{color:"#a78bfa",fontSize:20,fontFamily:"'Cormorant Garamond',serif",fontWeight:700}}>{fmt(b.proposedPrice)} €</div>
-                </div>
-              </div>
-              <div style={{background:"#a78bfa12",border:"1px solid #a78bfa33",borderRadius:8,padding:"7px 10px",marginBottom:10,display:"flex",alignItems:"center",gap:7}}>
-                <span>⏳</span><span style={{color:"#a78bfa",fontSize:11}}>Esperando confirmación del cliente...</span>
-              </div>
-              <button onClick={()=>setChatBooking(b)} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8,background:"linear-gradient(135deg,#1e0a3e,#2a1a4e)",border:"1px solid #a78bfa55",borderRadius:10,padding:"9px 0",color:"#a78bfa",fontSize:12,fontWeight:700,cursor:"pointer"}}>
-                💬 Chatear con el cliente
-              </button>
-            </div>
-          ))}
-        </section>
-      )}
 
       {/* ── 2. DISPONIBLE / EN SERVICIO ── */}
       <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:14}}>
@@ -4864,7 +4825,22 @@ export default function RivieraApp() {
     prevPendingRef.current=pendingCount;
   },[pendingCount]);
 
-  const handleAccept    =id=>fbMutateBookings(p=>p.map(b=>b.id===id?{...b,status:"confirmed"}:b),setBookings,(err)=>setToast(err));
+  const handleAccept = id => {
+    const booking = bookings.find(b=>b.id===id);
+    fbMutateBookings(p=>p.map(b=>b.id===id?{...b,status:"confirmed"}:b), setBookings, (err)=>setToast(err));
+    // Send auto-message notifying client/reception
+    if(booking) {
+      const isEN = booking.clientLang==="en";
+      handleSendMessage(id, {
+        from:"driver", fromName:"Conductor",
+        text: isEN
+          ? `✅ Your trip on ${booking.date} at ${booking.time} has been confirmed. See you soon!`
+          : `✅ Tu viaje del ${booking.date} a las ${booking.time} ha sido confirmado. ¡Hasta pronto!`,
+        ts: Date.now(),
+      });
+    }
+    setToast("✅ Viaje aceptado y cliente notificado");
+  };
   const handleReject    =(id,reason)=>fbMutateBookings(p=>p.map(b=>b.id===id?{...b,status:"rejected",rejectionReason:reason||""}:b),setBookings);
   const handleUpdateFare=(id,fare)=>fbMutateBookings(p=>p.map(b=>b.id===id?{...b,fare}:b),setBookings);
   const handlePayCommission=(id,proof)=>fbMutateBookings(p=>p.map(b=>b.id===id?{...b,commissionStatus:"paid",commissionProof:proof}:b),setBookings);

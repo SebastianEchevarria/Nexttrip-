@@ -1743,22 +1743,11 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
                     </div>
                   )}
 
-                  {/* Accept / Reject */}
-                  <div style={{display:"flex",gap:8}}>
-                    <button onClick={e=>{e.stopPropagation();onClientAcceptPrice&&onClientAcceptPrice(b.id);}} style={{
-                      flex:2,background:"linear-gradient(135deg,#22c55e,#16a34a)",
-                      border:"none",borderRadius:10,padding:"13px 0",
-                      color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer",
-                    }}>
-                      ✓ {lang==="en"?"Accept price":"Aceptar precio"}
-                    </button>
-                    <button onClick={e=>{e.stopPropagation();onClientRejectPrice&&onClientRejectPrice(b.id);}} style={{
-                      flex:1,background:"#1e293b",border:"1px solid #ef444433",
-                      borderRadius:10,padding:"13px 0",
-                      color:"#ef4444",fontSize:13,fontWeight:600,cursor:"pointer",
-                    }}>
-                      ✕ {lang==="en"?"Reject":"Rechazar"}
-                    </button>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:"10px",background:"#22c55e12",borderRadius:10,border:"1px solid #22c55e33",marginTop:8}}>
+                    <span>✅</span>
+                    <span style={{color:"#22c55e",fontSize:12,fontWeight:700}}>
+                      {lang==="en"?"Trip confirmed by driver":"Viaje confirmado por el conductor"}
+                    </span>
                   </div>
                 </div>
               )}
