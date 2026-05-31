@@ -1616,32 +1616,26 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
                   </div>
                 </div>
               )}
-              {/* ── ROUTE MAP ── */}
-              {b.origin&&b.destination&&b.fare>0&&(()=>{
-                const mapUrl=`https://maps.googleapis.com/maps/api/staticmap?size=600x200&maptype=roadmap&markers=color:green%7Clabel:A%7C${encodeURIComponent(b.origin)}&markers=color:red%7Clabel:B%7C${encodeURIComponent(b.destination)}&path=enc:&key=AIzaSyDBpHd3eQLth0GhXeI50dT5JfefWfpQyAY&style=element:geometry%7Ccolor:0x1e293b&style=element:labels.text.fill%7Ccolor:0xc9a96e&style=element:labels.text.stroke%7Ccolor:0x0a0a0a&style=feature:road%7Celement:geometry%7Ccolor:0x2a3a4a&style=feature:water%7Ccolor:0x0a1628`;
-                const durationMin = b.fare ? Math.round(b.fare/3.15*2) : null;
-                const arrivalTime = b.time && durationMin ? (()=>{
-                  const [h,m]=b.time.split(":").map(Number);
-                  const arr=new Date(0,0,0,h,m+durationMin);
-                  return `${String(arr.getHours()).padStart(2,"0")}:${String(arr.getMinutes()).padStart(2,"0")}`;
-                })() : null;
+              {/* ── TRIP INFO — km / duration / arrival ── */}
+              {b.fare>0&&b.time&&(()=>{
+                const km = Math.round(b.fare/3.15*10)/10;
+                const durationMin = Math.round(km*2);
+                const [h,m]=b.time.split(":").map(Number);
+                const arr=new Date(0,0,0,h,m+durationMin);
+                const arrivalTime=`${String(arr.getHours()).padStart(2,"0")}:${String(arr.getMinutes()).padStart(2,"0")}`;
                 return(
-                  <div style={{marginTop:10,borderRadius:12,overflow:"hidden",border:"1px solid #1e3a5f"}}>
-                    <img src={mapUrl} alt="route map" style={{width:"100%",height:140,objectFit:"cover",display:"block"}}
-                      onError={e=>{e.target.style.display="none";}}/>
-                    <div style={{background:"#0f172a",padding:"8px 12px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                      <div style={{display:"flex",alignItems:"center",gap:6}}>
-                        <span style={{fontSize:12}}>🗺️</span>
-                        <span style={{color:"#a8b8cc",fontSize:11}}>{Math.round(b.fare/3.15*10)/10} km</span>
-                      </div>
-                      {durationMin&&<div style={{display:"flex",alignItems:"center",gap:6}}>
-                        <span style={{fontSize:12}}>⏱️</span>
-                        <span style={{color:"#a8b8cc",fontSize:11}}>~{durationMin} min</span>
-                      </div>}
-                      {arrivalTime&&<div style={{display:"flex",alignItems:"center",gap:6}}>
-                        <span style={{fontSize:12}}>🏁</span>
-                        <span style={{color:"#c9a96e",fontSize:11,fontWeight:700}}>Llegada ~{arrivalTime}</span>
-                      </div>}
+                  <div style={{display:"flex",justifyContent:"space-between",background:"#0f172a",border:"1px solid #1e3a5f",borderRadius:10,padding:"8px 12px",marginTop:8}}>
+                    <div style={{display:"flex",alignItems:"center",gap:5}}>
+                      <span>🗺️</span>
+                      <span style={{color:"#a8b8cc",fontSize:11}}>{km} km</span>
+                    </div>
+                    <div style={{display:"flex",alignItems:"center",gap:5}}>
+                      <span>⏱️</span>
+                      <span style={{color:"#a8b8cc",fontSize:11}}>~{durationMin} min</span>
+                    </div>
+                    <div style={{display:"flex",alignItems:"center",gap:5}}>
+                      <span>🏁</span>
+                      <span style={{color:"#c9a96e",fontSize:11,fontWeight:700}}>{lang==="en"?"Arrival":"Llegada"} ~{arrivalTime}</span>
                     </div>
                   </div>
                 );

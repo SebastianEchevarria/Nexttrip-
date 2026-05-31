@@ -1440,13 +1440,25 @@ function BookingDetailModal({ booking, onClose, onAccept, onReject, onUpdateFare
                 </div>
               ) : (
                 <div style={{display:"flex",alignItems:"center",gap:9}}>
-                  <span style={{color:b.fare?"#c9a96e":"#b8cce0",fontSize:14,fontWeight:600}}>{b.fare?(b.isClientBooking?`${fmt(b.fare*(1-0.15))} € VIP · base ${fmt(b.fare)} €`:`${fmt(b.fare)} €`):"Sin tarifa"}</span>
+                  <span style={{color:b.fare?"#c9a96e":"#b8cce0",fontSize:14,fontWeight:600}}>{b.isClientBooking&&b.fare>0?(
+                        <span>
+                          <span style={{textDecoration:"line-through",color:"#475569",fontSize:11,marginRight:4}}>{fmt(b.fare)}€</span>
+                          <span style={{color:"#22c55e",fontWeight:800}}>{fmt(Math.round(b.fare*0.85*100)/100)} €</span>
+                          <span style={{color:"#22c55e",fontSize:9,marginLeft:3}}>VIP</span>
+                        </span>
+                      ):b.fare?`${fmt(b.fare)} €`:"Sin tarifa"}</span>
                   <button onClick={()=>{setEditFare(b.fare??"");setEditingFare(true);}}
                     style={{background:"#1e3a5f",border:"none",borderRadius:6,color:"#b8cce0",padding:"3px 8px",cursor:"pointer",fontSize:11}}>✏️ Editar</button>
                 </div>
               )
             ) : (
-              <span style={{color:b.fare?"#c9a96e":"#b8cce0",fontSize:14,fontWeight:600}}>{b.fare?(b.isClientBooking?`${fmt(b.fare*(1-0.15))} € VIP · base ${fmt(b.fare)} €`:`${fmt(b.fare)} €`):"Sin tarifa"}</span>
+              <span style={{color:b.fare?"#c9a96e":"#b8cce0",fontSize:14,fontWeight:600}}>{b.isClientBooking&&b.fare>0?(
+                        <span>
+                          <span style={{textDecoration:"line-through",color:"#475569",fontSize:11,marginRight:4}}>{fmt(b.fare)}€</span>
+                          <span style={{color:"#22c55e",fontWeight:800}}>{fmt(Math.round(b.fare*0.85*100)/100)} €</span>
+                          <span style={{color:"#22c55e",fontSize:9,marginLeft:3}}>VIP</span>
+                        </span>
+                      ):b.fare?`${fmt(b.fare)} €`:"Sin tarifa"}</span>
             )}
           </div>
           {b.fare && !editingFare && (
