@@ -1278,7 +1278,7 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
     if(!form.guest||!form.origin||!form.destination||!slotAvailable||!form.time) return;
     if(!isClientAdvanceOk(form.date,form.time)) return;
     onNewBooking({
-      ...form, fare:0, clientId:client.id, receptionist:client.name,
+      ...form, fare:form.fare||0, clientId:client.id, receptionist:client.name,
       hotel:`Cliente VIP: ${client.name}`, employeeId:null,
       isClientBooking:true, discountedFare:null, clientLang:lang,
       status:"pending", createdAt:new Date().toLocaleString(lang==="en"?"en-GB":"es-ES"),
@@ -1891,7 +1891,7 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
             <input value={form.destination} placeholder={t.destPlaceholder} onChange={e=>setForm({...form,destination:e.target.value})} style={inputStyle}/>
           </div>
           <TripEstimateBox origin={form.origin} destination={form.destination}/>
-          <DistancePriceCalcClient origin={form.origin} destination={form.destination}/>
+          <DistancePriceCalcClient origin={form.origin} destination={form.destination} onPriceCalculated={price=>setForm(f=>({...f,fare:price}))}/>
           <div style={{marginBottom:14}}>
             <label style={{color:"#a8b8cc",fontSize:11,letterSpacing:2,display:"block",marginBottom:5}}>{t.passengers}</label>
             <div style={{display:"flex",gap:8}}>

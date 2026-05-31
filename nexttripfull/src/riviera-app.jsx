@@ -1440,13 +1440,13 @@ function BookingDetailModal({ booking, onClose, onAccept, onReject, onUpdateFare
                 </div>
               ) : (
                 <div style={{display:"flex",alignItems:"center",gap:9}}>
-                  <span style={{color:b.fare?"#c9a96e":"#b8cce0",fontSize:14,fontWeight:600}}>{b.fare?`${fmt(b.fare)} €`:"Sin tarifa"}</span>
+                  <span style={{color:b.fare?"#c9a96e":"#b8cce0",fontSize:14,fontWeight:600}}>{b.fare?(b.isClientBooking?`${fmt(b.fare*(1-0.15))} € VIP · base ${fmt(b.fare)} €`:`${fmt(b.fare)} €`):"Sin tarifa"}</span>
                   <button onClick={()=>{setEditFare(b.fare??"");setEditingFare(true);}}
                     style={{background:"#1e3a5f",border:"none",borderRadius:6,color:"#b8cce0",padding:"3px 8px",cursor:"pointer",fontSize:11}}>✏️ Editar</button>
                 </div>
               )
             ) : (
-              <span style={{color:b.fare?"#c9a96e":"#b8cce0",fontSize:14,fontWeight:600}}>{b.fare?`${fmt(b.fare)} €`:"Sin tarifa"}</span>
+              <span style={{color:b.fare?"#c9a96e":"#b8cce0",fontSize:14,fontWeight:600}}>{b.fare?(b.isClientBooking?`${fmt(b.fare*(1-0.15))} € VIP · base ${fmt(b.fare)} €`:`${fmt(b.fare)} €`):"Sin tarifa"}</span>
             )}
           </div>
           {b.fare && !editingFare && (
@@ -1684,6 +1684,8 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
   const [historyOpen,setHistoryOpen]=useState(false);
   const [rejOpen,setRejOpen]=useState(false);
   const [arrivedBookingId,setArrivedBookingId]=useState(null);
+  const [cancelConfirm,setCancelConfirm]=useState(false);
+  const [showQuickMsgs,setShowQuickMsgs]=useState(false);
   const [pendingOpen,setPendingOpen]=useState(false);
   const [confirmedOpen,setConfirmedOpen]=useState(false);
   const [todayTripsOpen,setTodayTripsOpen]=useState(false);
@@ -1785,18 +1787,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
               {b.paymentMethod==="card"?"CARD":"CASH"}
             </span>
           </div>
-          {/* Bolt screenshot badge */}
-          {b.boltScreenshot ? (
-            <div style={{display:"inline-flex",alignItems:"center",gap:4,background:"#22c55e15",border:"1px solid #22c55e44",borderRadius:7,padding:"4px 9px"}}>
-              <span style={{fontSize:11}}>📸</span>
-              <span style={{color:"#22c55e",fontSize:10,fontWeight:700}}>BOLT ✓</span>
-            </div>
-          ) : (
-            <div style={{display:"inline-flex",alignItems:"center",gap:4,background:"#f59e0b15",border:"1px solid #f59e0b44",borderRadius:7,padding:"4px 9px"}}>
-              <span style={{fontSize:11}}>⚠️</span>
-              <span style={{color:"#f59e0b",fontSize:10,fontWeight:700}}>SIN CAPTURA</span>
-            </div>
-          )}
+
         </div>
         {(b.status==="confirmed"||b.status==="inprogress")&&(
           <div style={{display:"flex",gap:7,marginTop:8}}>
@@ -2125,98 +2116,167 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
                 </div>
               )}
             </div>
-            {/* Action buttons */}
+            {/* ── ACTION BUTTONS ── */}
             <div style={{margin:"0 12px",display:"flex",flexDirection:"column",gap:8,marginBottom:12}}>
-              {/* Row: Maps + Chat — visible before arriving */}
+
+              {/* ── FASE 1: Antes de llegar — Punto recogida + Chat + Mensajes rápidos + He llegado ── */}
               {arrivedBookingId!==upcoming.id&&!isOngoing&&(
-                <div style={{display:"flex",gap:8}}>
-                  {mapsUrl&&(
-                    <a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{
+                <>
+                  {/* Maps + Chat row */}
+                  <div style={{display:"flex",gap:8}}>
+                    {mapsUrl&&(
+                      <a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{
+                        flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:7,
+                        background:"linear-gradient(135deg,#1a3a1a,#1e293b)",
+                        border:"1px solid #22c55e55",borderRadius:10,padding:"10px 0",
+                        color:"#22c55e",fontSize:12,fontWeight:700,textDecoration:"none",
+                      }}>🗺️ Punto recogida</a>
+                    )}
+                    <button onClick={()=>setChatBooking(upcoming)} style={{
                       flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:7,
-                      background:"linear-gradient(135deg,#1a3a1a,#1e293b)",
-                      border:"1px solid #22c55e55",borderRadius:10,padding:"10px 0",
-                      color:"#22c55e",fontSize:12,fontWeight:700,textDecoration:"none",
-                    }}>🗺️ Punto recogida</a>
+                      background:"linear-gradient(135deg,#1e0a3e,#1e293b)",
+                      border:"1px solid #a78bfa55",borderRadius:10,padding:"10px 0",
+                      color:"#a78bfa",fontSize:12,fontWeight:700,cursor:"pointer",
+                    }}>💬 Chat</button>
+                    <button onClick={()=>setShowQuickMsgs(v=>!v)} style={{
+                      flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,
+                      background:showQuickMsgs?"#1e3a1e":"linear-gradient(135deg,#1a1a2a,#1e293b)",
+                      border:`1px solid ${showQuickMsgs?"#22c55e55":"#47556955"}`,borderRadius:10,padding:"10px 0",
+                      color:showQuickMsgs?"#22c55e":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer",
+                    }}>⚡ Rápidos</button>
+                  </div>
+                  {/* Quick messages */}
+                  {showQuickMsgs&&(
+                    <div style={{background:"#1e293b",borderRadius:12,padding:"10px",display:"flex",flexDirection:"column",gap:6}}>
+                      <div style={{color:"#a8b8cc",fontSize:9,letterSpacing:2,marginBottom:4}}>MENSAJES RÁPIDOS</div>
+                      {[
+                        {es:"🚗 Estoy en camino, llegaré en unos minutos.", en:"🚗 I'm on my way, I'll arrive in a few minutes."},
+                        {es:"⏱️ Llegaré en aproximadamente 10 minutos.", en:"⏱️ I'll arrive in approximately 10 minutes."},
+                        {es:"🅿️ Estoy aparcado esperándote en el punto de recogida.", en:"🅿️ I'm parked waiting for you at the pickup point."},
+                        {es:"📞 Por favor llámame si tienes algún problema para encontrarme.", en:"📞 Please call me if you have any trouble finding me."},
+                      ].map((msg,i)=>(
+                        <button key={i} onClick={()=>{
+                          onSendMessage&&onSendMessage(upcoming.id,{from:"driver",fromName:"Conductor",text:upcoming.clientLang==="en"?msg.en:msg.es,ts:Date.now()});
+                          setShowQuickMsgs(false);
+                          setToast("✅ Mensaje enviado");
+                        }} style={{
+                          background:"#0f172a",border:"1px solid #2a3a4a",borderRadius:8,
+                          padding:"8px 10px",color:"#e2e8f0",fontSize:11,textAlign:"left",cursor:"pointer",
+                        }}>{msg.es}</button>
+                      ))}
+                    </div>
                   )}
-                  <button onClick={()=>setChatBooking(upcoming)} style={{
-                    flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:7,
-                    background:"linear-gradient(135deg,#1e0a3e,#1e293b)",
-                    border:"1px solid #a78bfa55",borderRadius:10,padding:"10px 0",
-                    color:"#a78bfa",fontSize:12,fontWeight:700,cursor:"pointer",
-                  }}>💬 Chat</button>
-                </div>
+                  {/* HE LLEGADO */}
+                  <button onClick={()=>{
+                    setArrivedBookingId(upcoming.id);
+                    setShowQuickMsgs(false);
+                    const waitEnd=new Date(new Date(`${upcoming.date}T${upcoming.time}:00`).getTime()+10*60*1000);
+                    const wH=String(waitEnd.getHours()).padStart(2,"0"),wM=String(waitEnd.getMinutes()).padStart(2,"0");
+                    fbGet("nexttrip/status").then(cur=>{
+                      fbSet("nexttrip/status",{...(cur||{}),driverArrived:{bookingId:upcoming.id,arrivedAt:Date.now()},updatedAt:Date.now()});
+                    });
+                    const isEN=upcoming.clientLang==="en";
+                    onSendMessage&&onSendMessage(upcoming.id,{
+                      from:"driver",fromName:"Conductor",
+                      text:isEN
+                        ?`🚗 I have arrived at the pickup point and I am waiting for you. The 10-minute wait begins at ${upcoming.time} (your booking time) and ends at ${wH}:${wM}.`
+                        :`🚗 He llegado al punto de recogida y estoy esperándote. El tiempo de espera de 10 minutos comienza a las ${upcoming.time} (hora de tu reserva) y finaliza a las ${wH}:${wM}.`,
+                      ts:Date.now(),
+                    });
+                    setToast("✅ Cliente notificado — esperando desde las "+upcoming.time);
+                  }} style={{
+                    width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:10,
+                    background:"linear-gradient(135deg,#0a2a00,#1e293b)",
+                    border:"2px solid #22c55e",borderRadius:12,padding:"13px 0",
+                    color:"#22c55e",fontSize:14,fontWeight:700,cursor:"pointer",
+                    boxShadow:"0 0 16px #22c55e33",
+                  }}>🚗 He llegado</button>
+                </>
               )}
-              {/* HE LLEGADO button */}
-              {arrivedBookingId!==upcoming.id&&!isOngoing&&(
-                <button onClick={()=>{
-                  setArrivedBookingId(upcoming.id);
-                  // Calculate wait end time from trip time
-                  const waitEnd=new Date(new Date(`${upcoming.date}T${upcoming.time}:00`).getTime()+10*60*1000);
-                  const wH=String(waitEnd.getHours()).padStart(2,"0"),wM=String(waitEnd.getMinutes()).padStart(2,"0");
-                  // Broadcast to Firebase
-                  fbGet("nexttrip/status").then(cur=>{
-                    fbSet("nexttrip/status",{...(cur||{}),driverArrived:{bookingId:upcoming.id,arrivedAt:Date.now()},updatedAt:Date.now()});
-                  });
-                  // Auto-message
-                  onSendMessage&&onSendMessage(upcoming.id,{
-                    from:"driver",fromName:"Conductor",
-                    text:`🚗 He llegado al punto de recogida y estoy esperándote. El tiempo de espera de 10 minutos comienza a las ${upcoming.time} (hora de tu reserva) y finaliza a las ${wH}:${wM}.`,
-                    ts:Date.now(),
-                  });
-                  setToast("✅ Cliente notificado — esperando 10 minutos desde las "+upcoming.time);
-                }} style={{
-                  width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:10,
-                  background:"linear-gradient(135deg,#0a2a00,#1e293b)",
-                  border:"2px solid #22c55e",borderRadius:12,padding:"13px 0",
-                  color:"#22c55e",fontSize:14,fontWeight:700,cursor:"pointer",
-                  boxShadow:"0 0 16px #22c55e33",
-                }}>🚗 He llegado</button>
-              )}
-              {/* After He llegado — start trip button */}
+
+              {/* ── FASE 2: He llegado — espera + Iniciar viaje + Chat ── */}
               {arrivedBookingId===upcoming.id&&!isOngoing&&(
-                <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                <>
                   <div style={{background:"#22c55e12",border:"1.5px solid #22c55e44",borderRadius:10,padding:"10px 14px",display:"flex",alignItems:"center",gap:8}}>
-                    <span>✅</span>
+                    <span style={{fontSize:16}}>✅</span>
                     <div>
-                      <div style={{color:"#22c55e",fontSize:12,fontWeight:700}}>Cliente notificado — esperando desde las {upcoming.time}</div>
-                      <div style={{color:"#a8b8cc",fontSize:10}}>10 min de espera desde la hora de reserva</div>
+                      <div style={{color:"#22c55e",fontSize:12,fontWeight:700}}>Esperando desde las {upcoming.time}</div>
+                      <div style={{color:"#a8b8cc",fontSize:10}}>10 min de espera · el cliente está avisado</div>
                     </div>
                   </div>
-                  {upcoming.destination&&(
-                    <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(upcoming.destination)}`}
-                      target="_blank" rel="noopener noreferrer"
-                      onClick={()=>{
-                        onStartTrip(upcoming.id);
-                        setDriverStatus("onroute");
-                        setArrivedBookingId(null);
-                        fbGet("nexttrip/status").then(cur=>{const u={...(cur||{})};delete u.driverArrived;fbSet("nexttrip/status",{...u,updatedAt:Date.now()});});
-                        setToast("🚗 Viaje iniciado — navegando al destino");
-                      }}
-                      style={{
-                        display:"flex",alignItems:"center",justifyContent:"center",gap:8,
-                        background:"linear-gradient(135deg,#0a1a3a,#1e293b)",
-                        border:"2px solid #3b82f6",borderRadius:12,padding:"13px 0",
-                        color:"#3b82f6",fontSize:13,fontWeight:700,textDecoration:"none",
-                        boxShadow:"0 0 16px #3b82f633",
-                      }}>🗺️ Iniciar viaje → Ir al destino</a>
-                  )}
+                  {/* Iniciar viaje → Maps al destino */}
+                  <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(upcoming.destination||upcoming.origin)}`}
+                    target="_blank" rel="noopener noreferrer"
+                    onClick={()=>{
+                      onStartTrip(upcoming.id);
+                      setDriverStatus("onroute");
+                      setArrivedBookingId(null);
+                      setShowQuickMsgs(false);
+                      fbGet("nexttrip/status").then(cur=>{const u={...(cur||{})};delete u.driverArrived;fbSet("nexttrip/status",{...u,updatedAt:Date.now()});});
+                      setToast("🚗 Viaje iniciado — navegando al destino");
+                    }}
+                    style={{
+                      display:"flex",alignItems:"center",justifyContent:"center",gap:8,
+                      background:"linear-gradient(135deg,#0a1a3a,#1e293b)",
+                      border:"2px solid #3b82f6",borderRadius:12,padding:"14px 0",
+                      color:"#3b82f6",fontSize:13,fontWeight:700,textDecoration:"none",
+                      boxShadow:"0 0 16px #3b82f633",
+                    }}>
+                    🗺️ Iniciar viaje → {upcoming.destination||upcoming.origin}
+                  </a>
                   <button onClick={()=>setChatBooking(upcoming)} style={{
                     display:"flex",alignItems:"center",justifyContent:"center",gap:7,
                     background:"linear-gradient(135deg,#1e0a3e,#1e293b)",
                     border:"1px solid #a78bfa55",borderRadius:10,padding:"10px 0",
                     color:"#a78bfa",fontSize:12,fontWeight:700,cursor:"pointer",
                   }}>💬 Chat con cliente</button>
-                </div>
+                </>
               )}
-              {/* Ongoing — end trip */}
+
+              {/* ── FASE 3: En curso — Terminar viaje ── */}
               {isOngoing&&upcoming.status==="inprogress"&&(
-                <button onClick={()=>{onEndTrip(upcoming.id);setDriverStatus("free");setToast("✅ Viaje completado");}} style={{
+                <button onClick={()=>{
+                  onEndTrip(upcoming.id);
+                  setDriverStatus("free");
+                  setToast("✅ Viaje completado");
+                }} style={{
                   width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:10,
                   background:"linear-gradient(135deg,#2a0a00,#1e293b)",
-                  border:"2px solid #ef4444",borderRadius:12,padding:"13px 0",
+                  border:"2px solid #ef4444",borderRadius:12,padding:"14px 0",
                   color:"#ef4444",fontSize:14,fontWeight:700,cursor:"pointer",
                   boxShadow:"0 0 16px #ef444433",
                 }}>🏁 Terminar viaje</button>
+              )}
+
+              {/* ── CANCELAR RESERVA — siempre visible, doble confirmación ── */}
+              {!cancelConfirm?(
+                <button onClick={()=>setCancelConfirm(true)} style={{
+                  width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:7,
+                  background:"transparent",border:"1px solid #ef444433",borderRadius:10,padding:"9px 0",
+                  color:"#ef444477",fontSize:11,fontWeight:600,cursor:"pointer",marginTop:4,
+                }}>✕ Cancelar reserva</button>
+              ):(
+                <div style={{background:"linear-gradient(135deg,#2a0808,#1e293b)",border:"2px solid #ef4444",borderRadius:12,padding:"14px"}}>
+                  <div style={{color:"#f8fafc",fontSize:13,fontWeight:700,textAlign:"center",marginBottom:4}}>⚠️ ¿Confirmas la cancelación?</div>
+                  <div style={{color:"#a8b8cc",fontSize:11,textAlign:"center",marginBottom:12}}>Esta acción no se puede deshacer</div>
+                  <div style={{display:"flex",gap:8}}>
+                    <button onClick={()=>setCancelConfirm(false)} style={{
+                      flex:1,background:"#1e293b",border:"1px solid #475569",borderRadius:8,
+                      padding:"10px 0",color:"#a8b8cc",fontSize:12,fontWeight:600,cursor:"pointer",
+                    }}>No, volver</button>
+                    <button onClick={()=>{
+                      onCancelTrip&&onCancelTrip(upcoming.id,"Cancelado por el conductor");
+                      setCancelConfirm(false);
+                      setArrivedBookingId(null);
+                      setShowQuickMsgs(false);
+                      fbGet("nexttrip/status").then(cur=>{const u={...(cur||{})};delete u.driverArrived;fbSet("nexttrip/status",{...u,updatedAt:Date.now()});});
+                      setToast("❌ Reserva cancelada");
+                    }} style={{
+                      flex:1,background:"linear-gradient(135deg,#ef4444,#b91c1c)",border:"none",borderRadius:8,
+                      padding:"10px 0",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",
+                    }}>Sí, cancelar</button>
+                  </div>
+                </div>
               )}
             </div>
           </div>
@@ -4846,10 +4906,17 @@ export default function RivieraApp() {
   const handlePayCommission=(id,proof)=>fbMutateBookings(p=>p.map(b=>b.id===id?{...b,commissionStatus:"paid",commissionProof:proof}:b),setBookings);
   const handleStartTrip  =id=>{fbMutateBookings(p=>p.map(b=>b.id===id?{...b,status:"inprogress"}:b),setBookings); setDriverStatus("onroute");};
   const handleEndTrip=id=>{
-    fbMutateBookings(p=>p.map(b=>b.id===id?{...b,status:"completed",pendingRating:true}:b),setBookings);
+    fbMutateBookings(p=>p.map(b=>{
+      if(b.id!==id) return b;
+      const commission = b.fare && !b.isClientBooking ? Math.round(b.fare * COMMISSION_RATE * 100) / 100 : 0;
+      return {...b, status:"completed", pendingRating:true,
+        commissionAmount: commission,
+        commissionStatus: commission > 0 ? "pending" : "none",
+      };
+    }), setBookings);
     setDriverStatus("free");
-    sendNotification("Viaje completado","El viaje ha terminado","trip-done-"+id);
-  };
+    sendNotification("Viaje completado", "El viaje ha finalizado. ¡Gracias!", "end-"+id);
+  };;
   const handleCancelBooking=(id,reason)=>{
     fbMutateBookings(p=>p.map(b=>b.id===id?{...b,status:"cancelled",cancelReason:reason||"Cancelado por recepción"}:b),setBookings);
     sendNotification("❌ Reserva cancelada",reason||"Cancelado por recepción","cancel-booking-"+id);
