@@ -3599,7 +3599,7 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
       {(()=>{
         const now=nowTick;
         const upcoming=[...bookings]
-          .filter(b=>["confirmed","pending"].includes(b.status))
+          .filter(b=>["confirmed","pending"].includes(b.status)&&!b.isClientBooking)
           .sort((a,b)=>new Date(`${a.date}T${a.time}:00`)-new Date(`${b.date}T${b.time}:00`))
           .find(b=>new Date(`${b.date}T${b.time}:00`)-now>-TRIP_DURATION*60*1000);
         if(!upcoming) return null;
