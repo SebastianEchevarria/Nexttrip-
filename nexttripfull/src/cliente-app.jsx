@@ -1435,6 +1435,23 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
               <div style={{color:"#a8b8cc",fontSize:11,marginBottom:2}}><span style={{color:"#c9a96e"}}>▶ </span>{upcoming.origin}</div>
               <div style={{color:"#a8b8cc",fontSize:11,marginBottom:10}}><span style={{color:"#3b82f6"}}>■ </span>{upcoming.destination}</div>
             </div>
+            {/* ── TRIP INFO ── */}
+            {(()=>{
+              const fare3 = upcoming.proposedPrice||upcoming.fare||0;
+              if(!fare3||!upcoming.time) return null;
+              const km3 = Math.round(fare3/3.15*10)/10;
+              const dur3 = Math.round(km3*2);
+              const [h3,m3]=upcoming.time.split(":").map(Number);
+              const arr3=new Date(0,0,0,h3,m3+dur3);
+              const arrStr3=`${String(arr3.getHours()).padStart(2,"0")}:${String(arr3.getMinutes()).padStart(2,"0")}`;
+              return(
+                <div style={{display:"flex",justifyContent:"space-between",background:"#0f172a",border:"1px solid #1e3a5f",borderRadius:10,padding:"7px 12px",margin:"0 12px 8px"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:4}}><span>🗺️</span><span style={{color:"#a8b8cc",fontSize:11}}>{km3} km</span></div>
+                  <div style={{display:"flex",alignItems:"center",gap:4}}><span>⏱️</span><span style={{color:"#a8b8cc",fontSize:11}}>~{dur3} min</span></div>
+                  <div style={{display:"flex",alignItems:"center",gap:4}}><span>🏁</span><span style={{color:"#c9a96e",fontSize:11,fontWeight:700}}>{lang==="en"?"Arrival":"Llegada"} ~{arrStr3}</span></div>
+                </div>
+              );
+            })()}
             <div style={{margin:"0 12px 12px",display:"flex",gap:8}}>
               {!isArrived&&(
                 <div style={{flex:1,background:isOngoing?"#22c55e12":urgency?"#f59e0b12":"#c9a96e10",borderRadius:12,padding:"10px 14px"}}>

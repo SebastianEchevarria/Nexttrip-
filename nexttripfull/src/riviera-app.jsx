@@ -1753,7 +1753,14 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
         onMouseEnter={e=>e.currentTarget.style.transform="translateX(3px)"}
         onMouseLeave={e=>e.currentTarget.style.transform="none"}>
         {showActions&&<div style={{position:"absolute",top:8,right:8,background:"#c9a96e",borderRadius:6,padding:"2px 8px",fontSize:10,color:"#0a0a0a",fontWeight:700}}>NUEVA</div>}
-        {b.isClientBooking&&<div style={{position:"absolute",top:b.status==="price_proposed"?8:showActions?28:8,right:8,background:"#a78bfa",borderRadius:6,padding:"2px 8px",fontSize:9,color:"#fff",fontWeight:700}}>VIP CLIENT</div>}
+        {/* Source badge */}
+        <div style={{position:"absolute",top:b.status==="price_proposed"?8:showActions?28:8,right:8,display:"flex",flexDirection:"column",gap:3,alignItems:"flex-end"}}>
+          {b.isClientBooking?(
+            <span style={{background:"#a78bfa",borderRadius:6,padding:"2px 8px",fontSize:9,color:"#fff",fontWeight:700}}>💜 VIP CLIENT</span>
+          ):(
+            <span style={{background:"#c9a96e",borderRadius:6,padding:"2px 8px",fontSize:9,color:"#0a0a0a",fontWeight:700}}>🏨 RECEPCIÓN</span>
+          )}
+        </div>
         {b.status==="price_proposed"&&<div style={{background:"#a78bfa15",border:"1px solid #a78bfa44",borderRadius:8,padding:"6px 10px",marginBottom:8,display:"flex",gap:8,alignItems:"center"}}>
           <span style={{fontSize:13}}>💜</span>
           <div>
@@ -1777,11 +1784,29 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
           <div style={{color:"#b8cce0",fontSize:11}}><span style={{color:"#ef4444"}}>■ </span>{b.destination}</div>
         </div>
         <div style={{marginTop:8,display:"flex",gap:7,flexWrap:"wrap",alignItems:"center"}}>
-          {b.fare?(
-            <div style={{display:"inline-flex",alignItems:"center",gap:6,background:"rgba(201,169,110,0.12)",border:"1px solid #c9a96e44",borderRadius:7,padding:"5px 12px"}}>
-              <span style={{color:"#a8b8cc",fontSize:11}}>💶 Precio del viaje</span>
-              <span style={{color:"#c9a96e",fontSize:16,fontWeight:700}}>{fmt(b.fare)} €</span>
-            </div>
+          {b.fare>0?(
+            b.isClientBooking?(
+              <div style={{display:"inline-flex",flexDirection:"column",background:"#22c55e12",border:"1px solid #22c55e33",borderRadius:8,padding:"5px 12px"}}>
+                <div style={{display:"flex",alignItems:"center",gap:6}}>
+                  <span style={{color:"#a8b8cc",fontSize:10}}>💶 Precio del viaje</span>
+                  <span style={{color:"#475569",fontSize:11,textDecoration:"line-through"}}>{fmt(b.fare)} €</span>
+                </div>
+                <div style={{display:"flex",alignItems:"center",gap:6}}>
+                  <span style={{color:"#22c55e",fontSize:16,fontWeight:800}}>{fmt(Math.round(b.fare*0.85*100)/100)} €</span>
+                  <span style={{background:"#22c55e22",borderRadius:4,padding:"1px 5px",color:"#22c55e",fontSize:9,fontWeight:700}}>VIP -15%</span>
+                </div>
+              </div>
+            ):(
+              <div style={{display:"inline-flex",flexDirection:"column",background:"rgba(201,169,110,0.12)",border:"1px solid #c9a96e44",borderRadius:8,padding:"5px 12px"}}>
+                <div style={{display:"flex",alignItems:"center",gap:6}}>
+                  <span style={{color:"#a8b8cc",fontSize:10}}>💶 Precio del viaje</span>
+                </div>
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  <span style={{color:"#c9a96e",fontSize:16,fontWeight:700}}>{fmt(b.fare)} €</span>
+                  <span style={{color:"#a8b8cc",fontSize:10}}>comisión: <span style={{color:"#f59e0b",fontWeight:700}}>{fmt(Math.round(b.fare*COMMISSION_RATE*100)/100)} €</span></span>
+                </div>
+              </div>
+            )
           ):(
             <div style={{display:"inline-flex",alignItems:"center",background:"rgba(100,116,139,0.1)",border:"1px solid #33415540",borderRadius:7,padding:"3px 9px"}}>
               <span style={{color:"#b8cce0",fontSize:12}}>Sin tarifa</span>
@@ -2115,6 +2140,23 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
               <div style={{color:"#a8b8cc",fontSize:11,marginBottom:2}}><span style={{color:"#c9a96e"}}>▶ </span>{upcoming.origin}</div>
               <div style={{color:"#a8b8cc",fontSize:11,marginBottom:12}}><span style={{color:"#3b82f6"}}>■ </span>{upcoming.destination}</div>
             </div>
+              {/* ── TRIP INFO ── */}
+              {(()=>{
+                const fare = upcoming.fare||upcoming.proposedPrice||0;
+                if(!fare||!upcoming.time) return null;
+                const km = Math.round(fare/3.15*10)/10;
+                const durationMin = Math.round(km*2);
+                const [h,m]=upcoming.time.split(":").map(Number);
+                const arr=new Date(0,0,0,h,m+durationMin);
+                const arrStr=`${String(arr.getHours()).padStart(2,"0")}:${String(arr.getMinutes()).padStart(2,"0")}`;
+                return(
+                  <div style={{display:"flex",justifyContent:"space-between",background:"#0f172a",border:"1px solid #1e3a5f",borderRadius:10,padding:"7px 12px",margin:"0 12px 8px"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:4}}><span>🗺️</span><span style={{color:"#a8b8cc",fontSize:11}}>{km} km</span></div>
+                    <div style={{display:"flex",alignItems:"center",gap:4}}><span>⏱️</span><span style={{color:"#a8b8cc",fontSize:11}}>~{durationMin} min</span></div>
+                    <div style={{display:"flex",alignItems:"center",gap:4}}><span>🏁</span><span style={{color:"#c9a96e",fontSize:11,fontWeight:700}}>~{arrStr}</span></div>
+                  </div>
+                );
+              })()}
             <div style={{margin:"0 12px",display:"flex",gap:8,marginBottom:12}}>
               {/* Countdown */}
               <div style={{flex:1,background:isOngoing?"#22c55e12":urgency?"#f59e0b12":"#c9a96e10",borderRadius:12,padding:"10px 14px"}}>
@@ -2170,19 +2212,20 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
                     <div style={{background:"#1e293b",borderRadius:12,padding:"10px",display:"flex",flexDirection:"column",gap:6}}>
                       <div style={{color:"#a8b8cc",fontSize:9,letterSpacing:2,marginBottom:4}}>MENSAJES RÁPIDOS</div>
                       {[
-                        {es:"🚗 Estoy en camino, llegaré en unos minutos.", en:"🚗 I'm on my way, I'll arrive in a few minutes."},
+                        {es:"🚗 Estoy en camino.", en:"🚗 I'm on my way."},
                         {es:"⏱️ Llegaré en aproximadamente 10 minutos.", en:"⏱️ I'll arrive in approximately 10 minutes."},
                         {es:"🅿️ Estoy aparcado esperándote en el punto de recogida.", en:"🅿️ I'm parked waiting for you at the pickup point."},
                         {es:"📞 Por favor llámame si tienes algún problema para encontrarme.", en:"📞 Please call me if you have any trouble finding me."},
                       ].map((msg,i)=>(
                         <button key={i} onClick={()=>{
-                          onSendMessage&&onSendMessage(upcoming.id,{from:"driver",fromName:"Conductor",text:upcoming.clientLang==="en"?msg.en:msg.es,ts:Date.now()});
+                          const txt=upcoming.clientLang==="en"?msg.en:msg.es;
+                          onSendMessage&&onSendMessage(upcoming.id,{from:"driver",fromName:"Conductor",text:txt,ts:Date.now()});
                           setShowQuickMsgs(false);
                           setToast("✅ Mensaje enviado");
                         }} style={{
                           background:"#0f172a",border:"1px solid #2a3a4a",borderRadius:8,
                           padding:"8px 10px",color:"#e2e8f0",fontSize:11,textAlign:"left",cursor:"pointer",
-                        }}>{msg.es}</button>
+                        }}>{upcoming.clientLang==="en"?msg.en:msg.es}</button>
                       ))}
                     </div>
                   )}
@@ -3594,7 +3637,24 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
               <div style={{color:"#f8fafc",fontSize:15,fontFamily:"'Cormorant Garamond',serif",fontWeight:700,marginBottom:2}}>{upcoming.guest}</div>
               <div style={{color:"#a8b8cc",fontSize:11,marginBottom:1}}>{upcoming.date} · {upcoming.time} · {upcoming.passengers} pax · {upcoming.hotel}</div>
               <div style={{color:"#a8b8cc",fontSize:11,marginBottom:1}}><span style={{color:"#c9a96e"}}>▶ </span>{upcoming.origin}</div>
-              <div style={{color:"#a8b8cc",fontSize:11,marginBottom:10}}><span style={{color:"#3b82f6"}}>■ </span>{upcoming.destination}</div>
+              <div style={{color:"#a8b8cc",fontSize:11,marginBottom:8}}><span style={{color:"#3b82f6"}}>■ </span>{upcoming.destination}</div>
+              {/* ── TRIP INFO ── */}
+              {(()=>{
+                const fare2 = upcoming.fare||0;
+                if(!fare2||!upcoming.time) return null;
+                const km2 = Math.round(fare2/3.15*10)/10;
+                const dur2 = Math.round(km2*2);
+                const [h2,m2]=upcoming.time.split(":").map(Number);
+                const arr2=new Date(0,0,0,h2,m2+dur2);
+                const arrStr2=`${String(arr2.getHours()).padStart(2,"0")}:${String(arr2.getMinutes()).padStart(2,"0")}`;
+                return(
+                  <div style={{display:"flex",justifyContent:"space-between",background:"#0f172a",border:"1px solid #1e3a5f",borderRadius:10,padding:"7px 12px",marginBottom:8}}>
+                    <div style={{display:"flex",alignItems:"center",gap:4}}><span>🗺️</span><span style={{color:"#a8b8cc",fontSize:11}}>{km2} km</span></div>
+                    <div style={{display:"flex",alignItems:"center",gap:4}}><span>⏱️</span><span style={{color:"#a8b8cc",fontSize:11}}>~{dur2} min</span></div>
+                    <div style={{display:"flex",alignItems:"center",gap:4}}><span>🏁</span><span style={{color:"#c9a96e",fontSize:11,fontWeight:700}}>~{arrStr2}</span></div>
+                  </div>
+                );
+              })()}
               <div style={{background:isOngoing?"#22c55e12":urgency?"#f59e0b12":"#c9a96e10",borderRadius:10,padding:"8px 12px",display:"inline-block"}}>
                 <div style={{color:"#a8b8cc",fontSize:9,letterSpacing:2,marginBottom:2}}>{isOngoing?"EN CURSO":"TIEMPO RESTANTE"}</div>
                 <div style={{color:isOngoing?"#22c55e":urgency?"#f59e0b":"#f8fafc",fontSize:24,fontFamily:"'Cormorant Garamond',serif",fontWeight:700,letterSpacing:2}}>{countdownStr}</div>
