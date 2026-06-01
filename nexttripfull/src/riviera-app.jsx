@@ -2037,76 +2037,6 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
   return (
     <div style={{paddingBottom:80}}>
 
-      {/* ── PRICE CONFIG BUTTON ── */}
-      <div style={{display:"flex",justifyContent:"flex-end",marginBottom:12}}>
-        <button onClick={()=>{setDraftClient(String(priceClient));setDraftRecep(String(priceRecep));setShowPriceConfig(true);}} style={{
-          display:"flex",alignItems:"center",gap:7,
-          background:"linear-gradient(135deg,#0a1a0a,#1e293b)",
-          border:"1.5px solid #22c55e44",borderRadius:14,padding:"7px 14px",
-          cursor:"pointer",
-        }}>
-          <span style={{fontSize:14}}>💶</span>
-          <div>
-            <div style={{color:"#22c55e",fontSize:9,fontWeight:700,letterSpacing:1}}>PRECIO/KM</div>
-            <div style={{color:"#f8fafc",fontSize:10,fontWeight:600}}>VIP {priceClient}€ · Recep. {priceRecep}€</div>
-          </div>
-          <span style={{color:"#475569",fontSize:10}}>✎</span>
-        </button>
-      </div>
-
-      {/* Price config modal */}
-      {showPriceConfig&&(
-        <div style={{position:"fixed",inset:0,background:"#000000cc",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
-          <div style={{background:"linear-gradient(135deg,#0a1628,#1e293b)",border:"1.5px solid #22c55e44",borderRadius:20,padding:24,width:"100%",maxWidth:380}}>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
-              <div>
-                <div style={{color:"#f8fafc",fontSize:16,fontFamily:"'Cormorant Garamond',serif",fontWeight:700}}>⚙️ Precio por km</div>
-                <div style={{color:"#a8b8cc",fontSize:11,marginTop:2}}>Se aplica en todos los cálculos automáticos</div>
-              </div>
-              <button onClick={()=>setShowPriceConfig(false)} style={{background:"#1e293b",border:"1px solid #2a3a4a",borderRadius:8,padding:"4px 10px",color:"#a8b8cc",fontSize:12,cursor:"pointer"}}>✕</button>
-            </div>
-            <div style={{marginBottom:16}}>
-              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
-                <span style={{background:"#a78bfa22",border:"1px solid #a78bfa55",borderRadius:6,padding:"2px 8px",color:"#a78bfa",fontSize:10,fontWeight:700}}>💜 CLIENTE VIP</span>
-              </div>
-              <div style={{display:"flex",alignItems:"center",gap:8}}>
-                <input type="number" step="0.05" min="1" max="20" value={draftClient}
-                  onChange={e=>setDraftClient(e.target.value)}
-                  style={{flex:1,background:"#0f172a",border:"1.5px solid #a78bfa55",borderRadius:10,color:"#f8fafc",fontSize:20,fontWeight:700,padding:"10px 14px",outline:"none",textAlign:"center"}}/>
-                <span style={{color:"#a8b8cc",fontSize:14}}>€/km</span>
-              </div>
-              {draftClient&&<div style={{color:"#a78bfa",fontSize:10,marginTop:4}}>Ej. 30km → {Math.max(30,Math.round(30*Number(draftClient)*100)/100)} €</div>}
-            </div>
-            <div style={{marginBottom:24}}>
-              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
-                <span style={{background:"#c9a96e22",border:"1px solid #c9a96e55",borderRadius:6,padding:"2px 8px",color:"#c9a96e",fontSize:10,fontWeight:700}}>🏨 RECEPCIÓN</span>
-              </div>
-              <div style={{display:"flex",alignItems:"center",gap:8}}>
-                <input type="number" step="0.05" min="1" max="20" value={draftRecep}
-                  onChange={e=>setDraftRecep(e.target.value)}
-                  style={{flex:1,background:"#0f172a",border:"1.5px solid #c9a96e55",borderRadius:10,color:"#f8fafc",fontSize:20,fontWeight:700,padding:"10px 14px",outline:"none",textAlign:"center"}}/>
-                <span style={{color:"#a8b8cc",fontSize:14}}>€/km</span>
-              </div>
-              {draftRecep&&<div style={{color:"#c9a96e",fontSize:10,marginTop:4}}>Ej. 30km → {Math.max(30,Math.round(30*Number(draftRecep)*100)/100)} €</div>}
-            </div>
-            <div style={{display:"flex",gap:8}}>
-              <button onClick={()=>setShowPriceConfig(false)} style={{flex:1,background:"#1e293b",border:"1px solid #2a3a4a",borderRadius:10,padding:"11px 0",color:"#a8b8cc",fontSize:12,fontWeight:600,cursor:"pointer"}}>Cancelar</button>
-              <button onClick={()=>{
-                const c=Math.max(1,Number(draftClient)||3.15);
-                const r=Math.max(1,Number(draftRecep)||3.15);
-                setPriceClient(c);setPriceRecep(r);
-                try{localStorage.setItem("ntprice_client",String(c));localStorage.setItem("ntprice_recep",String(r));}catch{}
-                fbGet("nexttrip/status").then(cur=>{fbSet("nexttrip/status",{...(cur||{}),pricePerKmClient:c,pricePerKmRecep:r,updatedAt:Date.now()});});
-                setShowPriceConfig(false);
-                setToast("✅ Precios: VIP "+c+"€/km · Recepción "+r+"€/km");
-              }} style={{flex:2,background:"linear-gradient(135deg,#22c55e,#16a34a)",border:"none",borderRadius:10,padding:"11px 0",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer"}}>
-                ✓ Guardar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* ── TOP BUTTONS: PENDIENTES + CONFIRMADOS ── */}
       <div style={{display:"flex",gap:8,marginBottom:14}}>
         <button onClick={()=>setPendingOpen(v=>!v)} style={{
@@ -4948,6 +4878,11 @@ export default function RivieraApp() {
   }, []);
   const [toast,setToast]=useState(null);
   const [driverAlert,setDriverAlert]=useState(null);
+  const [driverPriceConfig,setDriverPriceConfig]=useState(false);
+  const [driverPriceClient,setDriverPriceClient]=useState(()=>{try{return Number(localStorage.getItem("ntprice_client")||3.15);}catch{return 3.15;}});
+  const [driverPriceRecep,setDriverPriceRecep]=useState(()=>{try{return Number(localStorage.getItem("ntprice_recep")||3.15);}catch{return 3.15;}});
+  const [draftPriceClient,setDraftPriceClient]=useState("3.15");
+  const [draftPriceRecep,setDraftPriceRecep]=useState("3.15");
   const [notifDismissed,setNotifDismissed]=useState(false);
   const [driverStatus,setDriverStatus]=useState("free");
   useEffect(()=>{
@@ -5298,13 +5233,24 @@ export default function RivieraApp() {
               background:isDriverScreen?"#1a130a":(currentEmployee?.avatar+"12"),
               border:`1px solid ${isDriverScreen?"#c9a96e33":((currentEmployee?.avatar??"#c9a96e")+"33")}`,borderRadius:20,padding:"5px 12px"}}>
               {isDriverScreen?(
+                <>
                 <div style={{display:"flex",alignItems:"center",gap:8}}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c9a96e" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/>
                     <line x1="12" y1="2" x2="12" y2="9"/><line x1="4.93" y1="4.93" x2="9.17" y2="9.17"/><line x1="19.07" y1="4.93" x2="14.83" y2="9.17"/>
                   </svg>
                   <span style={{color:"#c9a96e",fontSize:12,fontWeight:700,letterSpacing:3,fontFamily:"'DM Sans',sans-serif"}}>DRIVER</span>
-                </div>)
+                </div>
+                <button onClick={()=>{setDraftPriceClient(String(driverPriceClient));setDraftPriceRecep(String(driverPriceRecep));setDriverPriceConfig(true);}} style={{
+                  display:"inline-flex",alignItems:"center",gap:6,
+                  background:"linear-gradient(135deg,#0a1628,#1e293b)",
+                  border:"1.5px solid #22c55e55",borderRadius:20,padding:"6px 14px",
+                  cursor:"pointer",marginLeft:8,
+                }}>
+                  <span style={{color:"#22c55e",fontSize:12,fontWeight:700,letterSpacing:2,fontFamily:"'DM Sans',sans-serif"}}>PRECIOS KM</span>
+                </button>
+                </>
+                )
               :currentEmployee?(<>
                 <div style={{width:18,height:18,borderRadius:"50%",background:currentEmployee.avatar+"25",border:`1.5px solid ${currentEmployee.avatar}55`,display:"flex",alignItems:"center",justifyContent:"center",color:currentEmployee.avatar,fontSize:9,fontWeight:700}}>{initials(currentEmployee.name)}</div>
                 <span style={{color:currentEmployee.avatar,fontSize:11}}>{currentEmployee.name}</span>
@@ -5336,6 +5282,58 @@ export default function RivieraApp() {
         <button onClick={handleInstall} style={{background:"linear-gradient(135deg,#c9a96e,#a07840)",border:"none",borderRadius:10,color:"#0a0a0a",fontSize:12,fontWeight:700,padding:"8px 14px",cursor:"pointer"}}>Instalar</button>
         <button onClick={()=>setShowInstall(false)} style={{background:"none",border:"none",color:"#a8b8cc",fontSize:18,cursor:"pointer",padding:"0 4px"}}>x</button>
       </div>}
+      {/* ── PRICE CONFIG MODAL ── */}
+      {driverPriceConfig&&(
+        <div style={{position:"fixed",inset:0,background:"#000000cc",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+          <div style={{background:"linear-gradient(135deg,#0a1628,#1e293b)",border:"1.5px solid #22c55e44",borderRadius:20,padding:24,width:"100%",maxWidth:380}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
+              <div>
+                <div style={{color:"#f8fafc",fontSize:16,fontFamily:"'Cormorant Garamond',serif",fontWeight:700}}>⚙️ Precio por km</div>
+                <div style={{color:"#a8b8cc",fontSize:11,marginTop:2}}>Se aplica en todos los cálculos automáticos</div>
+              </div>
+              <button onClick={()=>setDriverPriceConfig(false)} style={{background:"#1e293b",border:"1px solid #2a3a4a",borderRadius:8,padding:"4px 10px",color:"#a8b8cc",fontSize:12,cursor:"pointer"}}>✕</button>
+            </div>
+            <div style={{marginBottom:16}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+                <span style={{background:"#a78bfa22",border:"1px solid #a78bfa55",borderRadius:6,padding:"2px 8px",color:"#a78bfa",fontSize:10,fontWeight:700}}>💜 CLIENTE VIP</span>
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <input type="number" step="0.05" min="1" max="20" value={draftPriceClient}
+                  onChange={e=>setDraftPriceClient(e.target.value)}
+                  style={{flex:1,background:"#0f172a",border:"1.5px solid #a78bfa55",borderRadius:10,color:"#f8fafc",fontSize:20,fontWeight:700,padding:"10px 14px",outline:"none",textAlign:"center"}}/>
+                <span style={{color:"#a8b8cc",fontSize:14}}>€/km</span>
+              </div>
+              {draftPriceClient&&<div style={{color:"#a78bfa",fontSize:10,marginTop:4}}>Ej. 30km → {Math.max(30,Math.round(30*Number(draftPriceClient)*100)/100)} €</div>}
+            </div>
+            <div style={{marginBottom:24}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+                <span style={{background:"#c9a96e22",border:"1px solid #c9a96e55",borderRadius:6,padding:"2px 8px",color:"#c9a96e",fontSize:10,fontWeight:700}}>🏨 RECEPCIÓN</span>
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <input type="number" step="0.05" min="1" max="20" value={draftPriceRecep}
+                  onChange={e=>setDraftPriceRecep(e.target.value)}
+                  style={{flex:1,background:"#0f172a",border:"1.5px solid #c9a96e55",borderRadius:10,color:"#f8fafc",fontSize:20,fontWeight:700,padding:"10px 14px",outline:"none",textAlign:"center"}}/>
+                <span style={{color:"#a8b8cc",fontSize:14}}>€/km</span>
+              </div>
+              {draftPriceRecep&&<div style={{color:"#c9a96e",fontSize:10,marginTop:4}}>Ej. 30km → {Math.max(30,Math.round(30*Number(draftPriceRecep)*100)/100)} €</div>}
+            </div>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>setDriverPriceConfig(false)} style={{flex:1,background:"#1e293b",border:"1px solid #2a3a4a",borderRadius:10,padding:"11px 0",color:"#a8b8cc",fontSize:12,fontWeight:600,cursor:"pointer"}}>Cancelar</button>
+              <button onClick={()=>{
+                const c=Math.max(1,Number(draftPriceClient)||3.15);
+                const r=Math.max(1,Number(draftPriceRecep)||3.15);
+                setDriverPriceClient(c);setDriverPriceRecep(r);
+                try{localStorage.setItem("ntprice_client",String(c));localStorage.setItem("ntprice_recep",String(r));}catch{}
+                fbGet("nexttrip/status").then(cur=>{fbSet("nexttrip/status",{...(cur||{}),pricePerKmClient:c,pricePerKmRecep:r,updatedAt:Date.now()});});
+                setDriverPriceConfig(false);
+                setToast("✅ Precios: VIP "+c+"€/km · Recepción "+r+"€/km");
+              }} style={{flex:2,background:"linear-gradient(135deg,#22c55e,#16a34a)",border:"none",borderRadius:10,padding:"11px 0",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer"}}>
+                ✓ Guardar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {toast&&<Toast msg={toast} onClose={()=>setToast(null)}/>}
     </div>
     </ErrorBoundary>
