@@ -646,8 +646,10 @@ function DistancePriceCalcClient({ origin, destination, onPriceCalculated, price
         if (data.error) throw new Error(data.error);
         const basePrice = Math.max(30, Math.round(data.km * pricePerKm * 100) / 100);
         const discounted = Math.round(basePrice * 0.85 * 100) / 100;
+        let durMin=Math.round(data.km*1.5);
+        if(data.duration){const hm=data.duration.match(/([0-9]+)\s*h/),mm=data.duration.match(/([0-9]+)\s*min/);const d=(hm?parseInt(hm[1])*60:0)+(mm?parseInt(mm[1]):0);if(d)durMin=d;}
         setState({ status:"ok", km:data.km, duration:data.duration, price:basePrice, discounted });
-        onPriceCalculated && onPriceCalculated(basePrice);
+        onPriceCalculated && onPriceCalculated(basePrice, data.km, durMin);
       } catch(e) {
         setState({ status:"error", km:null, duration:null, price:null });
       }
@@ -1440,8 +1442,8 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
             {(()=>{
               const fare3 = upcoming.proposedPrice||upcoming.fare||0;
               if(!fare3||!upcoming.time) return null;
-              const km3 = Math.round(fare3/3.15*10)/10;
-              const dur3 = Math.round(km3*2);
+              const km3 = upcoming.tripKm || Math.round(fare3/3.15*10)/10;
+              const dur3 = upcoming.durationMin || Math.round(km3*1.5);
               const [h3,m3]=upcoming.time.split(":").map(Number);
               const arr3=new Date(0,0,0,h3,m3+dur3);
               const arrStr3=`${String(arr3.getHours()).padStart(2,"0")}:${String(arr3.getMinutes()).padStart(2,"0")}`;
@@ -1935,7 +1937,7 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
             <input value={form.destination} placeholder={t.destPlaceholder} onChange={e=>setForm({...form,destination:e.target.value})} style={inputStyle}/>
           </div>
           <TripEstimateBox origin={form.origin} destination={form.destination}/>
-          <DistancePriceCalcClient origin={form.origin} destination={form.destination} pricePerKm={pricePerKm} onPriceCalculated={price=>setForm(f=>({...f,fare:price}))}/>
+          <DistancePriceCalcClient origin={form.origin} destination={form.destination} pricePerKm={pricePerKm} onPriceCalculated={(price,km,durMin)=>setForm(f=>({...f,fare:price,tripKm:km,durationMin:durMin}))}/>
           <div style={{marginBottom:14}}>
             <label style={{color:"#a8b8cc",fontSize:11,letterSpacing:2,display:"block",marginBottom:5}}>{t.passengers}</label>
             <div style={{display:"flex",gap:8}}>

@@ -2150,8 +2150,8 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
               {(()=>{
                 const fare = upcoming.fare||upcoming.proposedPrice||0;
                 if(!fare||!upcoming.time) return null;
-                const km = Math.round(fare/3.15*10)/10;
-                const durationMin = Math.round(km*2);
+                const km = upcoming.tripKm || Math.round(fare/3.15*10)/10;
+                const durationMin = upcoming.durationMin || Math.round(km*1.5);
                 const [h,m]=upcoming.time.split(":").map(Number);
                 const arr=new Date(0,0,0,h,m+durationMin);
                 const arrStr=`${String(arr.getHours()).padStart(2,"0")}:${String(arr.getMinutes()).padStart(2,"0")}`;
@@ -3659,8 +3659,8 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
               {(()=>{
                 const fare2 = upcoming.fare||0;
                 if(!fare2||!upcoming.time) return null;
-                const km2 = Math.round(fare2/3.15*10)/10;
-                const dur2 = Math.round(km2*2);
+                const km2 = upcoming.tripKm || Math.round(fare2/3.15*10)/10;
+                const dur2 = upcoming.durationMin || Math.round(km2*1.5);
                 const [h2,m2]=upcoming.time.split(":").map(Number);
                 const arr2=new Date(0,0,0,h2,m2+dur2);
                 const arrStr2=`${String(arr2.getHours()).padStart(2,"0")}:${String(arr2.getMinutes()).padStart(2,"0")}`;
@@ -4130,7 +4130,7 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
               </div>
             )}
           </div>
-          <DistancePriceCalc origin={form.origin} destination={form.destination} pricePerKm={priceRecepFromStatus||3.15} onPriceCalculated={price=>setForm(f=>({...f,fare:String(price)}))}/>
+          <DistancePriceCalc origin={form.origin} destination={form.destination} pricePerKm={priceRecepFromStatus||3.15} onPriceCalculated={(price,km,durMin)=>setForm(f=>({...f,fare:String(price),tripKm:km,durationMin:durMin}))}/>
           {form.fare&&Number(form.fare)>0&&(
             <div style={{background:"#0f172a",border:"1px solid #c9a96e22",borderRadius:10,padding:"12px 14px",marginBottom:14}}>
               <div style={{color:"#a8b8cc",fontSize:9,letterSpacing:2,marginBottom:10}}>DESGLOSE DE LA TARIFA</div>
@@ -4480,7 +4480,9 @@ function DistancePriceCalc({ origin, destination, onPriceCalculated, pricePerKm=
         if (data.error) throw new Error(data.error);
         const price = Math.max(30, Math.round(data.km * pricePerKm * 100) / 100);
         setState({ status:"ok", km:data.km, duration:data.duration, price });
-        onPriceCalculated(price);
+        // Parse duration to minutes
+        let durMin=Math.round(data.km*1.5); if(data.duration){const h=data.duration.match(/([0-9]+)\s*h/),m=data.duration.match(/([0-9]+)\s*min/);const d=(h?parseInt(h[1])*60:0)+(m?parseInt(m[1]):0);if(d)durMin=d;}
+        onPriceCalculated(price, data.km, durMin);
       } catch(e) {
         setState({ status:"error", km:null, duration:null, price:null });
       }
