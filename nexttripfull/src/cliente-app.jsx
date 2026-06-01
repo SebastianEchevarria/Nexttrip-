@@ -871,7 +871,7 @@ function ChatModal({ booking, messages, onSend, currentUser, isDriver, onClose, 
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a8b8cc" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M19 12H5M12 19l-7-7 7-7"/>
               </svg>
-              Volver
+              {lang==="en"?"Back":"Volver"}
             </button>
             <button onClick={handleClose} style={{
               background:"#1e293b",border:"1px solid #2a3a4a",borderRadius:"50%",
@@ -881,7 +881,7 @@ function ChatModal({ booking, messages, onSend, currentUser, isDriver, onClose, 
           </div>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
             <div style={{flex:1}}>
-              <div style={{color:"#a8b8cc",fontSize:9,letterSpacing:2,marginBottom:3}}>CHAT DE RESERVA</div>
+              <div style={{color:"#a8b8cc",fontSize:9,letterSpacing:2,marginBottom:3}}>{lang==="en"?"BOOKING CHAT":"CHAT DE RESERVA"}</div>
               <div style={{color:"#f8fafc",fontSize:15,fontFamily:"'Cormorant Garamond',serif",fontWeight:700}}>{b.guest}</div>
               <div style={{color:"#c9a96e",fontSize:10,marginTop:1}}>{b.hotel} · {b.date} {b.time}</div>
             </div>
@@ -951,7 +951,7 @@ function ChatModal({ booking, messages, onSend, currentUser, isDriver, onClose, 
             value={text}
             onChange={e=>setText(e.target.value)}
             onKeyDown={e=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();}}}
-            placeholder="Escribe un mensaje..."
+            placeholder={lang==="en"?"Write a message...":"Escribe un mensaje..."}
             style={{flex:1,background:"#1e293b",border:"1px solid #2a3a4a",borderRadius:24,
               padding:"10px 16px",color:"#f8fafc",fontSize:13,outline:"none"}}
           />
@@ -1186,7 +1186,7 @@ function ClientAuth({ onLogin, onBack, lang, setLang }) {
         {onBack&&(
           <button onClick={onBack} style={{width:"100%",background:"none",border:"1px solid #1e293b",
             borderRadius:12,padding:"11px 0",color:"#a8b8cc",fontSize:13,cursor:"pointer",marginTop:4}}>
-            ← Volver
+            {lang==="en"?"← Back":"← Volver"}
           </button>
         )}
       </div>
@@ -1206,7 +1206,7 @@ function ClientAuth({ onLogin, onBack, lang, setLang }) {
             <div style={{width:40,height:4,background:"#2a3a4a",borderRadius:2,margin:"0 auto 14px"}}/>
             <button onClick={()=>setShowRecovery(false)} style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",color:"#a8b8cc",fontSize:13,cursor:"pointer",padding:"0 0 14px",fontFamily:"inherit"}}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a8b8cc" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-              Volver
+              {lang==="en"?"Back":"Volver"}
             </button>
 
             {recoveryDone ? (
@@ -1478,7 +1478,7 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
             <div style={{margin:"0 12px 12px",display:"flex",gap:8}}>
               {!isArrived&&(
                 <div style={{flex:1,background:isOngoing?"#22c55e12":urgency?"#f59e0b12":"#c9a96e10",borderRadius:12,padding:"10px 14px"}}>
-                  <div style={{color:"#a8b8cc",fontSize:9,letterSpacing:2,marginBottom:3}}>{isOngoing?"EN CURSO":"TIEMPO RESTANTE"}</div>
+                  <div style={{color:"#a8b8cc",fontSize:9,letterSpacing:2,marginBottom:3}}>{isOngoing?(lang==="en"?"IN PROGRESS":"EN CURSO"):(lang==="en"?"TIME REMAINING":"TIEMPO RESTANTE")}</div>
                   <div style={{color:isOngoing?"#22c55e":urgency?"#f59e0b":"#f8fafc",fontSize:26,fontFamily:"'Cormorant Garamond',serif",fontWeight:700,letterSpacing:2}}>{countdownStr}</div>
                 </div>
               )}
@@ -1492,7 +1492,7 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
               )}
               {basePrice>0&&(
                 <div style={{background:"#c9a96e10",borderRadius:12,padding:"10px 14px",textAlign:"right",flexShrink:0}}>
-                  <div style={{color:"#a8b8cc",fontSize:9,marginBottom:2}}>TARIFA</div>
+                  <div style={{color:"#a8b8cc",fontSize:9,marginBottom:2}}>{lang==="en"?"FARE":"TARIFA"}</div>
                   <div style={{color:"#a8b8cc",fontSize:11,textDecoration:"line-through"}}>{basePrice} €</div>
                   <div style={{color:"#c9a96e",fontSize:20,fontFamily:"'Cormorant Garamond',serif",fontWeight:700}}>{discountedPrice} €</div>
                   <div style={{color:"#22c55e",fontSize:9,fontWeight:700}}>-{Math.round(DISCOUNT_RATE*100)}% VIP</div>
@@ -1569,13 +1569,13 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
               const isFree=!occupied&&!isDriverBlocked;
               return (
                 <div key={slotTime} style={{display:"flex",alignItems:"center",borderBottom:`1px solid ${isHour?"#222":"#181818"}`,minHeight:isHour?40:28,
-                  background:occupied?"linear-gradient(90deg,#1a0a00,#111)":isDriverBlocked?"linear-gradient(90deg,#2a0505,#111)":"transparent",
+                  background:occupied?"linear-gradient(90deg,#2a0000,#1a0000)":isDriverBlocked?"linear-gradient(90deg,#2a0505,#111)":"transparent",
                 }}>
                   <div style={{width:52,flexShrink:0,padding:"0 10px",borderRight:`1px solid ${isHour?"#222":"#181818"}`,display:"flex",alignItems:"center"}}>
                     <span style={{color:isHour?"#ffffff":isHalfHour?"#e2e8f0":"#cbd5e1",fontSize:isHour?12:10,fontWeight:isHour?700:400}}>{slotTime}</span>
                   </div>
                   <div style={{flex:1,padding:"0 10px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                    {occupied&&<span style={{color:"#c9a96e",fontSize:10}}>{t.occupied}</span>}
+                    {occupied&&<span style={{color:"#ef4444",fontSize:10,fontWeight:600}}>{t.occupied}</span>}
                     {isDriverBlocked&&!occupied&&<span style={{color:"#f97316",fontSize:10}}>{t.notAvail}</span>}
                     {isFree&&(isHour||isHalfHour)&&!isOffline&&(
                       <button onClick={()=>{setForm(f=>({...f,time:slotTime}));setTab("new");}} style={{

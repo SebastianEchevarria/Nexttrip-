@@ -1707,6 +1707,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
   const [arrivedBookingId,setArrivedBookingId]=useState(null);
   const [cancelConfirm,setCancelConfirm]=useState(false);
   const [showQuickMsgs,setShowQuickMsgs]=useState(false);
+  const [tripStarted,setTripStarted]=useState(false); // true after "Iniciar viaje" is pressed
   const [showPriceConfig,setShowPriceConfig]=useState(false);
   const [priceClient,setPriceClient]=useState(()=>{try{return Number(localStorage.getItem("ntprice_client")||3.15);}catch{return 3.15;}});
   const [priceRecep,setPriceRecep]=useState(()=>{try{return Number(localStorage.getItem("ntprice_recep")||3.15);}catch{return 3.15;}});
@@ -2238,6 +2239,26 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
                       color:showQuickMsgs?"#22c55e":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer",
                     }}>⚡ Rápidos</button>
                   </div>
+                  {/* ── INICIAR VIAJE button — appears after "Estoy en camino" ── */}
+                  {isOnRoute&&!tripStarted&&upcoming.destination&&(
+                    <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(upcoming.destination)}`}
+                      target="_blank" rel="noopener noreferrer"
+                      onClick={()=>{
+                        onStartTrip(upcoming.id);
+                        setTripStarted(true);
+                        setShowQuickMsgs(false);
+                        setToast("🗺️ Navegando al destino");
+                      }}
+                      style={{
+                        display:"flex",alignItems:"center",justifyContent:"center",gap:8,
+                        background:"linear-gradient(135deg,#0a1a3a,#1e293b)",
+                        border:"2px solid #3b82f6",borderRadius:12,padding:"13px 0",
+                        color:"#3b82f6",fontSize:13,fontWeight:700,textDecoration:"none",
+                        boxShadow:"0 0 16px #3b82f633",
+                      }}>
+                      🗺️ Iniciar viaje → {upcoming.destination.split(",")[0]}
+                    </a>
+                  )}
                   {/* Quick messages */}
                   {showQuickMsgs&&(
                     <div style={{background:"#1e293b",borderRadius:12,padding:"10px",display:"flex",flexDirection:"column",gap:6}}>
@@ -2250,7 +2271,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
                       ].map((msg,i)=>(
                         <button key={i} onClick={()=>{
                           onSendMessage&&onSendMessage(upcoming.id,{from:"driver",fromName:"Conductor",text:msg.es,ts:Date.now()});
-                          if(i===0) setDriverStatus("onroute"); // First msg = "Estoy en camino" → activates EN RUTA
+                          if(i===0){ setDriverStatus("onroute"); setTripStarted(false); } // First msg = "Estoy en camino" → activates EN RUTA + shows Iniciar viaje
                           setShowQuickMsgs(false);
                           setToast("✅ Mensaje enviado");
                         }} style={{
@@ -2365,11 +2386,13 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
                 </>
               )}
 
-              {/* ── FASE 3: En curso — Terminar viaje ── */}
-              {isOngoing&&upcoming.status==="inprogress"&&(
+              {/* ── FASE 3: En curso — Terminar viaje (shown when tripStarted or inprogress) ── */}
+              {(tripStarted||isOngoing)&&(
                 <button onClick={()=>{
                   onEndTrip(upcoming.id);
                   setDriverStatus("free");
+                  setTripStarted(false);
+                  setArrivedBookingId(null);
                   setToast("✅ Viaje completado");
                 }} style={{
                   width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:10,
@@ -2402,6 +2425,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
                       setArrivedBookingId(null);
                       setShowQuickMsgs(false);
                       setDriverStatus("free");
+                      setTripStarted(false);
                       fbGet("nexttrip/status").then(cur=>{const u={...(cur||{})};delete u.driverArrived;fbSet("nexttrip/status",{...u,updatedAt:Date.now()});});
                       setToast("❌ Reserva cancelada");
                     }} style={{
@@ -3794,11 +3818,11 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
               style={{background:"#1e293b",border:"1px solid #1e3a5f",borderRadius:10,color:"#f8fafc",fontSize:13,padding:"9px 14px",outline:"none",colorScheme:"dark",width:"100%",boxSizing:"border-box"}}/>
           </div>
           {driverStatus==="onroute"&&(
-            <div style={{background:"linear-gradient(135deg,#2a0808,#1a0505)",border:"1.5px solid #ef4444",borderRadius:12,padding:"12px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:10}}>
-              <div style={{width:10,height:10,borderRadius:"50%",background:"#ef4444",boxShadow:"0 0 8px #ef4444",animation:"pulse 1.5s infinite",flexShrink:0}}/>
+            <div style={{background:"linear-gradient(135deg,#0a1a2a,#1e293b)",border:"1.5px solid #3b82f666",borderRadius:12,padding:"10px 14px",marginBottom:12,display:"flex",alignItems:"center",gap:10}}>
+              <div style={{width:8,height:8,borderRadius:"50%",background:"#3b82f6",boxShadow:"0 0 6px #3b82f6",animation:"pulse 1.5s infinite",flexShrink:0}}/>
               <div>
-                <div style={{color:"#ef4444",fontSize:13,fontWeight:700}}>Conductor EN RUTA</div>
-                <div style={{color:"#a8b8cc",fontSize:11}}>Actualmente en servicio</div>
+                <div style={{color:"#3b82f6",fontSize:12,fontWeight:700}}>🚗 Conductor en ruta</div>
+                <div style={{color:"#a8b8cc",fontSize:10}}>Puedes crear reservas con normalidad</div>
               </div>
             </div>
           )}
