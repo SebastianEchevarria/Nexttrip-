@@ -1693,6 +1693,15 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
   const [noteModal,setNoteModal]=useState(null); // booking whose doc to show fullscreen
   const [filterHotel,setFilterHotel]=useState("all");
   const [calDate,setCalDate]=useState(new Date().toISOString().slice(0,10));
+  // Auto-advance calendar to today when the day changes
+  useEffect(()=>{
+    const checkDay=()=>{
+      const today=new Date().toISOString().slice(0,10);
+      setCalDate(prev=>prev<today?today:prev);
+    };
+    const t=setInterval(checkDay,60000); // check every minute
+    return()=>clearInterval(t);
+  },[]);
   const [historyOpen,setHistoryOpen]=useState(false);
   const [rejOpen,setRejOpen]=useState(false);
   const [arrivedBookingId,setArrivedBookingId]=useState(null);
@@ -2240,8 +2249,8 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
                         {es:"📞 Por favor llámame si tienes algún problema para encontrarme.", en:"📞 Please call me if you have any trouble finding me."},
                       ].map((msg,i)=>(
                         <button key={i} onClick={()=>{
-                          // Always send in Spanish — client app translates if needed
                           onSendMessage&&onSendMessage(upcoming.id,{from:"driver",fromName:"Conductor",text:msg.es,ts:Date.now()});
+                          if(i===0) setDriverStatus("onroute"); // First msg = "Estoy en camino" → activates EN RUTA
                           setShowQuickMsgs(false);
                           setToast("✅ Mensaje enviado");
                         }} style={{
@@ -2280,13 +2289,53 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
               {/* ── FASE 2: He llegado — espera + Iniciar viaje + Chat ── */}
               {arrivedBookingId===upcoming.id&&!isOngoing&&(
                 <>
-                  <div style={{background:"#22c55e12",border:"1.5px solid #22c55e44",borderRadius:10,padding:"10px 14px",display:"flex",alignItems:"center",gap:8}}>
-                    <span style={{fontSize:16}}>✅</span>
-                    <div>
-                      <div style={{color:"#22c55e",fontSize:12,fontWeight:700}}>Esperando desde las {upcoming.time}</div>
-                      <div style={{color:"#a8b8cc",fontSize:10}}>10 min de espera · el cliente está avisado</div>
-                    </div>
-                  </div>
+                  {(()=>{
+                    const waitEnd=new Date(`${upcoming.date}T${upcoming.time}:00`).getTime()+10*60*1000;
+                    const overMs=nowTick.getTime()-waitEnd;
+                    const isExpired=overMs>0;
+                    const autoDeleteMs=15*60*1000; // 5 min after 10 min = 15 min total
+                    const willAutoDelete=overMs>10*60*1000;
+                    const secsToDelete=willAutoDelete?0:Math.max(0,Math.floor((autoDeleteMs-overMs)/1000));
+                    // Auto-cancel after 5 min of no response
+                    if(overMs>5*60*1000&&!cancelConfirm){
+                      onCancelTrip&&onCancelTrip(upcoming.id,"No-show: tiempo de espera agotado sin respuesta");
+                      setArrivedBookingId(null);
+                      setDriverStatus("free");
+                      setToast("❌ Reserva cancelada automáticamente por no presentación");
+                    }
+                    return isExpired?(
+                      <div style={{background:"linear-gradient(135deg,#2a0808,#1e293b)",border:"2px solid #ef4444",borderRadius:12,padding:"14px"}}>
+                        <div style={{color:"#ef4444",fontSize:13,fontWeight:700,marginBottom:8}}>⏰ Tiempo de espera agotado</div>
+                        <div style={{color:"#a8b8cc",fontSize:11,marginBottom:12}}>
+                          {overMs<5*60*1000?`Cancelación automática en ${Math.floor((5*60*1000-overMs)/1000)}s si no responde`:"Cancelando automáticamente..."}
+                        </div>
+                        <div style={{display:"flex",gap:8}}>
+                          <button onClick={()=>{
+                            onCancelTrip&&onCancelTrip(upcoming.id,"No-show: cliente no se presentó");
+                            setArrivedBookingId(null);setDriverStatus("free");
+                            fbGet("nexttrip/status").then(cur=>{const u={...(cur||{})};delete u.driverArrived;fbSet("nexttrip/status",{...u,updatedAt:Date.now()});});
+                            setToast("❌ Reserva cancelada por no presentación");
+                          }} style={{flex:1,background:"linear-gradient(135deg,#ef4444,#b91c1c)",border:"none",borderRadius:8,padding:"10px 0",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                            ❌ Cancelar reserva
+                          </button>
+                          <button onClick={()=>{
+                            setArrivedBookingId(null); // Reset — keep waiting
+                            setToast("⏳ Continuando espera...");
+                          }} style={{flex:1,background:"#1e293b",border:"1px solid #22c55e44",borderRadius:8,padding:"10px 0",color:"#22c55e",fontSize:12,fontWeight:600,cursor:"pointer"}}>
+                            ⏳ Seguir esperando
+                          </button>
+                        </div>
+                      </div>
+                    ):(
+                      <div style={{background:"#22c55e12",border:"1.5px solid #22c55e44",borderRadius:10,padding:"10px 14px",display:"flex",alignItems:"center",gap:8}}>
+                        <span style={{fontSize:16}}>✅</span>
+                        <div>
+                          <div style={{color:"#22c55e",fontSize:12,fontWeight:700}}>Esperando desde las {upcoming.time}</div>
+                          <div style={{color:"#a8b8cc",fontSize:10}}>10 min de espera · el cliente está avisado</div>
+                        </div>
+                      </div>
+                    );
+                  })()}
                   {/* Iniciar viaje → Maps al destino */}
                   <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(upcoming.destination||upcoming.origin)}`}
                     target="_blank" rel="noopener noreferrer"
@@ -2352,6 +2401,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
                       setCancelConfirm(false);
                       setArrivedBookingId(null);
                       setShowQuickMsgs(false);
+                      setDriverStatus("free");
                       fbGet("nexttrip/status").then(cur=>{const u={...(cur||{})};delete u.driverArrived;fbSet("nexttrip/status",{...u,updatedAt:Date.now()});});
                       setToast("❌ Reserva cancelada");
                     }} style={{
@@ -3906,9 +3956,14 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
             );
           })()}
 
-          <div style={{color:"#a8b8cc",fontSize:11,letterSpacing:3,marginBottom:12}}>MIS RESERVAS</div>
-          {myBookings.length===0&&<div style={{color:"#a8b8cc",fontSize:13,textAlign:"center",padding:"32px 0"}}>No tienes reservas todavía</div>}
-          {myBookings.sort((a,b)=>b.date.localeCompare(a.date)||b.time.localeCompare(a.time)).map(b=>(
+          {/* ── ACTIVE BOOKINGS ── */}
+          <div style={{color:"#a8b8cc",fontSize:10,letterSpacing:3,marginBottom:10}}>RESERVAS ACTIVAS</div>
+          {myBookings.filter(b=>!["completed","cancelled","rejected"].includes(b.status)).length===0&&(
+            <div style={{color:"#475569",fontSize:12,textAlign:"center",padding:"16px 0",background:"#1e293b",borderRadius:10,marginBottom:16}}>No hay reservas activas</div>
+          )}
+          {myBookings.filter(b=>!["completed","cancelled","rejected"].includes(b.status))
+            .sort((a,b)=>new Date(`${a.date}T${a.time}`)-new Date(`${b.date}T${b.time}`))
+            .map(b=>(
             <div key={b.id} onClick={()=>setCalModal(b)} style={{background:"#1e293b",borderRadius:12,padding:"14px 16px",marginBottom:8,
               borderLeft:`3px solid ${statusColor(b.status)}`,cursor:"pointer",transition:"all 0.2s"}}
               onMouseEnter={e=>e.currentTarget.style.transform="translateX(3px)"}
@@ -3947,6 +4002,29 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
               )}
             </div>
           ))}
+          {/* ── HISTORY ── */}
+          {myBookings.filter(b=>["completed","cancelled","rejected"].includes(b.status)).length>0&&(
+            <div style={{marginTop:20}}>
+              <div style={{color:"#a8b8cc",fontSize:10,letterSpacing:3,marginBottom:10}}>HISTORIAL DE RESERVAS</div>
+              {myBookings.filter(b=>["completed","cancelled","rejected"].includes(b.status))
+                .sort((a,b)=>b.date.localeCompare(a.date)||b.time.localeCompare(a.time))
+                .map(b=>(
+                <div key={b.id+"hist"} style={{background:"#0f172a",borderRadius:10,padding:"12px 14px",marginBottom:8,borderLeft:`3px solid ${statusColor(b.status)}`}}>
+                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                    <span style={{color:"#f8fafc",fontSize:13,fontFamily:"'Cormorant Garamond',serif"}}>{b.guest}</span>
+                    <span style={{fontSize:10,padding:"2px 8px",borderRadius:4,background:`${statusColor(b.status)}22`,color:statusColor(b.status)}}>{statusLabel(b.status).toUpperCase()}</span>
+                  </div>
+                  <div style={{color:"#a8b8cc",fontSize:11,display:"flex",gap:8,flexWrap:"wrap"}}>
+                    <span>{b.date}</span><span>{b.time}</span>
+                    {b.fare>0&&<span style={{color:"#c9a96e"}}>{fmt(b.fare)} €</span>}
+                  </div>
+                  {b.status==="completed"&&<div style={{color:"#22c55e",fontSize:10,marginTop:4}}>✅ Completado · comisión: {fmt(b.fare*COMMISSION_RATE)} €</div>}
+                  {b.status==="cancelled"&&<div style={{color:"#f97316",fontSize:10,marginTop:4}}>✕ {b.cancelReason||"Cancelado"}</div>}
+                  {b.status==="rejected"&&<div style={{color:"#ef4444",fontSize:10,marginTop:4}}>✕ Rechazado</div>}
+                </div>
+              ))}
+            </div>
+          )}
           {calModal&&<BookingDetailModal booking={calModal} onClose={()=>setCalModal(null)} isDriver={false}/>}
         </div>
       )}

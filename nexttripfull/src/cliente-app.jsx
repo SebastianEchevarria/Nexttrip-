@@ -1499,12 +1499,28 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
                 </div>
               )}
             </div>
-            <div style={{margin:"0 12px 12px"}}>
+            <div style={{margin:"0 12px 12px",display:"flex",flexDirection:"column",gap:8}}>
               <button onClick={()=>setChatBooking(upcoming)} style={{
                 width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8,
                 background:"linear-gradient(135deg,#1e0a3e,#1e293b)",border:"1px solid #a78bfa55",
                 borderRadius:10,padding:"10px 0",color:"#a78bfa",fontSize:12,fontWeight:700,cursor:"pointer",
               }}>💬 {lang==="en"?"Chat with driver":"Chat con el conductor"}</button>
+              {/* Cancel with double confirmation */}
+              {cancelConfirm===upcoming.id?(
+                <div style={{background:"linear-gradient(135deg,#2a0808,#1e293b)",border:"2px solid #ef4444",borderRadius:12,padding:"14px"}}>
+                  <div style={{color:"#f8fafc",fontSize:13,fontWeight:700,textAlign:"center",marginBottom:4}}>{lang==="en"?"⚠️ Confirm cancellation?":"⚠️ ¿Confirmas la cancelación?"}</div>
+                  <div style={{color:"#a8b8cc",fontSize:11,textAlign:"center",marginBottom:12}}>{lang==="en"?"This cannot be undone":"Esta acción no se puede deshacer"}</div>
+                  <div style={{display:"flex",gap:8}}>
+                    <button onClick={()=>setCancelConfirm(null)} style={{flex:1,background:"#1e293b",border:"1px solid #475569",borderRadius:8,padding:"10px 0",color:"#a8b8cc",fontSize:12,fontWeight:600,cursor:"pointer"}}>{lang==="en"?"Go back":"No, volver"}</button>
+                    <button onClick={()=>{handleClientCancelTrip&&handleClientCancelTrip(upcoming.id);setCancelConfirm(null);}} style={{flex:1,background:"linear-gradient(135deg,#ef4444,#b91c1c)",border:"none",borderRadius:8,padding:"10px 0",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>{lang==="en"?"Yes, cancel":"Sí, cancelar"}</button>
+                  </div>
+                </div>
+              ):(
+                <button onClick={()=>setCancelConfirm(upcoming.id)} style={{
+                  width:"100%",background:"#1a0808",border:"1.5px solid #ef444466",borderRadius:10,
+                  padding:"10px 0",color:"#ef4444aa",fontSize:12,fontWeight:700,cursor:"pointer",
+                }}>✕ {lang==="en"?"Cancel trip":"Cancelar viaje"}</button>
+              )}
             </div>
           </div>
         );
