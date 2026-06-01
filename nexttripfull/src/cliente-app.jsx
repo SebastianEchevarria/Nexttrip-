@@ -1388,7 +1388,7 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
       {/* ── PRÓXIMO VIAJE CLIENTE ── */}
       {(()=>{
         const upcoming = myBookings
-          .filter(b=>["confirmed","pending","inprogress"].includes(b.status))
+          .filter(b=>["confirmed","inprogress"].includes(b.status))
           .sort((a,b)=>new Date(`${a.date}T${a.time}:00`)-new Date(`${b.date}T${b.time}:00`))
           .find(b=>new Date(`${b.date}T${b.time}:00`)-now>-TRIP_DURATION*60*1000);
         if(!upcoming) return null;
@@ -1448,7 +1448,8 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
                 <div style={{display:"flex",justifyContent:"space-between",background:"#0f172a",border:"1px solid #1e3a5f",borderRadius:10,padding:"7px 12px",margin:"0 12px 8px"}}>
                   <div style={{display:"flex",alignItems:"center",gap:4}}><span>🗺️</span><span style={{color:"#a8b8cc",fontSize:11}}>{km3} km</span></div>
                   <div style={{display:"flex",alignItems:"center",gap:4}}><span>⏱️</span><span style={{color:"#a8b8cc",fontSize:11}}>~{dur3} min</span></div>
-                  <div style={{display:"flex",alignItems:"center",gap:4}}><span>🏁</span><span style={{color:"#c9a96e",fontSize:11,fontWeight:700}}>{lang==="en"?"Arrival":"Llegada"} ~{arrStr3}</span></div>
+                  <div style={{display:"flex",alignItems:"center",gap:4}}><span>🏁</span><span style={{color:"#c9a96e",fontSize:11,fontWeight:700}}>~{arrStr3}</span></div>
+                  <a href={`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(upcoming.origin)}&destination=${encodeURIComponent(upcoming.destination)}`} target="_blank" rel="noopener noreferrer" style={{background:"#1e3a5f",border:"1px solid #3b82f655",borderRadius:6,padding:"3px 8px",color:"#3b82f6",fontSize:10,fontWeight:700,textDecoration:"none",flexShrink:0}}>{lang==="en"?"Route":"Ver ruta"}</a>
                 </div>
               );
             })()}

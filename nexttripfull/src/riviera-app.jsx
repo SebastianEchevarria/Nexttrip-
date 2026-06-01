@@ -2098,7 +2098,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
       {/* ── 1. PRÓXIMO VIAJE — CUENTA REGRESIVA ── */}
       {(()=>{
         const upcoming = [...bookings]
-          .filter(b=>["confirmed","pending"].includes(b.status))
+          .filter(b=>b.status==="confirmed")
           .sort((a,b)=>{const dA=new Date(`${a.date}T${a.time}:00`),dB=new Date(`${b.date}T${b.time}:00`);return dA-dB;})
           .find(b=>{const dt=new Date(`${b.date}T${b.time}:00`);return dt-nowTick>-TRIP_DURATION*60*1000;});
         if(!upcoming) return null;
@@ -2150,10 +2150,11 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
                 const arr=new Date(0,0,0,h,m+durationMin);
                 const arrStr=`${String(arr.getHours()).padStart(2,"0")}:${String(arr.getMinutes()).padStart(2,"0")}`;
                 return(
-                  <div style={{display:"flex",justifyContent:"space-between",background:"#0f172a",border:"1px solid #1e3a5f",borderRadius:10,padding:"7px 12px",margin:"0 12px 8px"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"#0f172a",border:"1px solid #1e3a5f",borderRadius:10,padding:"7px 12px",margin:"0 12px 8px"}}>
                     <div style={{display:"flex",alignItems:"center",gap:4}}><span>🗺️</span><span style={{color:"#a8b8cc",fontSize:11}}>{km} km</span></div>
                     <div style={{display:"flex",alignItems:"center",gap:4}}><span>⏱️</span><span style={{color:"#a8b8cc",fontSize:11}}>~{durationMin} min</span></div>
                     <div style={{display:"flex",alignItems:"center",gap:4}}><span>🏁</span><span style={{color:"#c9a96e",fontSize:11,fontWeight:700}}>~{arrStr}</span></div>
+                    <a href={`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(upcoming.origin)}&destination=${encodeURIComponent(upcoming.destination)}`} target="_blank" rel="noopener noreferrer" style={{background:"#1e3a5f",border:"1px solid #3b82f655",borderRadius:6,padding:"3px 8px",color:"#3b82f6",fontSize:10,fontWeight:700,textDecoration:"none",flexShrink:0}}>Ver ruta</a>
                   </div>
                 );
               })()}
@@ -2315,8 +2316,8 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
               {!cancelConfirm?(
                 <button onClick={()=>setCancelConfirm(true)} style={{
                   width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:7,
-                  background:"transparent",border:"1px solid #ef444433",borderRadius:10,padding:"9px 0",
-                  color:"#ef444477",fontSize:11,fontWeight:600,cursor:"pointer",marginTop:4,
+                  background:"#1a0808",border:"1.5px solid #ef444466",borderRadius:10,padding:"10px 0",
+                  color:"#ef4444aa",fontSize:12,fontWeight:700,cursor:"pointer",marginTop:4,
                 }}>✕ Cancelar reserva</button>
               ):(
                 <div style={{background:"linear-gradient(135deg,#2a0808,#1e293b)",border:"2px solid #ef4444",borderRadius:12,padding:"14px"}}>
@@ -3648,10 +3649,11 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
                 const arr2=new Date(0,0,0,h2,m2+dur2);
                 const arrStr2=`${String(arr2.getHours()).padStart(2,"0")}:${String(arr2.getMinutes()).padStart(2,"0")}`;
                 return(
-                  <div style={{display:"flex",justifyContent:"space-between",background:"#0f172a",border:"1px solid #1e3a5f",borderRadius:10,padding:"7px 12px",marginBottom:8}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"#0f172a",border:"1px solid #1e3a5f",borderRadius:10,padding:"7px 12px",marginBottom:8}}>
                     <div style={{display:"flex",alignItems:"center",gap:4}}><span>🗺️</span><span style={{color:"#a8b8cc",fontSize:11}}>{km2} km</span></div>
                     <div style={{display:"flex",alignItems:"center",gap:4}}><span>⏱️</span><span style={{color:"#a8b8cc",fontSize:11}}>~{dur2} min</span></div>
                     <div style={{display:"flex",alignItems:"center",gap:4}}><span>🏁</span><span style={{color:"#c9a96e",fontSize:11,fontWeight:700}}>~{arrStr2}</span></div>
+                    <a href={`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(upcoming.origin)}&destination=${encodeURIComponent(upcoming.destination)}`} target="_blank" rel="noopener noreferrer" style={{background:"#1e3a5f",border:"1px solid #3b82f655",borderRadius:6,padding:"3px 8px",color:"#3b82f6",fontSize:10,fontWeight:700,textDecoration:"none",flexShrink:0}}>Ver ruta</a>
                   </div>
                 );
               })()}
@@ -4123,7 +4125,6 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
             )}
           </div>
           <DistancePriceCalc origin={form.origin} destination={form.destination} onPriceCalculated={price=>setForm(f=>({...f,fare:String(price)}))}/>
-          <BoltPriceGuide/>
           {form.fare&&Number(form.fare)>0&&(
             <div style={{background:"#0f172a",border:"1px solid #c9a96e22",borderRadius:10,padding:"12px 14px",marginBottom:14}}>
               <div style={{color:"#a8b8cc",fontSize:9,letterSpacing:2,marginBottom:10}}>DESGLOSE DE LA TARIFA</div>
