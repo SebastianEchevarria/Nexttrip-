@@ -1984,6 +1984,21 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
             )}
           </button>
         )}
+        {/* Trip info bar */}
+        {b.status!=="rejected"&&(b.tripKm||b.fare>0)&&b.time&&(()=>{
+          const km = b.tripKm || Math.round((b.fare||0)/3.15*10)/10;
+          const dur = b.durationMin || Math.round(km*1.5);
+          const [h,m]=b.time.split(":").map(Number);
+          const arr=new Date(0,0,0,h,m+dur);
+          const arrStr=`${String(arr.getHours()).padStart(2,"0")}:${String(arr.getMinutes()).padStart(2,"0")}`;
+          return(
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"#0f172a",border:"1px solid #1e3a5f",borderRadius:10,padding:"7px 10px",marginTop:8,marginBottom:4}}>
+              <div style={{display:"flex",alignItems:"center",gap:4}}><span>🗺️</span><span style={{color:"#a8b8cc",fontSize:11}}>{km} km</span></div>
+              <div style={{display:"flex",alignItems:"center",gap:4}}><span>⏱️</span><span style={{color:"#a8b8cc",fontSize:11}}>~{dur} min</span></div>
+              <div style={{display:"flex",alignItems:"center",gap:4}}><span>🏁</span><span style={{color:"#c9a96e",fontSize:11,fontWeight:700}}>~{arrStr}</span></div>
+            </div>
+          );
+        })()}
         {b.status!=="rejected"&&(
           <a href={mapsRouteUrl(b.origin,b.destination)} target="_blank" rel="noopener noreferrer"
             onClick={e=>e.stopPropagation()}
@@ -2225,14 +2240,14 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
                         {es:"📞 Por favor llámame si tienes algún problema para encontrarme.", en:"📞 Please call me if you have any trouble finding me."},
                       ].map((msg,i)=>(
                         <button key={i} onClick={()=>{
-                          const txt=upcoming.clientLang==="en"?msg.en:msg.es;
-                          onSendMessage&&onSendMessage(upcoming.id,{from:"driver",fromName:"Conductor",text:txt,ts:Date.now()});
+                          // Always send in Spanish — client app translates if needed
+                          onSendMessage&&onSendMessage(upcoming.id,{from:"driver",fromName:"Conductor",text:msg.es,ts:Date.now()});
                           setShowQuickMsgs(false);
                           setToast("✅ Mensaje enviado");
                         }} style={{
                           background:"#0f172a",border:"1px solid #2a3a4a",borderRadius:8,
                           padding:"8px 10px",color:"#e2e8f0",fontSize:11,textAlign:"left",cursor:"pointer",
-                        }}>{upcoming.clientLang==="en"?msg.en:msg.es}</button>
+                        }}>{msg.es}</button>
                       ))}
                     </div>
                   )}
@@ -2245,12 +2260,10 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
                     fbGet("nexttrip/status").then(cur=>{
                       fbSet("nexttrip/status",{...(cur||{}),driverArrived:{bookingId:upcoming.id,arrivedAt:Date.now()},updatedAt:Date.now()});
                     });
-                    const isEN=upcoming.clientLang==="en";
+                    // Always send in Spanish — client app translates if needed
                     onSendMessage&&onSendMessage(upcoming.id,{
                       from:"driver",fromName:"Conductor",
-                      text:isEN
-                        ?`🚗 I have arrived at the pickup point and I am waiting for you. The 10-minute wait begins at ${upcoming.time} (your booking time) and ends at ${wH}:${wM}.`
-                        :`🚗 He llegado al punto de recogida y estoy esperándote. El tiempo de espera de 10 minutos comienza a las ${upcoming.time} (hora de tu reserva) y finaliza a las ${wH}:${wM}.`,
+                      text:`🚗 He llegado al punto de recogida y estoy esperándote. El tiempo de espera de 10 minutos comienza a las ${upcoming.time} (hora de tu reserva) y finaliza a las ${wH}:${wM}.`,
                       ts:Date.now(),
                     });
                     setToast("✅ Cliente notificado — esperando desde las "+upcoming.time);

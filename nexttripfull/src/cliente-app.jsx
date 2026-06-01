@@ -793,6 +793,25 @@ function FavRoutes({ clientId, myBookings, lang, t, onBook }) {
   );
 }
 
+function translateAutoMsg(text, lang) {
+  if (!lang || lang === "es") return text;
+  if (text.includes("He llegado al punto de recogida")) {
+    const endMatch = text.match(/finaliza a las ([0-9]{2}:[0-9]{2})/);
+    const startMatch = text.match(/comienza a las ([0-9]{2}:[0-9]{2})/);
+    return `🚗 I have arrived at the pickup point and I am waiting for you. The 10-minute wait starts at ${startMatch?startMatch[1]:""} (your booking time) and ends at ${endMatch?endMatch[1]:""}. `;
+  }
+  if (text.includes("Estoy en camino")) return "🚗 I'm on my way.";
+  if (text.includes("Llegaré en aproximadamente 10 minutos")) return "⏱️ I'll arrive in approximately 10 minutes.";
+  if (text.includes("aparcado esperándote")) return "🅿️ I'm parked waiting for you at the pickup point.";
+  if (text.includes("llámame si tienes algún problema")) return "📞 Please call me if you have any trouble finding me.";
+  if (text.includes("ha sido confirmado")) {
+    const dateMatch = text.match(/del ([0-9]{4}-[0-9]{2}-[0-9]{2})/);
+    const timeMatch = text.match(/las ([0-9]{2}:[0-9]{2}) ha/);
+    return `✅ Your trip on ${dateMatch?dateMatch[1]:""} at ${timeMatch?timeMatch[1]:""} has been confirmed. See you soon!`;
+  }
+  return text;
+}
+
 function ChatModal({ booking, messages, onSend, currentUser, isDriver, onClose, onMarkRead }) {
   const [text, setText] = useState("");
   const bottomRef = useRef(null);
@@ -917,7 +936,7 @@ function ChatModal({ booking, messages, onSend, currentUser, isDriver, onClose, 
                   borderRadius:mine?"14px 14px 4px 14px":"14px 14px 14px 4px",
                   padding:"9px 13px",
                 }}>
-                  <div style={{color:mine?"#0a0a0a":"#f8fafc",fontSize:13,lineHeight:1.4}}>{msg.text}</div>
+                  <div style={{color:mine?"#0a0a0a":"#f8fafc",fontSize:13,lineHeight:1.4}}>{(!mine&&msg.from==="driver")?translateAutoMsg(msg.text,booking?.clientLang||"es"):msg.text}</div>
                   <div style={{color:mine?"rgba(0,0,0,0.45)":"#475569",fontSize:10,marginTop:3,textAlign:"right"}}>{msg.ts}</div>
                 </div>
               </div>
@@ -1639,8 +1658,8 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
               )}
               {/* ── TRIP INFO — km / duration / arrival ── */}
               {b.fare>0&&b.time&&(()=>{
-                const km = Math.round(b.fare/3.15*10)/10;
-                const durationMin = Math.round(km*2);
+                const km = b.tripKm || Math.round(b.fare/3.15*10)/10;
+                const durationMin = b.durationMin || Math.round(km*1.5);
                 const [h,m]=b.time.split(":").map(Number);
                 const arr=new Date(0,0,0,h,m+durationMin);
                 const arrivalTime=`${String(arr.getHours()).padStart(2,"0")}:${String(arr.getMinutes()).padStart(2,"0")}`;
