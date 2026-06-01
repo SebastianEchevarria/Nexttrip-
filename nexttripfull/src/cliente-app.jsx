@@ -632,7 +632,7 @@ function PinKeypad({ correctPin, onSuccess, onBack, subtitle, accentColor="#c9a9
   );
 }
 
-function DistancePriceCalcClient({ origin, destination, onPriceCalculated }) {
+function DistancePriceCalcClient({ origin, destination, onPriceCalculated, pricePerKm=3.15 }) {
   const [state, setState] = useState({ status:"idle", km:null, duration:null, price:null });
   useEffect(() => {
     if (!origin || !destination || origin.length < 5 || destination.length < 5) {
@@ -644,7 +644,7 @@ function DistancePriceCalcClient({ origin, destination, onPriceCalculated }) {
         const res = await fetch(`/api/distance?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}`);
         const data = await res.json();
         if (data.error) throw new Error(data.error);
-        const basePrice = Math.max(30, Math.round(data.km * 3.15 * 100) / 100);
+        const basePrice = Math.max(30, Math.round(data.km * pricePerKm * 100) / 100);
         const discounted = Math.round(basePrice * 0.85 * 100) / 100;
         setState({ status:"ok", km:data.km, duration:data.duration, price:basePrice, discounted });
         onPriceCalculated && onPriceCalculated(basePrice);
@@ -1258,6 +1258,7 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
   },[]);
   const [chatBooking,setChatBooking]=useState(null);
   const [arrivedBooking,setArrivedBooking]=useState(null);
+  const [pricePerKm,setPricePerKm]=useState(()=>{try{return Number(localStorage.getItem("ntprice_client")||3.15);}catch{return 3.15;}});
   const [cancelConfirm,setCancelConfirm]=useState(null);
   const [historyOpen,setHistoryOpen]=useState(true); // booking to cancel
   const [form,setForm]=useState({
@@ -1934,7 +1935,7 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
             <input value={form.destination} placeholder={t.destPlaceholder} onChange={e=>setForm({...form,destination:e.target.value})} style={inputStyle}/>
           </div>
           <TripEstimateBox origin={form.origin} destination={form.destination}/>
-          <DistancePriceCalcClient origin={form.origin} destination={form.destination} onPriceCalculated={price=>setForm(f=>({...f,fare:price}))}/>
+          <DistancePriceCalcClient origin={form.origin} destination={form.destination} pricePerKm={pricePerKm} onPriceCalculated={price=>setForm(f=>({...f,fare:price}))}/>
           <div style={{marginBottom:14}}>
             <label style={{color:"#a8b8cc",fontSize:11,letterSpacing:2,display:"block",marginBottom:5}}>{t.passengers}</label>
             <div style={{display:"flex",gap:8}}>
@@ -2251,6 +2252,7 @@ export default function NextTripClientApp() {
       if(d?.serviceStatus) setServiceStatus(d.serviceStatus);
       if(d?.driverArrived) setArrivedBooking({id:d.driverArrived.bookingId, arrivedAt:d.driverArrived.arrivedAt});
       else setArrivedBooking(null);
+      if(d?.pricePerKmClient){setPricePerKm(d.pricePerKmClient);try{localStorage.setItem("ntprice_client",String(d.pricePerKmClient));}catch{}}
     });
     const unsubBlocks = fbListen("nexttrip/blocks", d=>{
       if(d?.data) { setBlockedSlots(d.data); try{localStorage.setItem(BLOCKS_KEY,JSON.stringify(d.data));}catch{} }

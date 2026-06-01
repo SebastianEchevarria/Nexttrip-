@@ -382,7 +382,7 @@ function estimateTrip(origin, destination) {
 
 // ─── LUXURY PRICING ENGINE ────────────────────────────────────────────────────
 const PRICE_BASE_KM    = 15;   // base fare €
-const PRICE_PER_KM     = 3.15; // € per km (luxury VTC)
+const PRICE_PER_KM     = 3.15; // € per km (luxury VTC) — default, overridden by Firebase
 const GMAPS_KEY = "AIzaSyDBpHd3eQLth0GhXeI50dT5JfefWfpQyAY";
 const MIN_FARE_CLIENT  = 30;   // absolute minimum €
 
@@ -1698,6 +1698,11 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
   const [arrivedBookingId,setArrivedBookingId]=useState(null);
   const [cancelConfirm,setCancelConfirm]=useState(false);
   const [showQuickMsgs,setShowQuickMsgs]=useState(false);
+  const [showPriceConfig,setShowPriceConfig]=useState(false);
+  const [priceClient,setPriceClient]=useState(()=>{try{return Number(localStorage.getItem("ntprice_client")||3.15);}catch{return 3.15;}});
+  const [priceRecep,setPriceRecep]=useState(()=>{try{return Number(localStorage.getItem("ntprice_recep")||3.15);}catch{return 3.15;}});
+  const [draftClient,setDraftClient]=useState("");
+  const [draftRecep,setDraftRecep]=useState("");
   const [pendingOpen,setPendingOpen]=useState(false);
   const [confirmedOpen,setConfirmedOpen]=useState(false);
   const [todayTripsOpen,setTodayTripsOpen]=useState(false);
@@ -2031,6 +2036,77 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
 
   return (
     <div style={{paddingBottom:80}}>
+
+      {/* ── PRICE CONFIG BUTTON ── */}
+      <div style={{display:"flex",justifyContent:"flex-end",marginBottom:12}}>
+        <button onClick={()=>{setDraftClient(String(priceClient));setDraftRecep(String(priceRecep));setShowPriceConfig(true);}} style={{
+          display:"flex",alignItems:"center",gap:7,
+          background:"linear-gradient(135deg,#0a1a0a,#1e293b)",
+          border:"1.5px solid #22c55e44",borderRadius:14,padding:"7px 14px",
+          cursor:"pointer",
+        }}>
+          <span style={{fontSize:14}}>💶</span>
+          <div>
+            <div style={{color:"#22c55e",fontSize:9,fontWeight:700,letterSpacing:1}}>PRECIO/KM</div>
+            <div style={{color:"#f8fafc",fontSize:10,fontWeight:600}}>VIP {priceClient}€ · Recep. {priceRecep}€</div>
+          </div>
+          <span style={{color:"#475569",fontSize:10}}>✎</span>
+        </button>
+      </div>
+
+      {/* Price config modal */}
+      {showPriceConfig&&(
+        <div style={{position:"fixed",inset:0,background:"#000000cc",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+          <div style={{background:"linear-gradient(135deg,#0a1628,#1e293b)",border:"1.5px solid #22c55e44",borderRadius:20,padding:24,width:"100%",maxWidth:380}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
+              <div>
+                <div style={{color:"#f8fafc",fontSize:16,fontFamily:"'Cormorant Garamond',serif",fontWeight:700}}>⚙️ Precio por km</div>
+                <div style={{color:"#a8b8cc",fontSize:11,marginTop:2}}>Se aplica en todos los cálculos automáticos</div>
+              </div>
+              <button onClick={()=>setShowPriceConfig(false)} style={{background:"#1e293b",border:"1px solid #2a3a4a",borderRadius:8,padding:"4px 10px",color:"#a8b8cc",fontSize:12,cursor:"pointer"}}>✕</button>
+            </div>
+            <div style={{marginBottom:16}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+                <span style={{background:"#a78bfa22",border:"1px solid #a78bfa55",borderRadius:6,padding:"2px 8px",color:"#a78bfa",fontSize:10,fontWeight:700}}>💜 CLIENTE VIP</span>
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <input type="number" step="0.05" min="1" max="20" value={draftClient}
+                  onChange={e=>setDraftClient(e.target.value)}
+                  style={{flex:1,background:"#0f172a",border:"1.5px solid #a78bfa55",borderRadius:10,color:"#f8fafc",fontSize:20,fontWeight:700,padding:"10px 14px",outline:"none",textAlign:"center"}}/>
+                <span style={{color:"#a8b8cc",fontSize:14}}>€/km</span>
+              </div>
+              {draftClient&&<div style={{color:"#a78bfa",fontSize:10,marginTop:4}}>Ej. 30km → {Math.max(30,Math.round(30*Number(draftClient)*100)/100)} €</div>}
+            </div>
+            <div style={{marginBottom:24}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+                <span style={{background:"#c9a96e22",border:"1px solid #c9a96e55",borderRadius:6,padding:"2px 8px",color:"#c9a96e",fontSize:10,fontWeight:700}}>🏨 RECEPCIÓN</span>
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <input type="number" step="0.05" min="1" max="20" value={draftRecep}
+                  onChange={e=>setDraftRecep(e.target.value)}
+                  style={{flex:1,background:"#0f172a",border:"1.5px solid #c9a96e55",borderRadius:10,color:"#f8fafc",fontSize:20,fontWeight:700,padding:"10px 14px",outline:"none",textAlign:"center"}}/>
+                <span style={{color:"#a8b8cc",fontSize:14}}>€/km</span>
+              </div>
+              {draftRecep&&<div style={{color:"#c9a96e",fontSize:10,marginTop:4}}>Ej. 30km → {Math.max(30,Math.round(30*Number(draftRecep)*100)/100)} €</div>}
+            </div>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>setShowPriceConfig(false)} style={{flex:1,background:"#1e293b",border:"1px solid #2a3a4a",borderRadius:10,padding:"11px 0",color:"#a8b8cc",fontSize:12,fontWeight:600,cursor:"pointer"}}>Cancelar</button>
+              <button onClick={()=>{
+                const c=Math.max(1,Number(draftClient)||3.15);
+                const r=Math.max(1,Number(draftRecep)||3.15);
+                setPriceClient(c);setPriceRecep(r);
+                try{localStorage.setItem("ntprice_client",String(c));localStorage.setItem("ntprice_recep",String(r));}catch{}
+                fbGet("nexttrip/status").then(cur=>{fbSet("nexttrip/status",{...(cur||{}),pricePerKmClient:c,pricePerKmRecep:r,updatedAt:Date.now()});});
+                setShowPriceConfig(false);
+                setToast("✅ Precios: VIP "+c+"€/km · Recepción "+r+"€/km");
+              }} style={{flex:2,background:"linear-gradient(135deg,#22c55e,#16a34a)",border:"none",borderRadius:10,padding:"11px 0",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer"}}>
+                ✓ Guardar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── TOP BUTTONS: PENDIENTES + CONFIRMADOS ── */}
       <div style={{display:"flex",gap:8,marginBottom:14}}>
         <button onClick={()=>setPendingOpen(v=>!v)} style={{
@@ -3328,6 +3404,16 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
   const [tab,setTab]=useState("avail");
   const [nowTick,setNowTick]=useState(()=>new Date());
   useEffect(()=>{const t=setInterval(()=>setNowTick(new Date()),1000);return()=>clearInterval(t);},[]);
+  const [priceRecepFromStatus,setPriceRecepFromStatus]=useState(()=>{try{return Number(localStorage.getItem("ntprice_recep")||3.15);}catch{return 3.15;}});
+  const [priceClientFromStatus,setPriceClientFromStatus]=useState(()=>{try{return Number(localStorage.getItem("ntprice_client")||3.15);}catch{return 3.15;}});
+  // Listen for price updates from driver
+  useEffect(()=>{
+    const unsub=fbListen("nexttrip/status",d=>{
+      if(d?.pricePerKmRecep){setPriceRecepFromStatus(d.pricePerKmRecep);try{localStorage.setItem("ntprice_recep",String(d.pricePerKmRecep));}catch{}}
+      if(d?.pricePerKmClient){setPriceClientFromStatus(d.pricePerKmClient);try{localStorage.setItem("ntprice_client",String(d.pricePerKmClient));}catch{}}
+    });
+    return()=>unsub();
+  },[]);
   const [calModal,setCalModal]=useState(null);
   const [chatBooking,setChatBooking]=useState(null);
   const [showOriginSettings,setShowOriginSettings]=useState(false);
@@ -4105,17 +4191,7 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
           </div>
           <div style={{marginBottom:14}}>
             <label style={{color:"#a8b8cc",fontSize:11,letterSpacing:2,display:"block",marginBottom:5}}>TARIFA (€)</label>
-            {/* COMFORT only warning */}
-            <div style={{background:"linear-gradient(135deg,#2a1000,#1e293b)",border:"2.5px solid #f59e0b",borderRadius:12,padding:"12px 14px",marginBottom:10}}>
-              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
-                <span style={{fontSize:22,flexShrink:0}}>⚠️</span>
-                <div style={{color:"#f59e0b",fontSize:13,fontWeight:700,letterSpacing:0.5}}>SOLO PRECIOS BOLT COMFORT</div>
-              </div>
-              <div style={{color:"#f8fafc",fontSize:11,lineHeight:1.5,background:"#f59e0b12",borderRadius:8,padding:"8px 10px"}}>
-                Introduce <strong style={{color:"#f59e0b"}}>únicamente</strong> el precio de la categoría <strong style={{color:"#f59e0b"}}>Comfort</strong> de la app Bolt.<br/>
-                <span style={{color:"#ef4444",fontWeight:700}}>❌ No usar:</span> Económico, XL, Moto, ni ninguna otra categoría.
-              </div>
-            </div>
+
             <input type="number" value={form.fare} placeholder="0.00" min="30" onChange={e=>{setForm({...form,fare:e.target.value});setBoltError("");}}
               style={{...inputStyle,border:form.fare&&Number(form.fare)<30?"1px solid #ef4444":inputStyle.border}}/>
             {form.fare&&Number(form.fare)>0&&Number(form.fare)<30&&(
@@ -4124,7 +4200,7 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
               </div>
             )}
           </div>
-          <DistancePriceCalc origin={form.origin} destination={form.destination} onPriceCalculated={price=>setForm(f=>({...f,fare:String(price)}))}/>
+          <DistancePriceCalc origin={form.origin} destination={form.destination} pricePerKm={priceRecepFromStatus||3.15} onPriceCalculated={price=>setForm(f=>({...f,fare:String(price)}))}/>
           {form.fare&&Number(form.fare)>0&&(
             <div style={{background:"#0f172a",border:"1px solid #c9a96e22",borderRadius:10,padding:"12px 14px",marginBottom:14}}>
               <div style={{color:"#a8b8cc",fontSize:9,letterSpacing:2,marginBottom:10}}>DESGLOSE DE LA TARIFA</div>
@@ -4460,7 +4536,7 @@ function CancelTripModal({ booking, onCancel, onClose }) {
 // ─── BOLT PRICE GUIDE ────────────────────────────────────────────────────────
 // ─── BOLT SCREENSHOT UPLOAD ──────────────────────────────────────────────────
 
-function DistancePriceCalc({ origin, destination, onPriceCalculated }) {
+function DistancePriceCalc({ origin, destination, onPriceCalculated, pricePerKm=3.15 }) {
   const [state, setState] = useState({ status:"idle", km:null, duration:null, price:null });
   useEffect(() => {
     if (!origin || !destination || origin.length < 5 || destination.length < 5) {
@@ -4472,7 +4548,7 @@ function DistancePriceCalc({ origin, destination, onPriceCalculated }) {
         const res = await fetch(`/api/distance?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}`);
         const data = await res.json();
         if (data.error) throw new Error(data.error);
-        const price = Math.max(30, Math.round(data.km * PRICE_PER_KM * 100) / 100);
+        const price = Math.max(30, Math.round(data.km * pricePerKm * 100) / 100);
         setState({ status:"ok", km:data.km, duration:data.duration, price });
         onPriceCalculated(price);
       } catch(e) {
