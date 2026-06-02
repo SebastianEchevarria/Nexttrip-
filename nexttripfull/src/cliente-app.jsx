@@ -771,7 +771,7 @@ function FavRoutes({ clientId, myBookings, lang, t, onBook }) {
   const [favs, setFavs] = useState(()=>{
     try { return JSON.parse(localStorage.getItem(FAVS_KEY))||[]; } catch { return []; }
   });
-  const saveFavs = (f) => { setFavs(f); try{localStorage.setItem(FAVS_KEY,JSON.stringify(f));}catch{} };
+  const saveFavs = (f) => { const limited=f.slice(0,2); setFavs(limited); try{localStorage.setItem(FAVS_KEY,JSON.stringify(limited));}catch{} };
   const recentRoutes = myBookings
     .filter(b=>b.status==="completed"&&b.origin&&b.destination)
     .map(b=>({origin:b.origin,destination:b.destination}))
@@ -781,7 +781,7 @@ function FavRoutes({ clientId, myBookings, lang, t, onBook }) {
   if(favs.length===0&&recentRoutes.length===0) return null;
   return (
     <div style={{marginBottom:14}}>
-      <div style={{color:"#334155",fontSize:10,letterSpacing:3,marginBottom:8}}>
+      <div style={{color:"#1e3a8a",fontSize:13,letterSpacing:2,fontWeight:800,marginBottom:8}}>
         ⭐ {lang==="en"?"FAVOURITE ROUTES":"RUTAS FAVORITAS"}
       </div>
       {favs.map((f,i)=>(
@@ -806,7 +806,7 @@ function FavRoutes({ clientId, myBookings, lang, t, onBook }) {
             <div style={{color:"#334155",fontSize:11,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.origin}</div>
             <div style={{color:"#334155",fontSize:10,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>→ {r.destination}</div>
           </div>
-          <button onClick={()=>saveFavs([...favs,r])} style={{background:"#e2e8f0",border:"1px solid #2563eb33",borderRadius:7,padding:"5px 10px",color:"#2563eb",fontSize:10,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap"}}>
+          <button onClick={()=>{ if(favs.length>=2){alert(lang==="en"?"Max 2 favourite routes":"Máximo 2 rutas favoritas");return;} saveFavs([...favs,r]); }} style={{background:"#e2e8f0",border:"1px solid #2563eb33",borderRadius:7,padding:"5px 10px",color:"#2563eb",fontSize:10,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap"}}>
             + {lang==="en"?"Save":"Guardar"}
           </button>
         </div>
@@ -1456,16 +1456,16 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
         return(
           <div style={{
             marginBottom:16,
-            background:isArrived?"linear-gradient(135deg,#dcfce7,#f1f5f9)":isOngoing?"linear-gradient(135deg,#dbeafe,#f1f5f9)":urgency?"linear-gradient(135deg,#fef3c7,#f1f5f9)":"linear-gradient(135deg,#e0e7ff,#f1f5f9)",
-            border:`2px solid ${isArrived?"#22c55e":isOngoing?"#22c55e":urgency?"#f59e0b":"#2563eb44"}`,
+            background:isArrived?"linear-gradient(135deg,#dcfce7,#f0fdf4)":isOngoing?"linear-gradient(135deg,#dbeafe,#eff6ff)":urgency?"linear-gradient(135deg,#fef3c7,#fffbeb)":"linear-gradient(135deg,#dbeafe,#eff6ff)",
+            border:`3px solid ${isArrived?"#16a34a":isOngoing?"#16a34a":urgency?"#f59e0b":"#2563eb"}`,
             borderRadius:18,overflow:"hidden",
-            boxShadow:isArrived?"0 0 24px #22c55e44":isOngoing?"0 0 20px #22c55e33":urgency?"0 0 20px #f59e0b33":"none",
+            boxShadow:isArrived?"0 4px 24px rgba(22,163,74,0.25)":isOngoing?"0 4px 20px rgba(22,163,74,0.2)":urgency?"0 4px 20px rgba(245,158,11,0.25)":"0 4px 20px rgba(37,99,235,0.2)",
           }}>
             <div style={{padding:"10px 16px 0",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
               <div style={{display:"flex",alignItems:"center",gap:7}}>
                 <div style={{width:8,height:8,borderRadius:"50%",background:isArrived?"#22c55e":urgency?"#f59e0b":"#2563eb",animation:"pulse 1s infinite",flexShrink:0}}/>
-                <span style={{color:"#334155",fontSize:10,letterSpacing:2,fontWeight:600}}>
-                  {isArrived?"🚗 CONDUCTOR LLEGÓ":"PRÓXIMO VIAJE"}
+                <span style={{color:"#1e3a8a",fontSize:13,letterSpacing:2,fontWeight:900}}>
+                  {isArrived?(lang==="en"?"🚗 DRIVER ARRIVED":"🚗 CONDUCTOR LLEGÓ"):(lang==="en"?"⚡ NEXT TRIP":"⚡ PRÓXIMO VIAJE")}
                 </span>
               </div>
               <span style={{background:isOngoing?"#22c55e22":urgency?"#f59e0b22":"#2563eb22",border:`1px solid ${isOngoing?"#22c55e44":urgency?"#f59e0b44":"#2563eb44"}`,borderRadius:8,padding:"3px 10px",color:isOngoing?"#22c55e":urgency?"#f59e0b":"#2563eb",fontSize:10,fontWeight:700}}>
@@ -1498,8 +1498,8 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
             <div style={{margin:"0 12px 12px",display:"flex",gap:8}}>
               {!isArrived&&(
                 <div style={{flex:1,background:isOngoing?"#22c55e12":urgency?"#f59e0b12":"#2563eb10",borderRadius:12,padding:"10px 14px"}}>
-                  <div style={{color:"#334155",fontSize:9,letterSpacing:2,marginBottom:3}}>{isOngoing?(lang==="en"?"IN PROGRESS":"EN CURSO"):(lang==="en"?"TIME REMAINING":"TIEMPO RESTANTE")}</div>
-                  <div style={{color:isOngoing?"#22c55e":urgency?"#f59e0b":"#f1f5f9",fontSize:26,fontFamily:"'DM Sans',sans-serif",fontWeight:700,letterSpacing:2}}>{countdownStr}</div>
+                  <div style={{color:"#1e3a8a",fontSize:11,letterSpacing:2,fontWeight:800,marginBottom:3}}>{isOngoing?(lang==="en"?"IN PROGRESS":"EN CURSO"):(lang==="en"?"TIME REMAINING":"TIEMPO RESTANTE")}</div>
+                  <div style={{color:isOngoing?"#22c55e":urgency?"#f59e0b":"#ffffff",fontSize:30,fontFamily:"'DM Sans',sans-serif",fontWeight:900,letterSpacing:2}}>{countdownStr}</div>
                 </div>
               )}
               {isArrived&&(
@@ -1512,7 +1512,7 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
               )}
               {basePrice>0&&(
                 <div style={{background:"#2563eb10",borderRadius:12,padding:"10px 14px",textAlign:"right",flexShrink:0}}>
-                  <div style={{color:"#334155",fontSize:9,marginBottom:2}}>{lang==="en"?"FARE":"TARIFA"}</div>
+                  <div style={{color:"#334155",fontSize:9,marginBottom:2}}>{lang==="en"?"PRICE":"PRECIO"}</div>
                   <div style={{color:"#334155",fontSize:11,textDecoration:"line-through"}}>{basePrice} €</div>
                   <div style={{color:"#2563eb",fontSize:20,fontFamily:"'DM Sans',sans-serif",fontWeight:700}}>{discountedPrice} €</div>
                   <div style={{color:"#22c55e",fontSize:9,fontWeight:700}}>-{Math.round(DISCOUNT_RATE*100)}% VIP</div>
@@ -1550,18 +1550,19 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
       <div style={{background:"linear-gradient(135deg,#eff6ff,#dbeafe)",border:"2px solid #1e3a8a44",borderRadius:12,padding:"12px 16px",marginBottom:14,display:"flex",alignItems:"center",gap:10,boxShadow:"0 2px 8px rgba(30,58,138,0.1)"}}>
         <span style={{fontSize:22}}>🏷️</span>
         <div>
-          <div style={{color:"#1e3a8a",fontSize:14,fontWeight:800}}>{t.discount15}</div>
-          <div style={{color:"#1e40af",fontSize:12,fontWeight:700}}>{t.autoDiscount}</div>
+          <div style={{color:"#1e3a8a",fontSize:16,fontWeight:900}}>{t.discount15}</div>
+          <div style={{color:"#1e40af",fontSize:13,fontWeight:700}}>{t.autoDiscount}</div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div style={{display:"flex",background:"#e2e8f0",borderRadius:12,padding:3,marginBottom:18,gap:2}}>
-        {[{id:"avail",label:t.tabAvail},{id:"mine",label:t.tabTrips}].map(t=>(
-          <button key={t.id} onClick={()=>setTab(t.id)} style={{flex:1,padding:"8px 4px",border:"none",borderRadius:9,cursor:"pointer",
-            background:tab===t.id?"linear-gradient(135deg,#2563eb,#1d4ed8)":"transparent",
-            color:tab===t.id?"#fff":"#475569",fontSize:11,fontWeight:tab===t.id?600:400,transition:"all 0.2s"}}>
-            {t.label}
+      <div style={{display:"flex",background:"#dbeafe",borderRadius:14,padding:4,marginBottom:18,gap:3,border:"2px solid #2563eb33",boxShadow:"0 2px 8px rgba(37,99,235,0.12)"}}>
+        {[{id:"avail",label:t.tabAvail},{id:"mine",label:t.tabTrips}].map(tb=>(
+          <button key={tb.id} onClick={()=>setTab(tb.id)} style={{flex:1,padding:"11px 4px",border:"none",borderRadius:10,cursor:"pointer",
+            background:tab===tb.id?"linear-gradient(135deg,#1e3a8a,#2563eb)":"transparent",
+            color:tab===tb.id?"#fff":"#1e3a8a",fontSize:13,fontWeight:700,transition:"all 0.2s",
+            boxShadow:tab===tb.id?"0 2px 8px rgba(30,58,138,0.3)":"none"}}>
+            {tb.label}
           </button>
         ))}
       </div>
@@ -1654,13 +1655,13 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
             t={t}
             onBook={r=>{setTab("new");setForm(fm=>({...fm,origin:r.origin,destination:r.destination}));}}
           />
-                    <div style={{color:"#334155",fontSize:11,letterSpacing:3,marginBottom:12}}>{t.myTripsSection}</div>
+                    <div style={{color:"#1e3a8a",fontSize:14,letterSpacing:2,fontWeight:900,marginBottom:12}}>{t.myTripsSection}</div>
           {myBookings.length===0&&<div style={{color:"#334155",fontSize:13,textAlign:"center",padding:"32px 0"}}>{t.noTrips}</div>}
           {(()=>{
             const active=myBookings.filter(b=>!["completed","cancelled","client_rejected","rejected"].includes(b.status)).sort((a,b)=>{const o={inprogress:0,confirmed:1,price_proposed:2,pending:3};return(o[a.status]??3)-(o[b.status]??3);});
             const hist=myBookings.filter(b=>["completed","cancelled","client_rejected","rejected"].includes(b.status)).sort((a,b)=>(b.date||"").localeCompare(a.date||""));
             return(<>
-            {active.length>0&&<div style={{color:"#2563eb",fontSize:11,letterSpacing:3,marginBottom:10,display:"flex",alignItems:"center",gap:6}}><span style={{width:6,height:6,borderRadius:"50%",background:"#2563eb",animation:"pulse 1.5s infinite",display:"inline-block"}}/>{lang==="en"?"MY BOOKINGS":"MIS RESERVAS"}</div>}
+            {active.length>0&&<div style={{color:"#1e3a8a",fontSize:14,letterSpacing:2,fontWeight:900,marginBottom:10,display:"flex",alignItems:"center",gap:6}}><span style={{width:7,height:7,borderRadius:"50%",background:"#2563eb",animation:"pulse 1.5s infinite",display:"inline-block"}}/>{lang==="en"?"MY BOOKINGS":"MIS RESERVAS"}</div>}
             {active.map(b=>(
             <div key={b.id} style={{
               background:"#ffffff",
@@ -1931,7 +1932,7 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
           ))}
             {hist.length>0&&<>
               <button onClick={()=>setHistoryOpen(o=>!o)} style={{background:"none",border:"none",cursor:"pointer",padding:"8px 0",display:"flex",alignItems:"center",gap:8,width:"100%",marginTop:8}}>
-                <span style={{color:"#334155",fontSize:11,letterSpacing:3}}>{lang==="en"?"TRIP HISTORY":"HISTORIAL DE VIAJES"}</span>
+                <span style={{color:"#1e3a8a",fontSize:14,letterSpacing:2,fontWeight:900}}>{lang==="en"?"TRIP HISTORY":"HISTORIAL DE VIAJES"}</span>
                 <span style={{background:"#e2e8f0",borderRadius:10,padding:"2px 8px",fontSize:10,color:"#334155"}}>{hist.length}</span>
                 <span style={{color:"#334155",fontSize:12,marginLeft:"auto"}}>{historyOpen?"▲":"▼"}</span>
               </button>
