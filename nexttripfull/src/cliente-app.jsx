@@ -1499,7 +1499,7 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
               {!isArrived&&(
                 <div style={{flex:1,background:isOngoing?"#22c55e12":urgency?"#f59e0b12":"#2563eb10",borderRadius:12,padding:"10px 14px"}}>
                   <div style={{color:"#1e3a8a",fontSize:11,letterSpacing:2,fontWeight:800,marginBottom:3}}>{isOngoing?(lang==="en"?"IN PROGRESS":"EN CURSO"):(lang==="en"?"TIME REMAINING":"TIEMPO RESTANTE")}</div>
-                  <div style={{color:isOngoing?"#22c55e":urgency?"#f59e0b":"#ffffff",fontSize:30,fontFamily:"'DM Sans',sans-serif",fontWeight:900,letterSpacing:2}}>{countdownStr}</div>
+                  <div style={{color:isOngoing?"#22c55e":urgency?"#f59e0b":"#0f172a",fontSize:30,fontFamily:"'DM Sans',sans-serif",fontWeight:900,letterSpacing:2}}>{countdownStr}</div>
                 </div>
               )}
               {isArrived&&(
@@ -1532,7 +1532,16 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
                   <div style={{color:"#334155",fontSize:11,textAlign:"center",marginBottom:12}}>{lang==="en"?"This cannot be undone":"Esta acción no se puede deshacer"}</div>
                   <div style={{display:"flex",gap:8}}>
                     <button onClick={()=>setCancelConfirm(null)} style={{flex:1,background:"#e2e8f0",border:"1px solid #475569",borderRadius:8,padding:"10px 0",color:"#334155",fontSize:12,fontWeight:600,cursor:"pointer"}}>{lang==="en"?"Go back":"No, volver"}</button>
-                    <button onClick={()=>{handleClientCancelTrip&&handleClientCancelTrip(upcoming.id);setCancelConfirm(null);}} style={{flex:1,background:"linear-gradient(135deg,#ef4444,#b91c1c)",border:"none",borderRadius:8,padding:"10px 0",color:"#0f172a",fontSize:12,fontWeight:700,cursor:"pointer"}}>{lang==="en"?"Yes, cancel":"Sí, cancelar"}</button>
+                    <button onClick={()=>{
+                      // Notificar al conductor con detalles del viaje
+                      const cancelMsg = lang==="en"
+                        ? `❌ TRIP CANCELLED BY CLIENT\n📅 ${upcoming.date} · ${upcoming.time}\n📍 ${upcoming.origin}\n🏁 ${upcoming.destination}\n👤 ${upcoming.guest||client.name}`
+                        : `❌ VIAJE CANCELADO POR EL CLIENTE\n📅 ${upcoming.date} · ${upcoming.time}\n📍 ${upcoming.origin}\n🏁 ${upcoming.destination}\n👤 ${upcoming.guest||client.name}`;
+                      onSendMessage&&onSendMessage(upcoming.id,{from:"client",fromName:client.name,text:cancelMsg,ts:Date.now(),isSystem:true});
+                      // Cancelar la reserva
+                      onClientCancelTrip&&onClientCancelTrip(upcoming.id);
+                      setCancelConfirm(null);
+                    }} style={{flex:1,background:"linear-gradient(135deg,#ef4444,#b91c1c)",border:"none",borderRadius:8,padding:"10px 0",color:"#ffffff",fontSize:12,fontWeight:700,cursor:"pointer"}}>{lang==="en"?"Yes, cancel":"Sí, cancelar"}</button>
                   </div>
                 </div>
               ):(
@@ -2103,6 +2112,11 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
             </div>
             {/* Buttons */}
             <button onClick={()=>{
+              // Notificar al conductor con detalles
+              const cMsg = lang==="en"
+                ? `❌ TRIP CANCELLED BY CLIENT\n📅 ${cancelConfirm.date} · ${cancelConfirm.time}\n📍 ${cancelConfirm.origin}\n🏁 ${cancelConfirm.destination}\n👤 ${cancelConfirm.guest||client.name}`
+                : `❌ VIAJE CANCELADO POR EL CLIENTE\n📅 ${cancelConfirm.date} · ${cancelConfirm.time}\n📍 ${cancelConfirm.origin}\n🏁 ${cancelConfirm.destination}\n👤 ${cancelConfirm.guest||client.name}`;
+              onSendMessage&&onSendMessage(cancelConfirm.id,{from:"client",fromName:client.name,text:cMsg,ts:Date.now(),isSystem:true});
               onClientCancelTrip&&onClientCancelTrip(cancelConfirm.id);
               setCancelConfirm(null);
             }} style={{
