@@ -2454,24 +2454,26 @@ export default function NextTripClientApp() {
       {chatNotifOpen&&<ChatModal booking={chatNotifOpen} messages={messages} onSend={handleSendMessage} currentUser={currentClient} isDriver={false} onClose={()=>setChatNotifOpen(null)} onMarkRead={handleMarkRead} lang={lang}/>}
 
       <div style={{padding:"8px 14px 8px",borderBottom:"2px solid #e2e8f0",background:"#ffffff",position:"sticky",top:0,zIndex:50,boxShadow:"0 2px 8px rgba(0,0,0,0.08)"}}>
-        {/* Single row: Logo izquierda grande + Lang + Exit + Nombre derecha */}
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-          {/* Logo — ocupa todo el lado izquierdo */}
+          {/* Logo izquierda — grande */}
           <div style={{flexShrink:0}}>
             <RivieraLogo size={60}/>
           </div>
-          {/* Derecha: idiomas + salir + nombre con círculo */}
-          <div style={{display:"flex",alignItems:"center",gap:8}}>
-            <LangToggle lang={lang} setLang={setLang}/>
-            <button onClick={()=>{setScreen("auth");setCurrentClient(null);}} style={{
-              background:"#1e3a8a",border:"none",borderRadius:8,
-              color:"#ffffff",fontSize:11,fontWeight:700,padding:"6px 12px",cursor:"pointer",whiteSpace:"nowrap",
-            }}>{TRANSLATIONS[lang]?.exit||"Salir"}</button>
-            {/* Nombre + avatar círculo azul marino */}
-            <div style={{display:"flex",alignItems:"center",gap:7,background:"#eff6ff",border:"1.5px solid #1e3a8a44",borderRadius:20,padding:"4px 10px 4px 4px"}}>
+          {/* Derecha: columna con 2 filas */}
+          <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:5}}>
+            {/* Fila 1: banderas + botón salir */}
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <LangToggle lang={lang} setLang={setLang}/>
+              <button onClick={()=>{setScreen("auth");setCurrentClient(null);}} style={{
+                background:"#1e3a8a",border:"none",borderRadius:8,
+                color:"#ffffff",fontSize:11,fontWeight:700,padding:"6px 12px",cursor:"pointer",whiteSpace:"nowrap",
+              }}>{TRANSLATIONS[lang]?.exit||"Salir"}</button>
+            </div>
+            {/* Fila 2: círculo LE azul marino + nombre */}
+            <div style={{display:"flex",alignItems:"center",gap:7}}>
               <div style={{
-                width:28,height:28,borderRadius:"50%",
-                background:"#1e3a8a",border:"2px solid #1e3a8a",
+                width:26,height:26,borderRadius:"50%",
+                background:"#1e3a8a",
                 display:"flex",alignItems:"center",justifyContent:"center",
                 color:"#ffffff",fontSize:10,fontWeight:800,flexShrink:0,
               }}>{initials(currentClient?.name||"")}</div>
