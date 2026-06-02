@@ -47,9 +47,9 @@ function sanitizeBookings(arr) {
 // ─── GLOBAL CSS ───────────────────────────────────────────────────────────────
 const GLOBAL_CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-  html,body,#root{width:100%;min-height:100%;margin:0;padding:0;background:#f1f5f9;}
-  input[type=date],input[type=time]{color-scheme:dark;}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;font-weight:700;}
+  html,body,#root{width:100%;min-height:100%;margin:0;padding:0;background:#ffffff;}
+  input[type=date],input[type=time]{color-scheme:light;color:#0f172a;font-weight:700;}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
   @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:none;opacity:1}}
   @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
@@ -212,7 +212,7 @@ const DISCOUNT_RATE = 0.15;
 const BOOKINGS_KEY  = "riviera_bookings_v1";
 const BLOCKS_KEY    = "riviera_blocks_v1";
 const CLIENTS_KEY   = "nexttrip_clients_v1";
-const inputStyle={width:"100%",background:"#e2e8f0",border:"1px solid #cbd5e1",borderRadius:10,padding:"12px 14px",color:"#f1f5f9",fontSize:14,outline:"none",boxSizing:"border-box"};
+const inputStyle={width:"100%",background:"#e2e8f0",border:"1px solid #cbd5e1",borderRadius:10,padding:"12px 14px",color:"#0f172a",fontSize:14,outline:"none",boxSizing:"border-box"};
 
 const USERS_KEY = "riviera_users_v1";
 function loadUsers() {
@@ -315,9 +315,9 @@ function GeoErrorMsg({onClose}){
     <div style={{background:"#fff0f0",border:"1.5px solid #ef444466",borderRadius:12,padding:"14px 16px",marginTop:8}}>
       <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
         <div style={{color:"#ef4444",fontSize:12,fontWeight:700}}>Ubicación bloqueada</div>
-        <button onClick={onClose} style={{background:"none",border:"none",color:"#475569",fontSize:14,cursor:"pointer"}}>×</button>
+        <button onClick={onClose} style={{background:"none",border:"none",color:"#334155",fontSize:14,cursor:"pointer"}}>×</button>
       </div>
-      {steps.map((s,i)=>(<div key={i} style={{display:"flex",gap:8,marginBottom:5}}><div style={{width:18,height:18,borderRadius:"50%",background:"#ef444422",display:"flex",alignItems:"center",justifyContent:"center",color:"#ef4444",fontSize:10,fontWeight:700,flexShrink:0}}>{i+1}</div><div style={{color:"#f1f5f9",fontSize:11}}>{s}</div></div>))}
+      {steps.map((s,i)=>(<div key={i} style={{display:"flex",gap:8,marginBottom:5}}><div style={{width:18,height:18,borderRadius:"50%",background:"#ef444422",display:"flex",alignItems:"center",justifyContent:"center",color:"#ef4444",fontSize:10,fontWeight:700,flexShrink:0}}>{i+1}</div><div style={{color:"#0f172a",fontSize:11}}>{s}</div></div>))}
     </div>
   );
 }
@@ -511,13 +511,13 @@ function ClientPriceBox({ origin, destination, onPriceCalculated, t }) {
   if (state.status === "loading") return (
     <div style={{background:"#f1f5f9",border:"1px solid #2563eb22",borderRadius:12,padding:"12px 16px",marginBottom:14,display:"flex",alignItems:"center",gap:10}}>
       <div style={{width:16,height:16,borderRadius:"50%",border:"2px solid #2563eb",borderTopColor:"transparent",animation:"spin 0.8s linear infinite"}}/>
-      <span style={{color:"#475569",fontSize:12}}>Calculando ruta y precio...</span>
+      <span style={{color:"#334155",fontSize:12}}>Calculando ruta y precio...</span>
     </div>
   );
 
   if (state.status === "unknown") return (
     <div style={{background:"#f1f5f9",border:"1px solid #2563eb22",borderRadius:12,padding:"12px 16px",marginBottom:14}}>
-      <div style={{color:"#475569",fontSize:12}}>📍 {_t.unknownAddr}</div>
+      <div style={{color:"#334155",fontSize:12}}>📍 {_t.unknownAddr}</div>
     </div>
   );
 
@@ -532,13 +532,13 @@ function ClientPriceBox({ origin, destination, onPriceCalculated, t }) {
       {/* Distance / time row */}
       <div style={{display:"flex",gap:16,marginBottom:14,padding:"8px 12px",background:"#f1f5f9",borderRadius:8}}>
         <div style={{textAlign:"center"}}>
-          <div style={{color:"#f1f5f9",fontSize:22,fontFamily:"'DM Sans',sans-serif",fontWeight:700,lineHeight:1}}>{state.km}</div>
-          <div style={{color:"#475569",fontSize:10}}>km</div>
+          <div style={{color:"#0f172a",fontSize:22,fontFamily:"'DM Sans',sans-serif",fontWeight:700,lineHeight:1}}>{state.km}</div>
+          <div style={{color:"#334155",fontSize:10}}>km</div>
         </div>
         <div style={{width:1,background:"#cbd5e1"}}/>
         <div style={{textAlign:"center"}}>
-          <div style={{color:"#f1f5f9",fontSize:22,fontFamily:"'DM Sans',sans-serif",fontWeight:700,lineHeight:1}}>{state.mins}</div>
-          <div style={{color:"#475569",fontSize:10}}>min aprox.</div>
+          <div style={{color:"#0f172a",fontSize:22,fontFamily:"'DM Sans',sans-serif",fontWeight:700,lineHeight:1}}>{state.mins}</div>
+          <div style={{color:"#334155",fontSize:10}}>min aprox.</div>
         </div>
         <div style={{flex:1}}/>
         <a href={mapsRouteUrl(origin, destination)} target="_blank" rel="noopener noreferrer"
@@ -549,16 +549,16 @@ function ClientPriceBox({ origin, destination, onPriceCalculated, t }) {
       {/* Pricing breakdown */}
       <div style={{marginBottom:4}}>
         <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-          <span style={{color:"#475569",fontSize:11}}>Base</span>
-          <span style={{color:"#475569",fontSize:11}}>{fmt(PRICE_BASE_KM)} €</span>
+          <span style={{color:"#334155",fontSize:11}}>Base</span>
+          <span style={{color:"#334155",fontSize:11}}>{fmt(PRICE_BASE_KM)} €</span>
         </div>
         <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-          <span style={{color:"#475569",fontSize:11}}>{state.km} km × {fmt(PRICE_PER_KM)} €/km</span>
-          <span style={{color:"#475569",fontSize:11}}>{fmt(state.km * PRICE_PER_KM)} €</span>
+          <span style={{color:"#334155",fontSize:11}}>{state.km} km × {fmt(PRICE_PER_KM)} €/km</span>
+          <span style={{color:"#334155",fontSize:11}}>{fmt(state.km * PRICE_PER_KM)} €</span>
         </div>
         <div style={{display:"flex",justifyContent:"space-between",paddingTop:8,borderTop:"1px solid #cbd5e1",marginBottom:8}}>
-          <span style={{color:"#f1f5f9",fontSize:12}}>Precio base</span>
-          <span style={{color:"#475569",fontSize:13,textDecoration:"line-through"}}>{fmt(state.price)} €</span>
+          <span style={{color:"#0f172a",fontSize:12}}>Precio base</span>
+          <span style={{color:"#334155",fontSize:13,textDecoration:"line-through"}}>{fmt(state.price)} €</span>
         </div>
         <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
           <span style={{color:"#2563eb",fontSize:12}}>🏷️ Tu descuento (15%)</span>
@@ -572,9 +572,9 @@ function ClientPriceBox({ origin, destination, onPriceCalculated, t }) {
         }}>
           <div>
             <div style={{color:"#38bdf8",fontSize:10,letterSpacing:2,marginBottom:2}}>{_t.youPay}</div>
-            <div style={{color:"#475569",fontSize:9}}>{_t.luxuryVtc}</div>
+            <div style={{color:"#334155",fontSize:9}}>{_t.luxuryVtc}</div>
           </div>
-          <div style={{color:"#38bdf8",fontSize:32,fontFamily:"'DM Sans',sans-serif",fontWeight:700,
+          <div style={{color:"#1d4ed8",fontSize:38,fontFamily:"'DM Sans',sans-serif",fontWeight:900,
             textShadow:"0 0 20px rgba(96,165,250,0.4)"}}>
             {fmt(withDiscount)} €
           </div>
@@ -605,8 +605,8 @@ function PinKeypad({ correctPin, onSuccess, onBack, subtitle, accentColor="#2563
   };
   return (
     <div style={{display:"flex",flexDirection:"column",alignItems:"center",width:"100%"}}>
-      {onBack&&<button onClick={onBack} style={{alignSelf:"flex-start",background:"none",border:"none",color:"#475569",cursor:"pointer",fontSize:13,letterSpacing:1,marginBottom:20}}>← VOLVER</button>}
-      {subtitle&&<div style={{color:"#475569",fontSize:12,letterSpacing:1,marginBottom:22}}>{subtitle}</div>}
+      {onBack&&<button onClick={onBack} style={{alignSelf:"flex-start",background:"none",border:"none",color:"#334155",cursor:"pointer",fontSize:13,letterSpacing:1,marginBottom:20}}>← VOLVER</button>}
+      {subtitle&&<div style={{color:"#334155",fontSize:12,letterSpacing:1,marginBottom:22}}>{subtitle}</div>}
       <div style={{display:"flex",gap:14,marginBottom:26}}>
         {[0,1,2,3].map(i=>(
           <div key={i} style={{width:13,height:13,borderRadius:"50%",
@@ -662,21 +662,21 @@ function DistancePriceCalcClient({ origin, destination, onPriceCalculated, price
       {state.status==="loading"&&(
         <div style={{background:"#e2e8f0",borderRadius:10,padding:"10px 14px",display:"flex",alignItems:"center",gap:8}}>
           <div style={{width:10,height:10,borderRadius:"50%",border:"2px solid #2563eb",borderTopColor:"transparent",animation:"spin 0.8s linear infinite"}}/>
-          <span style={{color:"#475569",fontSize:11}}>🗺️ Calculando ruta...</span>
+          <span style={{color:"#334155",fontSize:11}}>🗺️ Calculando ruta...</span>
         </div>
       )}
       {state.status==="ok"&&(
         <div style={{background:"linear-gradient(135deg,#e2e8f0,#f1f5f9)",border:"1.5px solid #2563eb55",borderRadius:12,padding:"12px 14px"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
             <div>
-              <span style={{color:"#f1f5f9",fontSize:13,fontWeight:700}}>🗺️ {state.km} km</span>
-              {state.duration&&<span style={{color:"#475569",fontSize:11,marginLeft:8}}>· {state.duration}</span>}
+              <span style={{color:"#0f172a",fontSize:13,fontWeight:700}}>🗺️ {state.km} km</span>
+              {state.duration&&<span style={{color:"#334155",fontSize:11,marginLeft:8}}>· {state.duration}</span>}
             </div>
           </div>
           <div style={{background:"#f1f5f9",borderRadius:8,padding:"8px 10px"}}>
             <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
-              <span style={{color:"#475569",fontSize:11}}>Precio base</span>
-              <span style={{color:"#475569",fontSize:11,textDecoration:"line-through"}}>{state.price} €</span>
+              <span style={{color:"#334155",fontSize:11}}>Precio base</span>
+              <span style={{color:"#334155",fontSize:11,textDecoration:"line-through"}}>{state.price} €</span>
             </div>
             <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
               <span style={{color:"#2563eb",fontSize:11}}>🏷️ Tu descuento VIP 15%</span>
@@ -713,22 +713,22 @@ function TripEstimateBox({ origin, destination }) {
     }}>
       <span style={{fontSize:22, flexShrink:0}}>🗺️</span>
       <div style={{flex:1}}>
-        <div style={{color:"#475569",fontSize:9,letterSpacing:2,marginBottom:5}}>TIEMPO ESTIMADO DEL VIAJE</div>
+        <div style={{color:"#334155",fontSize:9,letterSpacing:2,marginBottom:5}}>TIEMPO ESTIMADO DEL VIAJE</div>
         {est ? (
           <div style={{display:"flex",gap:12,alignItems:"center",flexWrap:"wrap"}}>
             <div style={{display:"flex",alignItems:"baseline",gap:4}}>
-              <span style={{color:"#f1f5f9",fontSize:20,fontFamily:"'DM Sans',sans-serif",fontWeight:700}}>{est.mins}</span>
-              <span style={{color:"#475569",fontSize:12}}>min</span>
+              <span style={{color:"#0f172a",fontSize:20,fontFamily:"'DM Sans',sans-serif",fontWeight:700}}>{est.mins}</span>
+              <span style={{color:"#334155",fontSize:12}}>min</span>
             </div>
             <div style={{width:1,height:18,background:"#cbd5e1"}}/>
             <div style={{display:"flex",alignItems:"baseline",gap:4}}>
-              <span style={{color:"#f1f5f9",fontSize:16,fontFamily:"'DM Sans',sans-serif",fontWeight:600}}>{est.km}</span>
-              <span style={{color:"#475569",fontSize:12}}>km aprox.</span>
+              <span style={{color:"#0f172a",fontSize:16,fontFamily:"'DM Sans',sans-serif",fontWeight:600}}>{est.km}</span>
+              <span style={{color:"#334155",fontSize:12}}>km aprox.</span>
             </div>
             {est.isAirport && <span style={{color:"#f59e0b",fontSize:11}}>✈️ Ruta aeropuerto</span>}
           </div>
         ) : (
-          <div style={{color:"#475569",fontSize:12}}>Introduce direcciones reconocibles para estimar</div>
+          <div style={{color:"#334155",fontSize:12}}>Introduce direcciones reconocibles para estimar</div>
         )}
       </div>
       <a href={routeLink} target="_blank" rel="noopener noreferrer" style={{
@@ -759,21 +759,21 @@ function FavRoutes({ clientId, myBookings, lang, t, onBook }) {
   if(favs.length===0&&recentRoutes.length===0) return null;
   return (
     <div style={{marginBottom:14}}>
-      <div style={{color:"#475569",fontSize:10,letterSpacing:3,marginBottom:8}}>
+      <div style={{color:"#334155",fontSize:10,letterSpacing:3,marginBottom:8}}>
         ⭐ {lang==="en"?"FAVOURITE ROUTES":"RUTAS FAVORITAS"}
       </div>
       {favs.map((f,i)=>(
         <div key={i} style={{background:"#e2e8f0",border:"1px solid #2563eb33",borderRadius:10,padding:"10px 12px",marginBottom:6,display:"flex",alignItems:"center",gap:8}}>
           <span style={{fontSize:14}}>⭐</span>
           <div style={{flex:1,minWidth:0}}>
-            <div style={{color:"#f1f5f9",fontSize:11,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{f.origin}</div>
-            <div style={{color:"#475569",fontSize:10,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>→ {f.destination}</div>
+            <div style={{color:"#0f172a",fontSize:11,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{f.origin}</div>
+            <div style={{color:"#334155",fontSize:10,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>→ {f.destination}</div>
           </div>
           <div style={{display:"flex",gap:4}}>
             <button onClick={()=>onBook(f)} style={{background:"linear-gradient(135deg,#2563eb,#1d4ed8)",border:"none",borderRadius:7,padding:"5px 10px",color:"#0a0a0a",fontSize:10,fontWeight:700,cursor:"pointer"}}>
               {lang==="en"?"Book":"Reservar"}
             </button>
-            <button onClick={()=>saveFavs(favs.filter((_,j)=>j!==i))} style={{background:"#f1f5f9",border:"1px solid #cbd5e1",borderRadius:7,padding:"5px 8px",color:"#475569",fontSize:10,cursor:"pointer"}}>✕</button>
+            <button onClick={()=>saveFavs(favs.filter((_,j)=>j!==i))} style={{background:"#f1f5f9",border:"1px solid #cbd5e1",borderRadius:7,padding:"5px 8px",color:"#334155",fontSize:10,cursor:"pointer"}}>✕</button>
           </div>
         </div>
       ))}
@@ -781,8 +781,8 @@ function FavRoutes({ clientId, myBookings, lang, t, onBook }) {
         <div key={i} style={{background:"#f1f5f9",border:"1px dashed #2563eb22",borderRadius:10,padding:"10px 12px",marginBottom:6,display:"flex",alignItems:"center",gap:8}}>
           <span style={{fontSize:14,opacity:0.4}}>☆</span>
           <div style={{flex:1,minWidth:0}}>
-            <div style={{color:"#475569",fontSize:11,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.origin}</div>
-            <div style={{color:"#475569",fontSize:10,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>→ {r.destination}</div>
+            <div style={{color:"#334155",fontSize:11,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.origin}</div>
+            <div style={{color:"#334155",fontSize:10,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>→ {r.destination}</div>
           </div>
           <button onClick={()=>saveFavs([...favs,r])} style={{background:"#e2e8f0",border:"1px solid #2563eb33",borderRadius:7,padding:"5px 10px",color:"#2563eb",fontSize:10,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap"}}>
             + {lang==="en"?"Save":"Guardar"}
@@ -866,7 +866,7 @@ function ChatModal({ booking, messages, onSend, currentUser, isDriver, onClose, 
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
             <button onClick={handleClose} style={{
               display:"flex",alignItems:"center",gap:6,background:"none",border:"none",
-              color:"#475569",fontSize:13,cursor:"pointer",padding:0,fontFamily:"inherit",
+              color:"#334155",fontSize:13,cursor:"pointer",padding:0,fontFamily:"inherit",
             }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M19 12H5M12 19l-7-7 7-7"/>
@@ -875,14 +875,14 @@ function ChatModal({ booking, messages, onSend, currentUser, isDriver, onClose, 
             </button>
             <button onClick={handleClose} style={{
               background:"#e2e8f0",border:"1px solid #cbd5e1",borderRadius:"50%",
-              width:30,height:30,cursor:"pointer",color:"#475569",fontSize:16,
+              width:30,height:30,cursor:"pointer",color:"#334155",fontSize:16,
               display:"flex",alignItems:"center",justifyContent:"center",
             }}>×</button>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
             <div style={{flex:1}}>
-              <div style={{color:"#475569",fontSize:9,letterSpacing:2,marginBottom:3}}>{lang==="en"?"BOOKING CHAT":"CHAT DE RESERVA"}</div>
-              <div style={{color:"#f1f5f9",fontSize:15,fontFamily:"'DM Sans',sans-serif",fontWeight:700}}>{b.guest}</div>
+              <div style={{color:"#334155",fontSize:9,letterSpacing:2,marginBottom:3}}>{lang==="en"?"BOOKING CHAT":"CHAT DE RESERVA"}</div>
+              <div style={{color:"#0f172a",fontSize:15,fontFamily:"'DM Sans',sans-serif",fontWeight:700}}>{b.guest}</div>
               <div style={{color:"#2563eb",fontSize:10,marginTop:1}}>{b.hotel} · {b.date} {b.time}</div>
             </div>
             {/* Show who's on the other side */}
@@ -891,7 +891,7 @@ function ChatModal({ booking, messages, onSend, currentUser, isDriver, onClose, 
                 <div style={{width:22,height:22,borderRadius:"50%",background:emp.avatar+"30",border:`1.5px solid ${emp.avatar}66`,display:"flex",alignItems:"center",justifyContent:"center",color:emp.avatar,fontSize:9,fontWeight:700}}>{initials(emp.name)}</div>
                 <div>
                   <div style={{color:emp.avatar,fontSize:11,fontWeight:600}}>{emp.name}</div>
-                  <div style={{color:"#475569",fontSize:9}}>{emp.hotel.split(" ").slice(-1)[0]}</div>
+                  <div style={{color:"#334155",fontSize:9}}>{emp.hotel.split(" ").slice(-1)[0]}</div>
                 </div>
               </div>
             ) : !isDriver ? (
@@ -924,7 +924,7 @@ function ChatModal({ booking, messages, onSend, currentUser, isDriver, onClose, 
                 {!mine && (
                   <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:3}}>
                     <div style={{width:16,height:16,borderRadius:"50%",background:msg.fromAvatar+"30",border:`1px solid ${msg.fromAvatar}55`,display:"flex",alignItems:"center",justifyContent:"center",color:msg.fromAvatar,fontSize:8,fontWeight:700}}>{msg.fromName[0]}</div>
-                    <span style={{color:"#475569",fontSize:10}}>{msg.fromName}</span>
+                    <span style={{color:"#334155",fontSize:10}}>{msg.fromName}</span>
                   </div>
                 )}
                 <div style={{
@@ -953,7 +953,7 @@ function ChatModal({ booking, messages, onSend, currentUser, isDriver, onClose, 
             onKeyDown={e=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();}}}
             placeholder={lang==="en"?"Write a message...":"Escribe un mensaje..."}
             style={{flex:1,background:"#e2e8f0",border:"1px solid #cbd5e1",borderRadius:24,
-              padding:"10px 16px",color:"#f1f5f9",fontSize:13,outline:"none"}}
+              padding:"10px 16px",color:"#0f172a",fontSize:13,outline:"none"}}
           />
           <button onClick={send} disabled={!text.trim()} style={{
             width:42,height:42,borderRadius:"50%",border:"none",cursor:"pointer",flexShrink:0,
@@ -976,8 +976,8 @@ function RatingModal({booking,onRate,onClose,lang}) {
     <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.88)",zIndex:400,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 20px"}}>
       <div onClick={e=>e.stopPropagation()} style={{background:"linear-gradient(135deg,#e2e8f0,#f1f5f9)",border:"1.5px solid #2563eb",borderRadius:20,padding:"28px 24px",width:"100%",maxWidth:320,textAlign:"center"}}>
         <div style={{fontSize:36,marginBottom:8}}>⭐</div>
-        <div style={{color:"#38bdf8",fontSize:18,fontFamily:"'DM Sans',sans-serif",fontWeight:700,marginBottom:4}}>{lang==="en"?"Rate your ride":"Valora tu viaje"}</div>
-        <div style={{color:"#475569",fontSize:11,marginBottom:20}}>{booking.origin} → {booking.destination}</div>
+        <div style={{color:"#1d4ed8",fontSize:18,fontFamily:"'DM Sans',sans-serif",fontWeight:800,marginBottom:4}}>{lang==="en"?"Rate your ride":"Valora tu viaje"}</div>
+        <div style={{color:"#334155",fontSize:11,marginBottom:20}}>{booking.origin} → {booking.destination}</div>
         <div style={{display:"flex",justifyContent:"center",gap:8,marginBottom:20}}>
           {[1,2,3,4,5].map(s=>(
             <button key={s} onClick={()=>setStars(s)} onMouseEnter={()=>setHover(s)} onMouseLeave={()=>setHover(0)}
@@ -987,7 +987,7 @@ function RatingModal({booking,onRate,onClose,lang}) {
           ))}
         </div>
         <button onClick={()=>stars&&onRate(booking.id,stars)} disabled={!stars} style={{width:"100%",background:stars?"linear-gradient(135deg,#2563eb,#1d4ed8)":"#e2e8f0",border:"none",borderRadius:12,padding:"12px 0",cursor:stars?"pointer":"default",color:stars?"#0a0a0a":"#475569",fontSize:13,fontWeight:700,marginBottom:8}}>{lang==="en"?"Submit":"Enviar valoracion"}</button>
-        <button onClick={onClose} style={{background:"none",border:"none",color:"#475569",fontSize:12,cursor:"pointer"}}>{lang==="en"?"Skip":"Omitir"}</button>
+        <button onClick={onClose} style={{background:"none",border:"none",color:"#334155",fontSize:12,cursor:"pointer"}}>{lang==="en"?"Skip":"Omitir"}</button>
       </div>
     </div>
   );
@@ -1051,12 +1051,12 @@ function ClientAuth({ onLogin, onBack, lang, setLang }) {
   return (
     <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",
       justifyContent:"center",padding:"24px 20px",background:"#f1f5f9"}}>
-      <RivieraLogo size={130}/>
+      <RivieraLogo size={200}/>
       <div style={{marginTop:12,marginBottom:4,display:"flex",alignItems:"center",gap:8}}>
         <div style={{width:8,height:8,borderRadius:"50%",background:"#2563eb"}}/>
-        <span style={{color:"#38bdf8",fontSize:12,fontWeight:700,letterSpacing:3}}>VIP CUSTOMER SERVICE</span>
+        <span style={{color:"#2563eb",fontSize:14,fontWeight:800,letterSpacing:3}}>VIP CUSTOMER SERVICE</span>
       </div>
-      <div style={{color:"#475569",fontSize:11,marginBottom:28}}>{t.tagline}</div>
+      <div style={{color:"#334155",fontSize:11,marginBottom:28}}>{t.tagline}</div>
 
       {/* Toggle */}
       <div style={{display:"flex",background:"#e2e8f0",borderRadius:12,padding:3,marginBottom:24,gap:2,width:"100%",maxWidth:340}}>
@@ -1074,16 +1074,16 @@ function ClientAuth({ onLogin, onBack, lang, setLang }) {
         {/* ── REGISTER ── */}
         {mode==="register"&&(
           <>
-            <label style={{color:"#475569",fontSize:11,letterSpacing:2,display:"block",marginBottom:5}}>{t.fullName}</label>
+            <label style={{color:"#334155",fontSize:11,letterSpacing:2,display:"block",marginBottom:5}}>{t.fullName}</label>
             <input value={name} onChange={e=>setName(e.target.value)} placeholder={t.namePlaceholder}
               style={{...inputStyle,marginBottom:14}}/>
 
-            <label style={{color:"#475569",fontSize:11,letterSpacing:2,display:"block",marginBottom:5}}>EMAIL</label>
+            <label style={{color:"#334155",fontSize:11,letterSpacing:2,display:"block",marginBottom:5}}>EMAIL</label>
             <input type="email" value={email} onChange={e=>setEmail(e.target.value)}
               placeholder={t.emailPlaceholder} autoCapitalize="none"
               style={{...inputStyle,marginBottom:14}}/>
 
-            <label style={{color:"#475569",fontSize:11,letterSpacing:2,display:"block",marginBottom:5}}>
+            <label style={{color:"#334155",fontSize:11,letterSpacing:2,display:"block",marginBottom:5}}>
               {t.choosePin}
             </label>
             <input
@@ -1093,7 +1093,7 @@ function ClientAuth({ onLogin, onBack, lang, setLang }) {
               style={{...inputStyle,letterSpacing:8,fontSize:22,textAlign:"center",marginBottom:14}}
             />
 
-            <label style={{color:"#475569",fontSize:11,letterSpacing:2,display:"block",marginBottom:5}}>
+            <label style={{color:"#334155",fontSize:11,letterSpacing:2,display:"block",marginBottom:5}}>
               {t.confirmPin}
             </label>
             <input
@@ -1118,7 +1118,7 @@ function ClientAuth({ onLogin, onBack, lang, setLang }) {
               <span style={{fontSize:18}}>🏷️</span>
               <div>
                 <div style={{color:"#38bdf8",fontSize:12,fontWeight:600}}>{t.discountBanner}</div>
-                <div style={{color:"#475569",fontSize:10,marginTop:1}}>{t.minFare}</div>
+                <div style={{color:"#334155",fontSize:10,marginTop:1}}>{t.minFare}</div>
               </div>
             </div>
 
@@ -1127,7 +1127,7 @@ function ClientAuth({ onLogin, onBack, lang, setLang }) {
             <button onClick={handleRegister} style={{
               width:"100%",background:"linear-gradient(135deg,#2563eb,#1d4ed8)",
               border:"none",borderRadius:12,padding:"14px 0",
-              color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer",marginBottom:10,
+              color:"#0f172a",fontSize:14,fontWeight:700,cursor:"pointer",marginBottom:10,
             }}>{t.createBtn}</button>
           </>
         )}
@@ -1135,7 +1135,7 @@ function ClientAuth({ onLogin, onBack, lang, setLang }) {
         {/* ── LOGIN ── */}
         {mode==="login"&&(
           <>
-            <label style={{color:"#475569",fontSize:11,letterSpacing:2,display:"block",marginBottom:5}}>EMAIL</label>
+            <label style={{color:"#334155",fontSize:11,letterSpacing:2,display:"block",marginBottom:5}}>EMAIL</label>
             <input type="email" value={email} onChange={e=>{setEmail(e.target.value);setError("");setPin("");}}
               placeholder={t.emailPlaceholder} autoCapitalize="none"
               style={{...inputStyle,marginBottom:14,
@@ -1151,7 +1151,7 @@ function ClientAuth({ onLogin, onBack, lang, setLang }) {
                 <div style={{color:"#22c55e",fontSize:11,marginBottom:14,display:"flex",alignItems:"center",gap:5}}>
                   <span>✓</span> Cuenta encontrada — introduce tu PIN
                 </div>
-                <label style={{color:"#475569",fontSize:11,letterSpacing:2,display:"block",marginBottom:5}}>
+                <label style={{color:"#334155",fontSize:11,letterSpacing:2,display:"block",marginBottom:5}}>
                   TU PIN DE 4 DÍGITOS
                 </label>
                 <input
@@ -1165,13 +1165,13 @@ function ClientAuth({ onLogin, onBack, lang, setLang }) {
                   style={{...inputStyle,letterSpacing:8,fontSize:22,textAlign:"center",marginBottom:8}}
                 />
                 {pin.length>0&&pin.length<4&&(
-                  <div style={{color:"#475569",fontSize:11,textAlign:"center",marginBottom:8}}>
+                  <div style={{color:"#334155",fontSize:11,textAlign:"center",marginBottom:8}}>
                     {4-pin.length} dígito{4-pin.length>1?"s":""} más...
                   </div>
                 )}
                 {/* Forgot PIN */}
                 <button onClick={()=>setShowRecovery(true)} style={{
-                  background:"none",border:"none",color:"#475569",fontSize:11,
+                  background:"none",border:"none",color:"#334155",fontSize:11,
                   cursor:"pointer",width:"100%",textAlign:"center",padding:"4px 0",marginBottom:10,
                   textDecoration:"underline",
                 }}>
@@ -1185,7 +1185,7 @@ function ClientAuth({ onLogin, onBack, lang, setLang }) {
 
         {onBack&&(
           <button onClick={onBack} style={{width:"100%",background:"none",border:"1px solid #e2e8f0",
-            borderRadius:12,padding:"11px 0",color:"#475569",fontSize:13,cursor:"pointer",marginTop:4}}>
+            borderRadius:12,padding:"11px 0",color:"#334155",fontSize:13,cursor:"pointer",marginTop:4}}>
             {lang==="en"?"← Back":"← Volver"}
           </button>
         )}
@@ -1204,7 +1204,7 @@ function ClientAuth({ onLogin, onBack, lang, setLang }) {
             animation:"slideUp 0.3s ease",
           }}>
             <div style={{width:40,height:4,background:"#cbd5e1",borderRadius:2,margin:"0 auto 14px"}}/>
-            <button onClick={()=>setShowRecovery(false)} style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",color:"#475569",fontSize:13,cursor:"pointer",padding:"0 0 14px",fontFamily:"inherit"}}>
+            <button onClick={()=>setShowRecovery(false)} style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",color:"#334155",fontSize:13,cursor:"pointer",padding:"0 0 14px",fontFamily:"inherit"}}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
               {lang==="en"?"Back":"Volver"}
             </button>
@@ -1213,19 +1213,19 @@ function ClientAuth({ onLogin, onBack, lang, setLang }) {
               <div style={{textAlign:"center",padding:"20px 0"}}>
                 <div style={{fontSize:48,marginBottom:12}}>✅</div>
                 <div style={{color:"#22c55e",fontSize:18,fontFamily:"'DM Sans',sans-serif"}}>PIN cambiado</div>
-                <div style={{color:"#475569",fontSize:13,marginTop:6}}>Ya puedes iniciar sesión con tu nuevo PIN</div>
+                <div style={{color:"#334155",fontSize:13,marginTop:6}}>Ya puedes iniciar sesión con tu nuevo PIN</div>
               </div>
             ) : (
               <>
                 <div style={{color:"#38bdf8",fontSize:11,letterSpacing:3,marginBottom:6}}>CAMBIAR PIN</div>
-                <div style={{color:"#f1f5f9",fontSize:15,fontFamily:"'DM Sans',sans-serif",marginBottom:4}}>
+                <div style={{color:"#0f172a",fontSize:15,fontFamily:"'DM Sans',sans-serif",marginBottom:4}}>
                   Establece un nuevo PIN de acceso
                 </div>
-                <div style={{color:"#475569",fontSize:11,marginBottom:18}}>
+                <div style={{color:"#334155",fontSize:11,marginBottom:18}}>
                   Cuenta: <span style={{color:"#38bdf8"}}>{email}</span>
                 </div>
 
-                <label style={{color:"#475569",fontSize:11,letterSpacing:2,display:"block",marginBottom:6}}>
+                <label style={{color:"#334155",fontSize:11,letterSpacing:2,display:"block",marginBottom:6}}>
                   NUEVO PIN DE 4 DÍGITOS
                 </label>
                 <input
@@ -1235,7 +1235,7 @@ function ClientAuth({ onLogin, onBack, lang, setLang }) {
                   style={{...inputStyle,letterSpacing:8,fontSize:22,textAlign:"center",marginBottom:14}}
                 />
 
-                <label style={{color:"#475569",fontSize:11,letterSpacing:2,display:"block",marginBottom:6}}>
+                <label style={{color:"#334155",fontSize:11,letterSpacing:2,display:"block",marginBottom:6}}>
                   CONFIRMA EL NUEVO PIN
                 </label>
                 <input
@@ -1254,7 +1254,7 @@ function ClientAuth({ onLogin, onBack, lang, setLang }) {
                 <button onClick={handleResetPin} style={{
                   width:"100%",background:"linear-gradient(135deg,#2563eb,#1d4ed8)",
                   border:"none",borderRadius:12,padding:"14px 0",
-                  color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer",
+                  color:"#0f172a",fontSize:14,fontWeight:700,cursor:"pointer",
                 }}>
                   Guardar nuevo PIN
                 </button>
@@ -1313,7 +1313,7 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
     <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"60vh",textAlign:"center"}}>
       <div style={{fontSize:56,marginBottom:16}}>✅</div>
       <div style={{color:"#38bdf8",fontSize:22,fontFamily:"'DM Sans',sans-serif",marginBottom:8}}>{t.sentTitle}</div>
-      <div style={{color:"#475569",fontSize:14}}>{t.sentSub}</div>
+      <div style={{color:"#334155",fontSize:14}}>{t.sentSub}</div>
     </div>
   );
 
@@ -1321,12 +1321,12 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
     <div style={{paddingBottom:80}}>
       {/* Offline banner */}
       {isOffline&&(
-        <div style={{background:"linear-gradient(135deg,#2a0808,#1a0505)",border:"2px solid #ef4444",borderRadius:14,padding:"14px 16px",marginBottom:14}}>
+        <div style={{background:"#fff0f0",border:"2px solid #ef4444",borderRadius:14,padding:"14px 16px",marginBottom:14}}>
           <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
             <div style={{width:10,height:10,borderRadius:"50%",background:"#ef4444",animation:"pulse 1s infinite"}}/>
             <span style={{color:"#ef4444",fontSize:13,fontWeight:700}}>🔴 SERVICIO NO DISPONIBLE</span>
           </div>
-          <div style={{color:"#f1f5f9",fontSize:13,lineHeight:1.5}}>
+          <div style={{color:"#0f172a",fontSize:13,fontWeight:700,lineHeight:1.5}}>
             El conductor está fuera de servicio.{serviceStatus?.lastActiveDate&&` Último día operativo: ${serviceStatus.lastActiveDate}.`}
             {serviceStatus?.returnDate&&` Regreso previsto: ${serviceStatus.returnDate}.`}
           </div>
@@ -1335,17 +1335,17 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
 
       {/* Last active date notice when online */}
       {!isOffline&&serviceStatus?.lastActiveDate&&(
-        <div style={{background:"linear-gradient(135deg,#1a1000,#e2e8f0)",border:"1.5px solid #f59e0b",borderRadius:12,padding:"10px 14px",marginBottom:14}}>
+        <div style={{background:"#fffbeb",border:"1.5px solid #f59e0b",borderRadius:12,padding:"10px 14px",marginBottom:14}}>
           <div style={{color:"#f59e0b",fontSize:12,fontWeight:700,marginBottom:3}}>⚠️ Aviso de disponibilidad</div>
-          <div style={{color:"#f1f5f9",fontSize:12}}>Servicio disponible hasta el <strong>{serviceStatus.lastActiveDate}</strong>. Reserva con antelación.{serviceStatus?.returnDate&&` Regreso: ${serviceStatus.returnDate}.`}</div>
+          <div style={{color:"#0f172a",fontSize:12}}>Servicio disponible hasta el <strong>{serviceStatus.lastActiveDate}</strong>. Reserva con antelación.{serviceStatus?.returnDate&&` Regreso: ${serviceStatus.returnDate}.`}</div>
         </div>
       )}
 
       {/* Driver status + Vehicle card */}
       {!isOffline&&(
         <div style={{
-          background:"linear-gradient(135deg,#0a0a0a,#1a1a1a)",
-          border:"1px solid #2563eb33",borderRadius:14,
+          background:"linear-gradient(135deg,#eff6ff,#dbeafe)",
+          border:"2px solid #2563eb44",borderRadius:14,
           padding:"14px 16px",marginBottom:14,
           position:"relative",overflow:"hidden",
         }}>
@@ -1356,7 +1356,7 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
             <div style={{display:"flex",alignItems:"center",gap:8}}>
               <div style={{width:7,height:7,borderRadius:"50%",background:driverStatus==="onroute"?"#ef4444":"#2563eb",animation:"pulse 1.5s infinite",flexShrink:0}}/>
-              <span style={{color:driverStatus==="onroute"?"#ef4444":"#38bdf8",fontSize:12,fontWeight:700,letterSpacing:0.5}}>
+              <span style={{color:driverStatus==="onroute"?"#ef4444":"#1d4ed8",fontSize:12,fontWeight:800,letterSpacing:0.5}}>
                 {driverStatus==="onroute"?t.onRoute:t.driverAvailable}
               </span>
             </div>
@@ -1373,8 +1373,8 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
             {/* Tesla T logo */}
             <div style={{
               width:42,height:42,borderRadius:10,
-              background:"linear-gradient(135deg,#111,#222)",
-              border:"1px solid #2563eb44",
+              background:"linear-gradient(135deg,#dbeafe,#bfdbfe)",
+              border:"1px solid #2563eb66",
               display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,
             }}>
               <svg width="22" height="22" viewBox="0 0 100 100" fill="none">
@@ -1385,15 +1385,15 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
             </div>
             <div style={{flex:1}}>
               <div style={{display:"flex",alignItems:"baseline",gap:6,marginBottom:3}}>
-                <span style={{color:"#f1f5f9",fontSize:15,fontFamily:"'DM Sans',sans-serif",fontWeight:700,letterSpacing:0.5}}>Tesla Model 3</span>
+                <span style={{color:"#0f172a",fontSize:16,fontFamily:"'DM Sans',sans-serif",fontWeight:800,letterSpacing:0.5}}>Tesla Model 3</span>
                 
               </div>
               <div style={{display:"flex",alignItems:"center",gap:6}}>
                 <div style={{width:12,height:12,borderRadius:"50%",background:"#f1f5f9",border:"1.5px solid #444",boxShadow:"inset 0 0 4px rgba(255,255,255,0.1)"}}/>
-                <span style={{color:"#475569",fontSize:11}}>{lang==="en"?"Midnight Black · Electric":"Negro Medianoche · Eléctrico"}</span>
+                <span style={{color:"#334155",fontSize:11}}>{lang==="en"?"Midnight Black · Electric":"Negro Medianoche · Eléctrico"}</span>
                 <div style={{display:"flex",alignItems:"center",gap:8,marginTop:5,flexWrap:"wrap"}}>
                   <span style={{color:"#2563eb",fontSize:12,fontWeight:700,letterSpacing:2,background:"#2563eb15",border:"1px solid #2563eb44",borderRadius:6,padding:"2px 8px"}}>🔲 5361MZC</span>
-                  <span style={{color:"#475569",fontSize:11}}>· Sebastián Echevarría</span>
+                  <span style={{color:"#334155",fontSize:11}}>· Sebastián Echevarría</span>
                 </div>
               </div>
             </div>
@@ -1444,7 +1444,7 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
             <div style={{padding:"10px 16px 0",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
               <div style={{display:"flex",alignItems:"center",gap:7}}>
                 <div style={{width:8,height:8,borderRadius:"50%",background:isArrived?"#22c55e":urgency?"#f59e0b":"#2563eb",animation:"pulse 1s infinite",flexShrink:0}}/>
-                <span style={{color:"#475569",fontSize:10,letterSpacing:2,fontWeight:600}}>
+                <span style={{color:"#334155",fontSize:10,letterSpacing:2,fontWeight:600}}>
                   {isArrived?"🚗 CONDUCTOR LLEGÓ":"PRÓXIMO VIAJE"}
                 </span>
               </div>
@@ -1453,9 +1453,9 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
               </span>
             </div>
             <div style={{padding:"10px 16px 0"}}>
-              <div style={{color:"#f1f5f9",fontSize:16,fontFamily:"'DM Sans',sans-serif",fontWeight:700,marginBottom:4}}>{upcoming.date} · {upcoming.time}</div>
-              <div style={{color:"#475569",fontSize:11,marginBottom:2}}><span style={{color:"#2563eb"}}>▶ </span>{upcoming.origin}</div>
-              <div style={{color:"#475569",fontSize:11,marginBottom:10}}><span style={{color:"#3b82f6"}}>■ </span>{upcoming.destination}</div>
+              <div style={{color:"#0f172a",fontSize:16,fontFamily:"'DM Sans',sans-serif",fontWeight:800,marginBottom:4}}>{upcoming.date} · {upcoming.time}</div>
+              <div style={{color:"#334155",fontSize:11,marginBottom:2}}><span style={{color:"#2563eb"}}>▶ </span>{upcoming.origin}</div>
+              <div style={{color:"#334155",fontSize:11,marginBottom:10}}><span style={{color:"#3b82f6"}}>■ </span>{upcoming.destination}</div>
             </div>
             {/* ── TRIP INFO ── */}
             {(()=>{
@@ -1468,8 +1468,8 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
               const arrStr3=`${String(arr3.getHours()).padStart(2,"0")}:${String(arr3.getMinutes()).padStart(2,"0")}`;
               return(
                 <div style={{display:"flex",justifyContent:"space-between",background:"#f1f5f9",border:"1px solid #cbd5e1",borderRadius:10,padding:"7px 12px",margin:"0 12px 8px"}}>
-                  <div style={{display:"flex",alignItems:"center",gap:4}}><span>🗺️</span><span style={{color:"#475569",fontSize:11}}>{km3} km</span></div>
-                  <div style={{display:"flex",alignItems:"center",gap:4}}><span>⏱️</span><span style={{color:"#475569",fontSize:11}}>~{dur3} min</span></div>
+                  <div style={{display:"flex",alignItems:"center",gap:4}}><span>🗺️</span><span style={{color:"#334155",fontSize:11}}>{km3} km</span></div>
+                  <div style={{display:"flex",alignItems:"center",gap:4}}><span>⏱️</span><span style={{color:"#334155",fontSize:11}}>~{dur3} min</span></div>
                   <div style={{display:"flex",alignItems:"center",gap:4}}><span>🏁</span><span style={{color:"#2563eb",fontSize:11,fontWeight:700}}>~{arrStr3}</span></div>
                   <a href={`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(upcoming.origin)}&destination=${encodeURIComponent(upcoming.destination)}`} target="_blank" rel="noopener noreferrer" style={{background:"#cbd5e1",border:"1px solid #3b82f655",borderRadius:6,padding:"3px 8px",color:"#3b82f6",fontSize:10,fontWeight:700,textDecoration:"none",flexShrink:0}}>{lang==="en"?"Route":"Ver ruta"}</a>
                 </div>
@@ -1478,22 +1478,22 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
             <div style={{margin:"0 12px 12px",display:"flex",gap:8}}>
               {!isArrived&&(
                 <div style={{flex:1,background:isOngoing?"#22c55e12":urgency?"#f59e0b12":"#2563eb10",borderRadius:12,padding:"10px 14px"}}>
-                  <div style={{color:"#475569",fontSize:9,letterSpacing:2,marginBottom:3}}>{isOngoing?(lang==="en"?"IN PROGRESS":"EN CURSO"):(lang==="en"?"TIME REMAINING":"TIEMPO RESTANTE")}</div>
+                  <div style={{color:"#334155",fontSize:9,letterSpacing:2,marginBottom:3}}>{isOngoing?(lang==="en"?"IN PROGRESS":"EN CURSO"):(lang==="en"?"TIME REMAINING":"TIEMPO RESTANTE")}</div>
                   <div style={{color:isOngoing?"#22c55e":urgency?"#f59e0b":"#f1f5f9",fontSize:26,fontFamily:"'DM Sans',sans-serif",fontWeight:700,letterSpacing:2}}>{countdownStr}</div>
                 </div>
               )}
               {isArrived&&(
                 <div style={{flex:1,background:"#22c55e12",borderRadius:12,padding:"10px 14px",border:"1.5px solid #22c55e44"}}>
                   <div style={{color:"#22c55e",fontSize:11,fontWeight:700,marginBottom:2}}>🚗 Conductor esperando</div>
-                  <div style={{color:"#475569",fontSize:9,marginBottom:3}}>ESPERA HASTA LAS {String(new Date(waitEndMs).getHours()).padStart(2,"0")}:{String(new Date(waitEndMs).getMinutes()).padStart(2,"0")}</div>
+                  <div style={{color:"#334155",fontSize:9,marginBottom:3}}>ESPERA HASTA LAS {String(new Date(waitEndMs).getHours()).padStart(2,"0")}:{String(new Date(waitEndMs).getMinutes()).padStart(2,"0")}</div>
                   <div style={{color:wSecs<120?"#ef4444":"#22c55e",fontSize:24,fontFamily:"'DM Sans',sans-serif",fontWeight:700,letterSpacing:2}}>{pad(wMins)}:{pad(wSecsR)}</div>
                   {wSecs===0&&<div style={{color:"#ef4444",fontSize:10,fontWeight:700,marginTop:4}}>⚠️ Tiempo de espera agotado</div>}
                 </div>
               )}
               {basePrice>0&&(
                 <div style={{background:"#2563eb10",borderRadius:12,padding:"10px 14px",textAlign:"right",flexShrink:0}}>
-                  <div style={{color:"#475569",fontSize:9,marginBottom:2}}>{lang==="en"?"FARE":"TARIFA"}</div>
-                  <div style={{color:"#475569",fontSize:11,textDecoration:"line-through"}}>{basePrice} €</div>
+                  <div style={{color:"#334155",fontSize:9,marginBottom:2}}>{lang==="en"?"FARE":"TARIFA"}</div>
+                  <div style={{color:"#334155",fontSize:11,textDecoration:"line-through"}}>{basePrice} €</div>
                   <div style={{color:"#2563eb",fontSize:20,fontFamily:"'DM Sans',sans-serif",fontWeight:700}}>{discountedPrice} €</div>
                   <div style={{color:"#22c55e",fontSize:9,fontWeight:700}}>-{Math.round(DISCOUNT_RATE*100)}% VIP</div>
                 </div>
@@ -1503,16 +1503,16 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
               <button onClick={()=>setChatBooking(upcoming)} style={{
                 width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8,
                 background:"linear-gradient(135deg,#1e0a3e,#e2e8f0)",border:"1px solid #a78bfa55",
-                borderRadius:10,padding:"10px 0",color:"#a78bfa",fontSize:12,fontWeight:700,cursor:"pointer",
+                borderRadius:10,padding:"12px 0",color:"#ffffff",fontSize:13,fontWeight:800,cursor:"pointer",background:"linear-gradient(135deg,#7c3aed,#6d28d9)",border:"none",
               }}>💬 {lang==="en"?"Chat with driver":"Chat con el conductor"}</button>
               {/* Cancel with double confirmation */}
               {cancelConfirm===upcoming.id?(
                 <div style={{background:"linear-gradient(135deg,#2a0808,#e2e8f0)",border:"2px solid #ef4444",borderRadius:12,padding:"14px"}}>
-                  <div style={{color:"#f1f5f9",fontSize:13,fontWeight:700,textAlign:"center",marginBottom:4}}>{lang==="en"?"⚠️ Confirm cancellation?":"⚠️ ¿Confirmas la cancelación?"}</div>
-                  <div style={{color:"#475569",fontSize:11,textAlign:"center",marginBottom:12}}>{lang==="en"?"This cannot be undone":"Esta acción no se puede deshacer"}</div>
+                  <div style={{color:"#0f172a",fontSize:13,fontWeight:700,textAlign:"center",marginBottom:4}}>{lang==="en"?"⚠️ Confirm cancellation?":"⚠️ ¿Confirmas la cancelación?"}</div>
+                  <div style={{color:"#334155",fontSize:11,textAlign:"center",marginBottom:12}}>{lang==="en"?"This cannot be undone":"Esta acción no se puede deshacer"}</div>
                   <div style={{display:"flex",gap:8}}>
-                    <button onClick={()=>setCancelConfirm(null)} style={{flex:1,background:"#e2e8f0",border:"1px solid #475569",borderRadius:8,padding:"10px 0",color:"#475569",fontSize:12,fontWeight:600,cursor:"pointer"}}>{lang==="en"?"Go back":"No, volver"}</button>
-                    <button onClick={()=>{handleClientCancelTrip&&handleClientCancelTrip(upcoming.id);setCancelConfirm(null);}} style={{flex:1,background:"linear-gradient(135deg,#ef4444,#b91c1c)",border:"none",borderRadius:8,padding:"10px 0",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>{lang==="en"?"Yes, cancel":"Sí, cancelar"}</button>
+                    <button onClick={()=>setCancelConfirm(null)} style={{flex:1,background:"#e2e8f0",border:"1px solid #475569",borderRadius:8,padding:"10px 0",color:"#334155",fontSize:12,fontWeight:600,cursor:"pointer"}}>{lang==="en"?"Go back":"No, volver"}</button>
+                    <button onClick={()=>{handleClientCancelTrip&&handleClientCancelTrip(upcoming.id);setCancelConfirm(null);}} style={{flex:1,background:"linear-gradient(135deg,#ef4444,#b91c1c)",border:"none",borderRadius:8,padding:"10px 0",color:"#0f172a",fontSize:12,fontWeight:700,cursor:"pointer"}}>{lang==="en"?"Yes, cancel":"Sí, cancelar"}</button>
                   </div>
                 </div>
               ):(
@@ -1531,7 +1531,7 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
         <span style={{fontSize:20}}>🏷️</span>
         <div>
           <div style={{color:"#38bdf8",fontSize:13,fontWeight:700}}>{t.discount15}</div>
-          <div style={{color:"#475569",fontSize:11}}>{t.autoDiscount}</div>
+          <div style={{color:"#334155",fontSize:11}}>{t.autoDiscount}</div>
         </div>
       </div>
 
@@ -1549,9 +1549,9 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
       {/* ── AVAILABILITY TAB ── */}
       {tab==="avail"&&(
         <div>
-          <div style={{color:"#475569",fontSize:10,letterSpacing:3,marginBottom:12}}>{t.sectionAvail}</div>
+          <div style={{color:"#334155",fontSize:10,letterSpacing:3,marginBottom:12}}>{t.sectionAvail}</div>
           <input type="date" value={form.date} onChange={e=>setForm({...form,date:e.target.value,time:""})}
-            style={{background:"#e2e8f0",border:"1px solid #cbd5e1",borderRadius:10,color:"#f1f5f9",fontSize:13,padding:"9px 14px",outline:"none",colorScheme:"dark",width:"100%",boxSizing:"border-box",marginBottom:14}}/>
+            style={{background:"#f8fafc",border:"2px solid #2563eb44",borderRadius:10,color:"#0f172a",fontSize:14,fontWeight:700,padding:"10px 14px",outline:"none",colorScheme:"light",width:"100%",boxSizing:"border-box",marginBottom:14}}/>
           <div style={{background:"#f1f5f9",borderRadius:14,overflow:"hidden",border:"1px solid #cbd5e1"}}>
             {Array.from({length:65},(_,i)=>i).map(i=>{
               const totalMins=6*60+i*15; if(totalMins>22*60)return null;
@@ -1572,7 +1572,7 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
                   background:occupied?"linear-gradient(90deg,#2a0000,#1a0000)":isDriverBlocked?"linear-gradient(90deg,#2a0505,#111)":"transparent",
                 }}>
                   <div style={{width:52,flexShrink:0,padding:"0 10px",borderRight:`1px solid ${isHour?"#222":"#181818"}`,display:"flex",alignItems:"center"}}>
-                    <span style={{color:isHour?"#ffffff":isHalfHour?"#e2e8f0":"#cbd5e1",fontSize:isHour?12:10,fontWeight:isHour?700:400}}>{slotTime}</span>
+                    <span style={{color:isHour?"#0f172a":isHalfHour?"#334155":"#475569",fontSize:isHour?13:11,fontWeight:700}}>{slotTime}</span>
                   </div>
                   <div style={{flex:1,padding:"0 10px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                     {occupied&&<span style={{color:"#ef4444",fontSize:10,fontWeight:600}}>{t.occupied}</span>}
@@ -1580,7 +1580,7 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
                     {isFree&&(isHour||isHalfHour)&&!isOffline&&(
                       <button onClick={()=>{setForm(f=>({...f,time:slotTime}));setTab("new");}} style={{
                         background:"linear-gradient(135deg,#2563eb,#1d4ed8)",border:"none",borderRadius:7,
-                        color:"#fff",fontSize:isHour?11:10,fontWeight:700,padding:isHour?"5px 12px":"3px 10px",cursor:"pointer",
+                        color:"#ffffff",fontSize:isHour?11:10,fontWeight:700,padding:isHour?"5px 12px":"3px 10px",cursor:"pointer",
                       }}>{t.reserveBtn}</button>
                     )}
                   </div>
@@ -1610,16 +1610,16 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
                 </div>
                 <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8}}>
                   <div style={{background:"#f1f5f9",borderRadius:10,padding:"10px 8px",textAlign:"center"}}>
-                    <div style={{color:"#f1f5f9",fontSize:20,fontFamily:"'DM Sans',sans-serif",fontWeight:700}}>{done.length}</div>
-                    <div style={{color:"#475569",fontSize:9,letterSpacing:1}}>{lang==="en"?"TRIPS":"VIAJES"}</div>
+                    <div style={{color:"#0f172a",fontSize:20,fontFamily:"'DM Sans',sans-serif",fontWeight:700}}>{done.length}</div>
+                    <div style={{color:"#334155",fontSize:9,letterSpacing:1}}>{lang==="en"?"TRIPS":"VIAJES"}</div>
                   </div>
                   <div style={{background:"#f1f5f9",borderRadius:10,padding:"10px 8px",textAlign:"center"}}>
                     <div style={{color:"#2563eb",fontSize:20,fontFamily:"'DM Sans',sans-serif",fontWeight:700}}>{fmt(totalSpent)}</div>
-                    <div style={{color:"#475569",fontSize:9,letterSpacing:1}}>{lang==="en"?"€ SPENT":"€ GASTADO"}</div>
+                    <div style={{color:"#334155",fontSize:9,letterSpacing:1}}>{lang==="en"?"€ SPENT":"€ GASTADO"}</div>
                   </div>
                   <div style={{background:"#f1f5f9",borderRadius:10,padding:"10px 8px",textAlign:"center"}}>
                     <div style={{color:"#22c55e",fontSize:20,fontFamily:"'DM Sans',sans-serif",fontWeight:700}}>{fmt(totalSaved)}</div>
-                    <div style={{color:"#475569",fontSize:9,letterSpacing:1}}>{lang==="en"?"€ SAVED":"€ AHORRADO"}</div>
+                    <div style={{color:"#334155",fontSize:9,letterSpacing:1}}>{lang==="en"?"€ SAVED":"€ AHORRADO"}</div>
                   </div>
                 </div>
               </div>
@@ -1634,8 +1634,8 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
             t={t}
             onBook={r=>{setTab("new");setForm(fm=>({...fm,origin:r.origin,destination:r.destination}));}}
           />
-                    <div style={{color:"#475569",fontSize:11,letterSpacing:3,marginBottom:12}}>{t.myTripsSection}</div>
-          {myBookings.length===0&&<div style={{color:"#475569",fontSize:13,textAlign:"center",padding:"32px 0"}}>{t.noTrips}</div>}
+                    <div style={{color:"#334155",fontSize:11,letterSpacing:3,marginBottom:12}}>{t.myTripsSection}</div>
+          {myBookings.length===0&&<div style={{color:"#334155",fontSize:13,textAlign:"center",padding:"32px 0"}}>{t.noTrips}</div>}
           {(()=>{
             const active=myBookings.filter(b=>!["completed","cancelled","client_rejected","rejected"].includes(b.status)).sort((a,b)=>{const o={inprogress:0,confirmed:1,price_proposed:2,pending:3};return(o[a.status]??3)-(o[b.status]??3);});
             const hist=myBookings.filter(b=>["completed","cancelled","client_rejected","rejected"].includes(b.status)).sort((a,b)=>(b.date||"").localeCompare(a.date||""));
@@ -1649,18 +1649,18 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
               borderLeft:"3px solid "+statusColor(b.status),
             }}>
               <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
-                <span style={{color:"#f1f5f9",fontSize:14,fontFamily:"'DM Sans',sans-serif"}}>{b.guest}</span>
+                <span style={{color:"#0f172a",fontSize:14,fontFamily:"'DM Sans',sans-serif"}}>{b.guest}</span>
                 <span style={{fontSize:10,padding:"2px 8px",borderRadius:4,background:`${statusColor(b.status)}22`,color:statusColor(b.status)}}>{statusLabel(b.status,t).toUpperCase()}</span>
               </div>
-              <div style={{color:"#475569",fontSize:12,marginBottom:6}}>{b.date} · {b.time} · {b.passengers} pax</div>
-              <div style={{color:"#475569",fontSize:11,marginBottom:4}}>📍 {b.origin}</div>
-              <div style={{color:"#475569",fontSize:11,marginBottom:8}}>🏁 {b.destination}</div>
+              <div style={{color:"#334155",fontSize:12,marginBottom:6}}>{b.date} · {b.time} · {b.passengers} pax</div>
+              <div style={{color:"#334155",fontSize:11,marginBottom:4}}>📍 {b.origin}</div>
+              <div style={{color:"#334155",fontSize:11,marginBottom:8}}>🏁 {b.destination}</div>
               {/* Fare with discount */}
               {b.fare&&(
                 <div style={{background:"#f1f5f9",borderRadius:8,padding:"8px 12px",marginBottom:8}}>
                   <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-                    <span style={{color:"#475569",fontSize:11}}>{t.priceBase2}</span>
-                    <span style={{color:"#475569",fontSize:12,textDecoration:"line-through"}}>{fmt(b.fare)} €</span>
+                    <span style={{color:"#334155",fontSize:11}}>{t.priceBase2}</span>
+                    <span style={{color:"#334155",fontSize:12,textDecoration:"line-through"}}>{fmt(b.fare)} €</span>
                   </div>
                   <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
                     <span style={{color:"#2563eb",fontSize:11}}>{lang==="en"?"🏷️ 15% VIP discount":"🏷️ Descuento 15% VIP"}</span>
@@ -1668,7 +1668,7 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
                   </div>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:6,borderTop:"1px solid #22c55e33",marginTop:4,background:"#22c55e0d",borderRadius:8,padding:"8px 8px"}}>
                     <span style={{color:"#22c55e",fontSize:14,fontWeight:800,letterSpacing:0.3}}>{lang==="en"?"💶 YOUR PRICE":"💶 TU PRECIO"}</span>
-                    <span style={{color:"#22c55e",fontSize:22,fontFamily:"'DM Sans',sans-serif",fontWeight:800}}>{fmt(b.fare*(1-DISCOUNT_RATE))} €</span>
+                    <span style={{color:"#16a34a",fontSize:22,fontFamily:"'DM Sans',sans-serif",fontWeight:800}}>{fmt(b.fare*(1-DISCOUNT_RATE))} €</span>
                   </div>
                 </div>
               )}
@@ -1683,11 +1683,11 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
                   <div style={{display:"flex",justifyContent:"space-between",background:"#f1f5f9",border:"1px solid #cbd5e1",borderRadius:10,padding:"8px 12px",marginTop:8}}>
                     <div style={{display:"flex",alignItems:"center",gap:5}}>
                       <span>🗺️</span>
-                      <span style={{color:"#475569",fontSize:11}}>{km} km</span>
+                      <span style={{color:"#334155",fontSize:11}}>{km} km</span>
                     </div>
                     <div style={{display:"flex",alignItems:"center",gap:5}}>
                       <span>⏱️</span>
-                      <span style={{color:"#475569",fontSize:11}}>~{durationMin} min</span>
+                      <span style={{color:"#334155",fontSize:11}}>~{durationMin} min</span>
                     </div>
                     <div style={{display:"flex",alignItems:"center",gap:5}}>
                       <span>🏁</span>
@@ -1720,10 +1720,10 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
                       display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,
                     }}>💶</div>
                     <div>
-                      <div style={{color:"#f1f5f9",fontSize:12,fontWeight:600,marginBottom:3}}>
+                      <div style={{color:"#0f172a",fontSize:12,fontWeight:600,marginBottom:3}}>
                         {lang==="en"?"Price pending driver review":"Precio pendiente de revisión"}
                       </div>
-                      <div style={{color:"#475569",fontSize:11,lineHeight:1.4}}>
+                      <div style={{color:"#334155",fontSize:11,lineHeight:1.4}}>
                         {lang==="en"
                           ?"The driver will review your route and propose a final price. You'll be able to accept or reject it."
                           :"El conductor revisará tu ruta y propondrá un precio final. Podrás aceptarlo o rechazarlo."}
@@ -1763,10 +1763,10 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
                   <div style={{background:"#f1f5f9",borderRadius:10,padding:"12px 14px",marginBottom:12}}>
                     {/* Original price */}
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                      <span style={{color:"#f1f5f9",fontSize:12}}>
+                      <span style={{color:"#0f172a",fontSize:12}}>
                         {lang==="en"?"Standard price":"Precio estándar"}
                       </span>
-                      <span style={{color:"#94a3b8",fontSize:15,textDecoration:"line-through",fontFamily:"'DM Sans',sans-serif"}}>
+                      <span style={{color:"#475569",fontSize:15,textDecoration:"line-through",fontFamily:"'DM Sans',sans-serif"}}>
                         {fmt(b.proposedPrice)} €
                       </span>
                     </div>
@@ -1790,7 +1790,7 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
                         <div style={{color:"#a78bfa",fontSize:11,fontWeight:700,letterSpacing:1,marginBottom:2}}>
                           {lang==="en"?"YOU PAY":"PAGAS TÚ"}
                         </div>
-                        <div style={{color:"#475569",fontSize:9}}>
+                        <div style={{color:"#334155",fontSize:9}}>
                           {lang==="en"?"Conductor profesional · Private Transfers":"Professional driver · Private Transfers"}
                         </div>
                       </div>
@@ -1817,7 +1817,7 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
                         <div style={{color:"#a78bfa",fontSize:9,letterSpacing:1,marginBottom:2}}>
                           {lang==="en"?"NOTE FROM DRIVER":"NOTA DEL CONDUCTOR"}
                         </div>
-                        <div style={{color:"#f1f5f9",fontSize:12,fontStyle:"italic"}}>
+                        <div style={{color:"#0f172a",fontSize:12,fontStyle:"italic"}}>
                           "{b.proposedNote}"
                         </div>
                       </div>
@@ -1835,7 +1835,7 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
               {b.status==="confirmed"&&<div style={{fontSize:11,color:"#2563eb"}}>✅ {t.confirmed}</div>}
               {(b.status==="confirmed"||b.status==="inprogress")&&b.notes&&(
                 <div style={{marginTop:8,background:"#f1f5f9",border:"1px solid #2563eb22",borderRadius:10,padding:"10px 12px"}}>
-                  <div style={{color:"#475569",fontSize:9,letterSpacing:2,marginBottom:4}}>{lang==="en"?"YOUR NOTES":"TUS NOTAS"}</div>
+                  <div style={{color:"#334155",fontSize:9,letterSpacing:2,marginBottom:4}}>{lang==="en"?"YOUR NOTES":"TUS NOTAS"}</div>
                   <div style={{color:"#38bdf8",fontSize:12}}>📋 {b.notes}</div>
                 </div>
               )}
@@ -1846,7 +1846,7 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
                   {/* Rating */}
                   {!b.rating ? (
                     <div style={{background:"#f1f5f9",border:"1px solid #2563eb22",borderRadius:10,padding:"10px 12px"}}>
-                      <div style={{color:"#475569",fontSize:10,letterSpacing:1,marginBottom:8,textAlign:"center"}}>
+                      <div style={{color:"#334155",fontSize:10,letterSpacing:1,marginBottom:8,textAlign:"center"}}>
                         {lang==="en"?"Rate your experience":"Valora tu experiencia"}
                       </div>
                       <div style={{display:"flex",justifyContent:"center",gap:6}}>
@@ -1869,7 +1869,7 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
                   ) : (
                     <div style={{display:"flex",alignItems:"center",gap:6,padding:"6px 10px",background:"#f1f5f9",borderRadius:8}}>
                       <span style={{fontSize:14}}>{"⭐".repeat(b.rating)}</span>
-                      <span style={{color:"#475569",fontSize:10}}>{lang==="en"?"Your rating":"Tu valoración"}</span>
+                      <span style={{color:"#334155",fontSize:10}}>{lang==="en"?"Your rating":"Tu valoración"}</span>
                     </div>
                   )}
                 </div>
@@ -1897,11 +1897,11 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
               <button onClick={()=>{onMarkRead&&onMarkRead(String(b.id),(messages[String(b.id)]||[]).length);setChatBooking(b);}} style={{
                 display:"flex",alignItems:"center",justifyContent:"center",gap:6,
                 width:"100%",marginTop:8,background:"#f1f5f9",border:"1px solid #cbd5e1",
-                borderRadius:8,padding:"7px 0",cursor:"pointer",color:"#475569",fontSize:12,fontWeight:600,position:"relative",
+                borderRadius:8,padding:"7px 0",cursor:"pointer",color:"#334155",fontSize:12,fontWeight:600,position:"relative",
               }}>
                 {t.chat}
                 {(messages[String(b.id)]||[]).filter(m=>m.from==="driver").length>0&&(
-                  <span style={{position:"absolute",top:-4,right:8,background:"#ef4444",borderRadius:10,padding:"1px 6px",fontSize:9,color:"#fff",fontWeight:700}}>
+                  <span style={{position:"absolute",top:-4,right:8,background:"#ef4444",borderRadius:10,padding:"1px 6px",fontSize:9,color:"#0f172a",fontWeight:700}}>
                     {(messages[String(b.id)]||[]).filter(m=>m.from==="driver").length}
                   </span>
                 )}
@@ -1910,20 +1910,20 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
           ))}
             {hist.length>0&&<>
               <button onClick={()=>setHistoryOpen(o=>!o)} style={{background:"none",border:"none",cursor:"pointer",padding:"8px 0",display:"flex",alignItems:"center",gap:8,width:"100%",marginTop:8}}>
-                <span style={{color:"#475569",fontSize:11,letterSpacing:3}}>{lang==="en"?"TRIP HISTORY":"HISTORIAL DE VIAJES"}</span>
-                <span style={{background:"#e2e8f0",borderRadius:10,padding:"2px 8px",fontSize:10,color:"#475569"}}>{hist.length}</span>
-                <span style={{color:"#475569",fontSize:12,marginLeft:"auto"}}>{historyOpen?"▲":"▼"}</span>
+                <span style={{color:"#334155",fontSize:11,letterSpacing:3}}>{lang==="en"?"TRIP HISTORY":"HISTORIAL DE VIAJES"}</span>
+                <span style={{background:"#e2e8f0",borderRadius:10,padding:"2px 8px",fontSize:10,color:"#334155"}}>{hist.length}</span>
+                <span style={{color:"#334155",fontSize:12,marginLeft:"auto"}}>{historyOpen?"▲":"▼"}</span>
               </button>
               {historyOpen&&hist.map(b=>{
                 const done=b.status==="completed";
                 return(<div key={b.id} style={{background:"#f1f5f9",borderRadius:10,padding:"10px 14px",marginBottom:6,borderLeft:"3px solid "+(done?"#22c55e":"#f97316"),opacity:0.85}}>
                   <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-                    <span style={{color:"#f1f5f9",fontSize:12,fontFamily:"'DM Sans',sans-serif"}}>{b.guest}</span>
+                    <span style={{color:"#0f172a",fontSize:12,fontFamily:"'DM Sans',sans-serif"}}>{b.guest}</span>
                     <span style={{color:done?"#22c55e":"#f97316",fontSize:9,fontWeight:700}}>{done?lang==="en"?"✅ DONE":"✅ COMPLETADO":lang==="en"?"✕ CANCELLED":"✕ CANCELADO"}</span>
                   </div>
-                  <div style={{color:"#475569",fontSize:10}}>{b.date} · {b.time}</div>
-                  <div style={{color:"#475569",fontSize:10}}>📍 {b.origin}</div>
-                  <div style={{color:"#475569",fontSize:10}}>🏁 {b.destination}</div>
+                  <div style={{color:"#334155",fontSize:10}}>{b.date} · {b.time}</div>
+                  <div style={{color:"#334155",fontSize:10}}>📍 {b.origin}</div>
+                  <div style={{color:"#334155",fontSize:10}}>🏁 {b.destination}</div>
                   {done&&b.fare&&<div style={{color:"#2563eb",fontSize:11,fontWeight:600,marginTop:4}}>💶 {fmt(b.fare*(1-DISCOUNT_RATE))} €</div>}
                 </div>);
               })}
@@ -1935,27 +1935,27 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
       {/* ── NEW BOOKING TAB ── */}
       {tab==="new"&&(
         <div>
-          <div style={{color:"#38bdf8",fontSize:18,fontFamily:"'DM Sans',sans-serif",marginBottom:18}}>{t.newBookingTitle}</div>
+          <div style={{color:"#1d4ed8",fontSize:20,fontFamily:"'DM Sans',sans-serif",marginBottom:18}}>{t.newBookingTitle}</div>
 
           {form.time&&(
             <div style={{background:"#f1f5f9",border:"1px solid #2563eb44",borderRadius:12,padding:"14px 16px",marginBottom:18,textAlign:"center"}}>
-              <div style={{color:"#475569",fontSize:10,letterSpacing:2,marginBottom:6}}>{t.selectedTime}</div>
+              <div style={{color:"#334155",fontSize:10,letterSpacing:2,marginBottom:6}}>{t.selectedTime}</div>
               <div style={{color:"#38bdf8",fontSize:36,fontFamily:"'DM Sans',sans-serif",fontWeight:700,lineHeight:1}}>{form.time}</div>
-              <div style={{color:"#475569",fontSize:11,marginTop:4}}>{form.date}</div>
+              <div style={{color:"#334155",fontSize:11,marginTop:4}}>{form.date}</div>
             </div>
           )}
 
           <div style={{marginBottom:14}}>
-            <label style={{color:"#475569",fontSize:11,letterSpacing:2,display:"block",marginBottom:5}}>{t.passengerName}</label>
+            <label style={{color:"#334155",fontSize:11,letterSpacing:2,display:"block",marginBottom:5}}>{t.passengerName}</label>
             <input value={form.guest} onChange={e=>setForm({...form,guest:e.target.value})} style={inputStyle}/>
           </div>
           <div style={{marginBottom:14}}>
-            <label style={{color:"#475569",fontSize:11,letterSpacing:2,display:"block",marginBottom:5}}>{t.phone}</label>
+            <label style={{color:"#334155",fontSize:11,letterSpacing:2,display:"block",marginBottom:5}}>{t.phone}</label>
             <input type="tel" value={form.guestPhone} placeholder={t.phonePlaceholder} onChange={e=>setForm({...form,guestPhone:e.target.value})} style={inputStyle}/>
           </div>
           <div style={{marginBottom:14}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
-              <label style={{color:"#475569",fontSize:11,letterSpacing:2}}>{t.origin}</label>
+              <label style={{color:"#334155",fontSize:11,letterSpacing:2}}>{t.origin}</label>
               <button onClick={()=>getLocation(addr=>setForm(f=>({...f,origin:addr})))} disabled={geoLoading} style={{
                 background:"none",border:"none",cursor:geoLoading?"default":"pointer",padding:0,
                 display:"flex",alignItems:"center",gap:4,
@@ -1968,13 +1968,13 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
             <input value={form.origin} placeholder={t.originPlaceholder} onChange={e=>setForm({...form,origin:e.target.value})} style={inputStyle}/>
           </div>
           <div style={{marginBottom:14}}>
-            <label style={{color:"#475569",fontSize:11,letterSpacing:2,display:"block",marginBottom:5}}>{t.destination}</label>
+            <label style={{color:"#334155",fontSize:11,letterSpacing:2,display:"block",marginBottom:5}}>{t.destination}</label>
             <input value={form.destination} placeholder={t.destPlaceholder} onChange={e=>setForm({...form,destination:e.target.value})} style={inputStyle}/>
           </div>
           <TripEstimateBox origin={form.origin} destination={form.destination}/>
           <DistancePriceCalcClient origin={form.origin} destination={form.destination} pricePerKm={pricePerKm} onPriceCalculated={(price,km,durMin)=>setForm(f=>({...f,fare:price,tripKm:km,durationMin:durMin}))}/>
           <div style={{marginBottom:14}}>
-            <label style={{color:"#475569",fontSize:11,letterSpacing:2,display:"block",marginBottom:5}}>{t.passengers}</label>
+            <label style={{color:"#334155",fontSize:11,letterSpacing:2,display:"block",marginBottom:5}}>{t.passengers}</label>
             <div style={{display:"flex",gap:8}}>
               {[1,2,3,4].map(n=>(
                 <button key={n} onClick={()=>setForm({...form,passengers:n})} style={{flex:1,height:46,borderRadius:10,border:"none",cursor:"pointer",
@@ -1985,7 +1985,7 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
           </div>
 
           <div style={{marginBottom:14}}>
-            <label style={{color:"#475569",fontSize:11,letterSpacing:2,display:"block",marginBottom:5}}>{t.notes}</label>
+            <label style={{color:"#334155",fontSize:11,letterSpacing:2,display:"block",marginBottom:5}}>{t.notes}</label>
             <input value={form.notes} placeholder={t.notesPlaceholder} onChange={e=>setForm({...form,notes:e.target.value})} style={inputStyle}/>
           </div>
 
@@ -1996,7 +1996,7 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
               <div style={{color:"#38bdf8",fontSize:13,fontWeight:600,marginBottom:4}}>
                 {lang==="en"?"Price confirmation":"Confirmación de precio"}
               </div>
-              <div style={{color:"#475569",fontSize:12,lineHeight:1.5}}>
+              <div style={{color:"#334155",fontSize:12,lineHeight:1.5}}>
                 {lang==="en"
                   ? "After sending your request, the driver will review the route and propose a price. You will be able to accept or reject it."
                   : "Tras enviar tu solicitud, el conductor revisará la ruta y te propondrá un precio. Podrás aceptarlo o rechazarlo."}
@@ -2005,7 +2005,7 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
           </div>
 
           <div style={{marginBottom:14}}>
-            <label style={{color:"#475569",fontSize:11,letterSpacing:2,display:"block",marginBottom:8}}>{t.payment}</label>
+            <label style={{color:"#334155",fontSize:11,letterSpacing:2,display:"block",marginBottom:8}}>{t.payment}</label>
             <div style={{display:"flex",gap:8}}>
               {[{id:"cash",icon:"💵",label:t.cash,en:t.cash.toUpperCase(),c:"#2563eb"},{id:"card",icon:"💳",label:t.card,en:t.card.toUpperCase(),c:"#2563eb"}].map(opt=>(
                 <button key={opt.id} onClick={()=>setForm({...form,paymentMethod:opt.id})} style={{
@@ -2021,7 +2021,7 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
           </div>
 
           <div style={{marginBottom:18}}>
-            <label style={{color:"#475569",fontSize:11,letterSpacing:2,display:"block",marginBottom:5}}>{t.notes}</label>
+            <label style={{color:"#334155",fontSize:11,letterSpacing:2,display:"block",marginBottom:5}}>{t.notes}</label>
             <input value={form.notes} placeholder={t.notesPlaceholder} onChange={e=>setForm({...form,notes:e.target.value})} style={inputStyle}/>
           </div>
 
@@ -2044,7 +2044,7 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
             }}>
             {isOffline?t.offlineBtn:t.submitBtn}
           </button>
-          <button onClick={()=>setTab("avail")} style={{width:"100%",background:"none",border:"1px solid #e2e8f0",borderRadius:12,padding:"11px 0",color:"#475569",fontSize:13,cursor:"pointer"}}>{t.backToAvail}</button>
+          <button onClick={()=>setTab("avail")} style={{width:"100%",background:"none",border:"1px solid #e2e8f0",borderRadius:12,padding:"11px 0",color:"#334155",fontSize:13,cursor:"pointer"}}>{t.backToAvail}</button>
         </div>
       )}
 
@@ -2068,11 +2068,11 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
             </div>
             {/* Trip info */}
             <div style={{background:"#f1f5f9",borderRadius:10,padding:"10px 14px",marginBottom:6,textAlign:"center"}}>
-              <div style={{color:"#f1f5f9",fontSize:13,fontWeight:600,marginBottom:3}}>{cancelConfirm.guest}</div>
-              <div style={{color:"#475569",fontSize:11}}>{cancelConfirm.date} · {cancelConfirm.time}</div>
-              <div style={{color:"#475569",fontSize:11,marginTop:2}}>📍 {cancelConfirm.origin} → {cancelConfirm.destination}</div>
+              <div style={{color:"#0f172a",fontSize:13,fontWeight:600,marginBottom:3}}>{cancelConfirm.guest}</div>
+              <div style={{color:"#334155",fontSize:11}}>{cancelConfirm.date} · {cancelConfirm.time}</div>
+              <div style={{color:"#334155",fontSize:11,marginTop:2}}>📍 {cancelConfirm.origin} → {cancelConfirm.destination}</div>
             </div>
-            <div style={{color:"#475569",fontSize:12,textAlign:"center",marginBottom:20,lineHeight:1.5}}>
+            <div style={{color:"#334155",fontSize:12,textAlign:"center",marginBottom:20,lineHeight:1.5}}>
               {lang==="en"
                 ?"This action cannot be undone. The driver will be notified."
                 :"Esta acción no se puede deshacer. El conductor recibirá una notificación."}
@@ -2084,14 +2084,14 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
             }} style={{
               width:"100%",background:"linear-gradient(135deg,#ef4444,#b91c1c)",
               border:"none",borderRadius:12,padding:"14px 0",
-              color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer",marginBottom:10,
+              color:"#0f172a",fontSize:14,fontWeight:700,cursor:"pointer",marginBottom:10,
             }}>
               {lang==="en"?"Yes, cancel trip":"Sí, cancelar viaje"}
             </button>
             <button onClick={()=>setCancelConfirm(null)} style={{
               width:"100%",background:"#e2e8f0",border:"1px solid #cbd5e1",
               borderRadius:12,padding:"13px 0",
-              color:"#475569",fontSize:13,cursor:"pointer",
+              color:"#334155",fontSize:13,cursor:"pointer",
             }}>
               {lang==="en"?"Keep my trip":"Mantener mi reserva"}
             </button>
@@ -2125,7 +2125,7 @@ function LangToggle({ lang, setLang }) {
           color:lang===l?"#0a0a0a":"#475569",
           display:"flex",alignItems:"center",gap:5,
         }}>
-          <span style={{fontSize:13}}>{l==="es"?"🇪🇸":"🇬🇧"}</span>
+          <span style={{fontSize:18}}>{l==="es"?"🇪🇸":"🇬🇧"}</span>
           <span>{l.toUpperCase()}</span>
         </div>
       ))}
@@ -2312,7 +2312,7 @@ export default function NextTripClientApp() {
     : [];
 
   if(screen==="auth") return(
-    <div style={{background:"#f1f5f9",minHeight:"100vh",width:"100%",fontFamily:"'DM Sans',sans-serif",color:"#f1f5f9"}}>
+    <div style={{background:"#f1f5f9",minHeight:"100vh",width:"100%",fontFamily:"'DM Sans',sans-serif",color:"#0f172a"}}>
       <style>{GLOBAL_CSS}</style>
       <div style={{position:"fixed",top:12,right:16,zIndex:100}}><LangToggle lang={lang} setLang={setLang}/></div>
       <ClientAuth onLogin={c=>{setCurrentClient(c);setScreen("client");}} onBack={null} lang={lang} setLang={setLang}/>
@@ -2324,7 +2324,7 @@ export default function NextTripClientApp() {
               <button onClick={()=>setShowIOSInstall(v=>!v)} style={{
                 width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:10,
                 background:"linear-gradient(135deg,#2563eb,#1d4ed8)",border:"none",borderRadius:14,
-                padding:"14px 0",color:"#0a0a0a",fontSize:14,fontWeight:700,cursor:"pointer",
+                padding:"14px 0",color:"#ffffff",fontSize:14,fontWeight:700,cursor:"pointer",
                 boxShadow:"0 4px 20px #2563eb44",
               }}>
                 <span style={{fontSize:20}}>⬇️</span>
@@ -2342,7 +2342,7 @@ export default function NextTripClientApp() {
                   ].map((s,i)=>(
                     <div key={i} style={{display:"flex",alignItems:"flex-start",gap:10,marginBottom:10}}>
                       <span style={{fontSize:18,flexShrink:0}}>{s.icon}</span>
-                      <span style={{color:"#f1f5f9",fontSize:13,lineHeight:1.4}}>{s.text}</span>
+                      <span style={{color:"#0f172a",fontSize:13,lineHeight:1.4}}>{s.text}</span>
                     </div>
                   ))}
                   <div style={{marginTop:8,background:"#2563eb15",borderRadius:8,padding:"8px 12px",display:"flex",alignItems:"center",gap:8}}>
@@ -2356,7 +2356,7 @@ export default function NextTripClientApp() {
             <button onClick={async()=>{installPrompt.prompt();const{outcome}=await installPrompt.userChoice;if(outcome==="accepted")setInstallPrompt(null);}} style={{
               width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:10,
               background:"linear-gradient(135deg,#2563eb,#1d4ed8)",border:"none",borderRadius:14,
-              padding:"14px 0",color:"#0a0a0a",fontSize:14,fontWeight:700,cursor:"pointer",
+              padding:"14px 0",color:"#ffffff",fontSize:14,fontWeight:700,cursor:"pointer",
               boxShadow:"0 4px 20px #2563eb44",
             }}>
               <span style={{fontSize:20}}>⬇️</span>
@@ -2369,7 +2369,7 @@ export default function NextTripClientApp() {
   );
 
   return(
-    <div style={{background:"#f1f5f9",minHeight:"100vh",width:"100%",fontFamily:"'DM Sans',sans-serif",color:"#f1f5f9",position:"relative"}}>
+    <div style={{background:"#f1f5f9",minHeight:"100vh",width:"100%",fontFamily:"'DM Sans',sans-serif",color:"#0f172a",position:"relative"}}>
       <style>{GLOBAL_CSS}</style>
 
       {/* ── OFFLINE BANNER ── */}
@@ -2401,10 +2401,10 @@ export default function NextTripClientApp() {
                 <div style={{width:32,height:32,borderRadius:"50%",background:"#2563eb20",border:"1px solid #2563eb55",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>💬</div>
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{display:"flex",justifyContent:"space-between",marginBottom:2}}>
-                    <span style={{color:"#f1f5f9",fontSize:12,fontWeight:600}}>{c.booking.guest}</span>
-                    <span style={{background:"#ef4444",borderRadius:10,padding:"1px 7px",fontSize:10,color:"#fff",fontWeight:700}}>{c.unread}</span>
+                    <span style={{color:"#0f172a",fontSize:12,fontWeight:600}}>{c.booking.guest}</span>
+                    <span style={{background:"#ef4444",borderRadius:10,padding:"1px 7px",fontSize:10,color:"#0f172a",fontWeight:700}}>{c.unread}</span>
                   </div>
-                  <div style={{color:"#f1f5f9",fontSize:11,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",opacity:0.8}}>{c.lastMsg?.fromName}: {c.lastMsg?.text}</div>
+                  <div style={{color:"#0f172a",fontSize:11,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",opacity:0.8}}>{c.lastMsg?.fromName}: {c.lastMsg?.text}</div>
                 </div>
               </div>
             ))}
@@ -2433,7 +2433,7 @@ export default function NextTripClientApp() {
                     {lang==="en"?"DRIVER PROPOSED A PRICE":"EL CONDUCTOR PROPONE UN PRECIO"}
                   </div>
                   <div style={{display:"flex",alignItems:"center",gap:6}}>
-                    <span style={{color:"#94a3b8",fontSize:11,textDecoration:"line-through"}}>{fmt(b.proposedPrice)} €</span>
+                    <span style={{color:"#475569",fontSize:11,textDecoration:"line-through"}}>{fmt(b.proposedPrice)} €</span>
                     <span style={{color:"#38bdf8",fontSize:15,fontWeight:700,fontFamily:"'DM Sans',sans-serif"}}>{fmt(b.proposedPrice*(1-DISCOUNT_RATE))} €</span>
                     <span style={{background:"#2563eb22",border:"1px solid #2563eb44",borderRadius:10,padding:"1px 5px",color:"#2563eb",fontSize:9,fontWeight:700}}>−{Math.round(DISCOUNT_RATE*100)}%</span>
                   </div>
@@ -2454,7 +2454,7 @@ export default function NextTripClientApp() {
       {priceAlerts.length>0&&<div style={{height:56*priceAlerts.length}}/>}
       {chatNotifOpen&&<ChatModal booking={chatNotifOpen} messages={messages} onSend={handleSendMessage} currentUser={currentClient} isDriver={false} onClose={()=>setChatNotifOpen(null)} onMarkRead={handleMarkRead}/>}
 
-      <div style={{padding:"10px 16px 8px",borderBottom:"1px solid #e2e8f0",background:"rgba(10,15,30,0.97)",backdropFilter:"blur(10px)",position:"sticky",top:0,zIndex:50}}>
+      <div style={{padding:"10px 16px 8px",borderBottom:"1px solid #e2e8f0",background:"#ffffff",borderBottom:"2px solid #e2e8f0",position:"sticky",top:0,zIndex:50,boxShadow:"0 2px 8px rgba(0,0,0,0.08)"}}>
         {/* Row 1: Logo + Lang + Exit */}
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
           <RivieraLogo size={36}/>
@@ -2462,16 +2462,16 @@ export default function NextTripClientApp() {
             <LangToggle lang={lang} setLang={setLang}/>
             <button onClick={()=>{setScreen("auth");setCurrentClient(null);}} style={{
               background:"#e2e8f0",border:"1px solid #cbd5e1",borderRadius:8,
-              color:"#475569",fontSize:10,padding:"5px 9px",cursor:"pointer",whiteSpace:"nowrap",
+              color:"#334155",fontSize:10,padding:"5px 9px",cursor:"pointer",whiteSpace:"nowrap",
             }}>{TRANSLATIONS[lang]?.exit||"Salir"}</button>
           </div>
         </div>
         {/* Row 2: User pill */}
-        <div style={{display:"flex",alignItems:"center",gap:6,background:"#2563eb12",border:"1px solid #2563eb33",borderRadius:20,padding:"4px 12px",width:"fit-content"}}>
+        <div style={{display:"flex",alignItems:"center",gap:6,background:"#eff6ff",border:"1.5px solid #2563eb55",borderRadius:20,padding:"5px 14px",width:"fit-content"}}>
           <div style={{width:16,height:16,borderRadius:"50%",background:(currentClient?.avatar||"#2563eb")+"25",border:"1.5px solid "+(currentClient?.avatar||"#2563eb")+"55",display:"flex",alignItems:"center",justifyContent:"center",color:currentClient?.avatar||"#2563eb",fontSize:8,fontWeight:700}}>{initials(currentClient?.name||"")}</div>
-          <span style={{color:"#38bdf8",fontSize:11}}>{currentClient?.name}</span>
+          <span style={{color:"#0f172a",fontSize:12,fontWeight:800}}>{currentClient?.name}</span>
           <span style={{color:"#2563eb44",fontSize:10}}>·</span>
-          <span style={{color:"#475569",fontSize:9,letterSpacing:1}}>VIP CLIENT</span>
+          <span style={{color:"#334155",fontSize:9,letterSpacing:1}}>VIP CLIENT</span>
         </div>
       </div>
 
