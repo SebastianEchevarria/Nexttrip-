@@ -1,0 +1,20 @@
+{
+  "name": "VELO",
+  "short_name": "VELO",
+  "description": "VELO \u2014 Private Transfers",
+  "start_url": "/cliente.html",
+  "scope": "/cliente.html",
+  "id": "velo-cliente",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1e3a8a",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon-cliente.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
