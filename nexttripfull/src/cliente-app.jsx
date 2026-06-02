@@ -1303,8 +1303,9 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
   const [pricePerKm,setPricePerKm]=useState(()=>{try{return Number(localStorage.getItem("ntprice_client")||3.15);}catch{return 3.15;}});
   const [cancelConfirm,setCancelConfirm]=useState(null);
   const [historyOpen,setHistoryOpen]=useState(true); // booking to cancel
+  const savedPhone = client?.phone||"";
   const [form,setForm]=useState({
-    guest:client.name, guestPhone:defaultPhone||"", origin:"", destination:"",
+    guest:client.name, guestPhone:savedPhone, origin:"", destination:"",
     date:new Date().toISOString().slice(0,10), time:"", passengers:1, notes:"", fare:"", paymentMethod:"cash",
   });
   const [submitted,setSubmitted]=useState(false);
@@ -1315,7 +1316,7 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
 
   const discountedFare = null; // Price will be proposed by driver
 
-  const resetForm = () => setForm({guest:client.name,guestPhone:defaultPhone||"",origin:"",destination:"",date:new Date().toISOString().slice(0,10),time:"",passengers:1,notes:"",fare:"",paymentMethod:"cash"});
+  const resetForm = () => setForm({guest:client.name,guestPhone:client?.phone||"",origin:"",destination:"",date:new Date().toISOString().slice(0,10),time:"",passengers:1,notes:"",fare:"",paymentMethod:"cash"});
 
   const handleSubmit = () => {
     if(!form.guest||!form.origin||!form.destination||!slotAvailable||!form.time) return;
