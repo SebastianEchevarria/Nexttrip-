@@ -2131,7 +2131,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
       {/* ── 1. PRÓXIMO VIAJE — CUENTA REGRESIVA ── */}
       {(()=>{
         const upcoming = [...bookings]
-          .filter(b=>b.status==="confirmed")
+          .filter(b=>b.status==="confirmed"||b.status==="inprogress")
           .sort((a,b)=>{const dA=new Date(`${a.date}T${a.time}:00`),dB=new Date(`${b.date}T${b.time}:00`);return dA-dB;})
           .find(b=>{const dt=new Date(`${b.date}T${b.time}:00`);return dt-nowTick>-TRIP_DURATION*60*1000;});
         if(!upcoming) return null;
@@ -2216,7 +2216,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
             <div style={{margin:"0 12px",display:"flex",flexDirection:"column",gap:8,marginBottom:12}}>
 
               {/* ── FASE 1: Antes de llegar — Punto recogida + Chat + Mensajes rápidos + He llegado ── */}
-              {arrivedBookingId!==upcoming.id&&!isOngoing&&!tripStarted&&(
+              {arrivedBookingId!==upcoming.id&&!isOngoing&&!tripStarted&&upcoming.status!=="inprogress"&&(
                 <>
                   {/* Maps + Chat row */}
                   <div style={{display:"flex",gap:8}}>
@@ -2310,7 +2310,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
               )}
 
               {/* ── FASE 2: He llegado — espera + Iniciar viaje + Chat ── */}
-              {arrivedBookingId===upcoming.id&&!isOngoing&&!tripStarted&&(
+              {arrivedBookingId===upcoming.id&&!isOngoing&&!tripStarted&&upcoming.status!=="inprogress"&&(
                 <>
                   {(()=>{
                     const waitEnd=new Date(`${upcoming.date}T${upcoming.time}:00`).getTime()+10*60*1000;
@@ -2388,20 +2388,21 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
                 </>
               )}
 
-              {/* ── FASE 3: En curso — Terminar viaje (shown when tripStarted or inprogress) ── */}
-              {(tripStarted||isOngoing)&&(
+              {/* ── FASE 3: En curso — Terminar viaje (shown when inprogress OR tripStarted OR isOngoing) ── */}
+              {(upcoming.status==="inprogress"||tripStarted||isOngoing)&&(
                 <button onClick={()=>{
                   onEndTrip(upcoming.id);
                   setDriverStatus("free");
                   setTripStarted(false);
                   setArrivedBookingId(null);
+                  try{localStorage.setItem("nexttrip_trip_started","0");localStorage.setItem("nexttrip_arrived_id","");}catch{}
                   setToast("✅ Viaje completado");
                 }} style={{
                   width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:10,
-                  background:"linear-gradient(135deg,#2a0a00,#1e293b)",
-                  border:"2px solid #ef4444",borderRadius:12,padding:"14px 0",
-                  color:"#ef4444",fontSize:14,fontWeight:700,cursor:"pointer",
-                  boxShadow:"0 0 16px #ef444433",
+                  background:"linear-gradient(135deg,#0a2a00,#1e293b)",
+                  border:"2px solid #22c55e",borderRadius:12,padding:"14px 0",
+                  color:"#22c55e",fontSize:15,fontWeight:700,cursor:"pointer",
+                  boxShadow:"0 0 20px #22c55e44",
                 }}>🏁 Terminar viaje</button>
               )}
 
