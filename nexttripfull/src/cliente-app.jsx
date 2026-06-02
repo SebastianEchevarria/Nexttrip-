@@ -2189,6 +2189,8 @@ export default function NextTripClientApp() {
   const [installPrompt,setInstallPrompt]=useState(null);
   const [showInstall,setShowInstall]=useState(false);
   const [showProfile,setShowProfile]=useState(false);
+  const [profilePhone,setProfilePhone]=useState(()=>currentClient?.phone||"");
+  const [profileSaved,setProfileSaved]=useState(false);
   const [showIOSInstall,setShowIOSInstall]=useState(false);
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
   const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
@@ -2314,6 +2316,14 @@ export default function NextTripClientApp() {
         return updated;
       });
     }
+  };
+  const saveProfilePhone = () => {
+    const clients = loadClients();
+    const updated = clients.map(cl=>cl.email===currentClient?.email?{...cl,phone:profilePhone}:cl);
+    saveClients(updated);
+    setCurrentClient({...currentClient,phone:profilePhone});
+    setProfileSaved(true);
+    setTimeout(()=>setProfileSaved(false),2000);
   };
   const handleMarkRead=(bookingId,count)=>setReadCounts(prev=>({...prev,[String(bookingId)]:count}));
   const handleRate=(bookingId,stars)=>{
@@ -2567,37 +2577,23 @@ export default function NextTripClientApp() {
               <div style={{background:"#f8fafc",border:"1.5px solid #e2e8f0",borderRadius:10,padding:"11px 14px",color:"#0f172a",fontSize:13,fontWeight:700}}>{currentClient?.email}</div>
             </div>
 
-            {/* Teléfono editable */}
-            {(()=>{
-              const [phone, setPhone] = React.useState(currentClient?.phone||"");
-              const [saved, setSaved] = React.useState(false);
-              const savePhone = () => {
-                const clients = loadClients();
-                const updated = clients.map(cl=>cl.email===currentClient.email?{...cl,phone}:cl);
-                saveClients(updated);
-                setCurrentClient({...currentClient,phone});
-                setSaved(true);
-                setTimeout(()=>setSaved(false),2000);
-              };
-              return (
-                <div style={{marginBottom:14}}>
-                  <label style={{color:"#1e3a8a",fontSize:10,letterSpacing:2,fontWeight:800,display:"block",marginBottom:5}}>
-                    {lang==="en"?"PHONE":"TELÉFONO"}
-                  </label>
-                  <div style={{display:"flex",gap:8}}>
-                    <input type="tel" value={phone} onChange={e=>setPhone(e.target.value)}
-                      placeholder="+34 600 000 000"
-                      style={{flex:1,background:"#f8fafc",border:"2px solid "+( phone?"#2563eb":"#f59e0b"),borderRadius:10,padding:"11px 14px",color:"#0f172a",fontSize:13,fontWeight:700,outline:"none"}}/>
-                    <button onClick={savePhone} style={{background:saved?"#16a34a":"linear-gradient(135deg,#1e3a8a,#2563eb)",border:"none",borderRadius:10,padding:"0 16px",color:"#ffffff",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>
-                      {saved?(lang==="en"?"✓ Saved":"✓ Guardado"):(lang==="en"?"Save":"Guardar")}
-                    </button>
-                  </div>
-                  <div style={{color:"#475569",fontSize:10,marginTop:4}}>
-                    {lang==="en"?"Saved automatically in future bookings":"Se guardará automáticamente en reservas futuras"}
-                  </div>
+                          {/* Teléfono editable */}
+              <div style={{marginBottom:14}}>
+                <label style={{color:"#1e3a8a",fontSize:10,letterSpacing:2,fontWeight:800,display:"block",marginBottom:5}}>
+                  {lang==="en"?"PHONE":"TELÉFONO"}
+                </label>
+                <div style={{display:"flex",gap:8}}>
+                  <input type="tel" value={profilePhone} onChange={e=>setProfilePhone(e.target.value)}
+                    placeholder="+34 600 000 000"
+                    style={{flex:1,background:"#f8fafc",border:"2px solid "+(profilePhone?"#2563eb":"#f59e0b"),borderRadius:10,padding:"11px 14px",color:"#0f172a",fontSize:13,fontWeight:700,outline:"none"}}/>
+                  <button onClick={saveProfilePhone} style={{background:profileSaved?"#16a34a":"linear-gradient(135deg,#1e3a8a,#2563eb)",border:"none",borderRadius:10,padding:"0 16px",color:"#ffffff",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>
+                    {profileSaved?(lang==="en"?"✓ Saved":"✓ Guardado"):(lang==="en"?"Save":"Guardar")}
+                  </button>
                 </div>
-              );
-            })()}
+                <div style={{color:"#475569",fontSize:10,marginTop:4}}>
+                  {lang==="en"?"Saved automatically in future bookings":"Se guardará automáticamente en reservas futuras"}
+                </div>
+              </div>
 
             {/* Cambiar PIN */}
             <button onClick={()=>{setShowProfile(false);setScreen("changePIN");}} style={{
