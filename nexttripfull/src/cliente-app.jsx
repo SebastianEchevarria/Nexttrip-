@@ -2453,24 +2453,31 @@ export default function NextTripClientApp() {
       {priceAlerts.length>0&&<div style={{height:56*priceAlerts.length}}/>}
       {chatNotifOpen&&<ChatModal booking={chatNotifOpen} messages={messages} onSend={handleSendMessage} currentUser={currentClient} isDriver={false} onClose={()=>setChatNotifOpen(null)} onMarkRead={handleMarkRead} lang={lang}/>}
 
-      <div style={{padding:"10px 16px 8px",borderBottom:"1px solid #e2e8f0",background:"#ffffff",borderBottom:"2px solid #e2e8f0",position:"sticky",top:0,zIndex:50,boxShadow:"0 2px 8px rgba(0,0,0,0.08)"}}>
-        {/* Row 1: Logo + Lang + Exit */}
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
-          <RivieraLogo size={56}/>
-          <div style={{display:"flex",alignItems:"center",gap:6}}>
+      <div style={{padding:"8px 14px 8px",borderBottom:"2px solid #e2e8f0",background:"#ffffff",position:"sticky",top:0,zIndex:50,boxShadow:"0 2px 8px rgba(0,0,0,0.08)"}}>
+        {/* Single row: Logo izquierda grande + Lang + Exit + Nombre derecha */}
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          {/* Logo — ocupa todo el lado izquierdo */}
+          <div style={{flexShrink:0}}>
+            <RivieraLogo size={60}/>
+          </div>
+          {/* Derecha: idiomas + salir + nombre con círculo */}
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
             <LangToggle lang={lang} setLang={setLang}/>
             <button onClick={()=>{setScreen("auth");setCurrentClient(null);}} style={{
-              background:"#e2e8f0",border:"1px solid #cbd5e1",borderRadius:8,
-              color:"#334155",fontSize:10,padding:"5px 9px",cursor:"pointer",whiteSpace:"nowrap",
+              background:"#1e3a8a",border:"none",borderRadius:8,
+              color:"#ffffff",fontSize:11,fontWeight:700,padding:"6px 12px",cursor:"pointer",whiteSpace:"nowrap",
             }}>{TRANSLATIONS[lang]?.exit||"Salir"}</button>
+            {/* Nombre + avatar círculo azul marino */}
+            <div style={{display:"flex",alignItems:"center",gap:7,background:"#eff6ff",border:"1.5px solid #1e3a8a44",borderRadius:20,padding:"4px 10px 4px 4px"}}>
+              <div style={{
+                width:28,height:28,borderRadius:"50%",
+                background:"#1e3a8a",border:"2px solid #1e3a8a",
+                display:"flex",alignItems:"center",justifyContent:"center",
+                color:"#ffffff",fontSize:10,fontWeight:800,flexShrink:0,
+              }}>{initials(currentClient?.name||"")}</div>
+              <span style={{color:"#0f172a",fontSize:12,fontWeight:800,whiteSpace:"nowrap"}}>{currentClient?.name}</span>
+            </div>
           </div>
-        </div>
-        {/* Row 2: User pill */}
-        <div style={{display:"flex",alignItems:"center",gap:6,background:"#eff6ff",border:"1.5px solid #2563eb55",borderRadius:20,padding:"5px 14px",width:"fit-content"}}>
-          <div style={{width:16,height:16,borderRadius:"50%",background:(currentClient?.avatar||"#2563eb")+"25",border:"1.5px solid "+(currentClient?.avatar||"#2563eb")+"55",display:"flex",alignItems:"center",justifyContent:"center",color:currentClient?.avatar||"#2563eb",fontSize:8,fontWeight:700}}>{initials(currentClient?.name||"")}</div>
-          <span style={{color:"#0f172a",fontSize:12,fontWeight:800}}>{currentClient?.name}</span>
-          <span style={{color:"#2563eb44",fontSize:10}}>·</span>
-          <span style={{color:"#334155",fontSize:9,letterSpacing:1}}>VIP CLIENT</span>
         </div>
       </div>
 
