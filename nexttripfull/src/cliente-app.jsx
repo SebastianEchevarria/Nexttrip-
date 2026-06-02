@@ -812,7 +812,8 @@ function translateAutoMsg(text, lang) {
   return text;
 }
 
-function ChatModal({ booking, messages, onSend, currentUser, isDriver, onClose, onMarkRead }) {
+function ChatModal({ booking, messages, onSend, currentUser, isDriver, onClose, onMarkRead, lang: langProp }) {
+  const lang = langProp || booking?.clientLang || "es";
   const [text, setText] = useState("");
   const bottomRef = useRef(null);
   const b = booking;
@@ -2452,7 +2453,7 @@ export default function NextTripClientApp() {
         </div>
       )}
       {priceAlerts.length>0&&<div style={{height:56*priceAlerts.length}}/>}
-      {chatNotifOpen&&<ChatModal booking={chatNotifOpen} messages={messages} onSend={handleSendMessage} currentUser={currentClient} isDriver={false} onClose={()=>setChatNotifOpen(null)} onMarkRead={handleMarkRead}/>}
+      {chatNotifOpen&&<ChatModal booking={chatNotifOpen} messages={messages} onSend={handleSendMessage} currentUser={currentClient} isDriver={false} onClose={()=>setChatNotifOpen(null)} onMarkRead={handleMarkRead} lang={lang}/>}
 
       <div style={{padding:"10px 16px 8px",borderBottom:"1px solid #1e293b",background:"rgba(10,15,30,0.97)",backdropFilter:"blur(10px)",position:"sticky",top:0,zIndex:50}}>
         {/* Row 1: Logo + Lang + Exit */}
