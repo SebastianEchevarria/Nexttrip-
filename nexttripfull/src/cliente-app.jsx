@@ -60,6 +60,28 @@ const GLOBAL_CSS = `
   a,button{touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
   .app-inner{width:100%;max-width:480px;margin:0 auto;padding:0 4px;}
 `;
+
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { hasError:false, error:null }; }
+  static getDerivedStateFromError(error) { return { hasError:true, error }; }
+  componentDidCatch(error, info) { console.error("App error:", error, info); }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{padding:20,background:"#fff0f0",border:"2px solid #ef4444",borderRadius:12,margin:16}}>
+          <div style={{color:"#ef4444",fontWeight:700,marginBottom:8}}>⚠️ Error detectado</div>
+          <div style={{color:"#0f172a",fontSize:12,wordBreak:"break-all"}}>{String(this.state.error)}</div>
+          <button onClick={()=>this.setState({hasError:false,error:null})} 
+            style={{marginTop:12,background:"#2563eb",color:"#fff",border:"none",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontWeight:700}}>
+            Reintentar
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 // ─── TRANSLATIONS ─────────────────────────────────────────────────────────────
 const TRANSLATIONS = {
   es: {
@@ -632,7 +654,7 @@ function PinKeypad({ correctPin, onSuccess, onBack, subtitle, accentColor="#2563
   );
 }
 
-function DistancePriceCalcClient({ origin, destination, onPriceCalculated, pricePerKm=3.15 }) {
+function DistancePriceCalcClient({ origin, destination, onPriceCalculated, pricePerKm=3.15, lang="es" }) {
   const [state, setState] = useState({ status:"idle", km:null, duration:null, price:null });
   useEffect(() => {
     if (!origin || !destination || origin.length < 5 || destination.length < 5) {
@@ -2484,11 +2506,11 @@ export default function NextTripClientApp() {
       </div>
 
       <div className="app-inner" style={{padding:"16px 16px 80px"}}>
-        <ClientView client={currentClient} bookings={bookings} setBookings={setBookings} onNewBooking={handleNewBooking}
+        <ErrorBoundary><ClientView client={currentClient} bookings={bookings} setBookings={setBookings} onNewBooking={handleNewBooking}
           onClientAcceptPrice={handleClientAcceptPrice} onClientRejectPrice={handleClientRejectPrice} onClientCancelTrip={handleClientCancelTrip}
           tab={clientTab} setTab={setClientTab}
           driverStatus={driverStatus} blockedSlots={blockedSlots} serviceStatus={serviceStatus}
-          messages={messages} onSendMessage={handleSendMessage} onMarkRead={handleMarkRead} lang={lang} setLang={setLang}/>
+          messages={messages} onSendMessage={handleSendMessage} onMarkRead={handleMarkRead} lang={lang} setLang={setLang}/></ErrorBoundary>
       </div>
       {ratingModal&&<RatingModal booking={ratingModal} onRate={handleRate} onClose={()=>setRatingModal(null)} lang={lang}/>}
       {showInstall&&<div style={{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",zIndex:9998,background:"#ffffff",border:"2px solid #1e3a8a",borderRadius:16,padding:"14px 20px",display:"flex",alignItems:"center",gap:12,boxShadow:"0 8px 32px #00000088"}}>

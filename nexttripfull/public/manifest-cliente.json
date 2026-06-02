@@ -1,15 +1,26 @@
 {
-  "name": "NEXTTRIP VIP",
-  "short_name": "NT VIP",
-  "description": "NextTrip Private Transfers — Cliente VIP",
+  "name": "VELO",
+  "short_name": "VELO",
+  "description": "VELO \u2014 Tu viaje, sin l\u00edmites",
   "start_url": "/cliente.html",
   "scope": "/cliente.html",
-  "id": "nexttrip-cliente",
+  "id": "velo-cliente",
   "display": "standalone",
-  "background_color": "#c9a96e",
-  "theme_color": "#c9a96e",
+  "background_color": "#ffffff",
+  "theme_color": "#1e3a8a",
   "orientation": "portrait",
   "icons": [
-    { "src": "/icon-cliente.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+    {
+      "src": "/icon-cliente.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-velo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
   ]
 }
