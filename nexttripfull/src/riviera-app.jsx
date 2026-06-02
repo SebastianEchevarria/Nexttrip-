@@ -2216,7 +2216,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
             <div style={{margin:"0 12px",display:"flex",flexDirection:"column",gap:8,marginBottom:12}}>
 
               {/* ── FASE 1: Antes de llegar — Punto recogida + Chat + Mensajes rápidos + He llegado ── */}
-              {arrivedBookingId!==upcoming.id&&!isOngoing&&(
+              {arrivedBookingId!==upcoming.id&&!isOngoing&&!tripStarted&&(
                 <>
                   {/* Maps + Chat row */}
                   <div style={{display:"flex",gap:8}}>
@@ -2310,7 +2310,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
               )}
 
               {/* ── FASE 2: He llegado — espera + Iniciar viaje + Chat ── */}
-              {arrivedBookingId===upcoming.id&&!isOngoing&&(
+              {arrivedBookingId===upcoming.id&&!isOngoing&&!tripStarted&&(
                 <>
                   {(()=>{
                     const waitEnd=new Date(`${upcoming.date}T${upcoming.time}:00`).getTime()+10*60*1000;
@@ -2405,31 +2405,83 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
                 }}>🏁 Terminar viaje</button>
               )}
 
-              {/* ── CANCELAR RESERVA — siempre visible, doble confirmación ── */}
+              {/* ── CANCELAR RESERVA — con 3 motivos ── */}
               {!cancelConfirm?(
-                <button onClick={()=>setCancelConfirm(true)} style={{
+                <button onClick={()=>setCancelConfirm({step:"choose",reason:"",custom:""})} style={{
                   width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:7,
                   background:"#1a0808",border:"1.5px solid #ef444466",borderRadius:10,padding:"10px 0",
                   color:"#ef4444aa",fontSize:12,fontWeight:700,cursor:"pointer",marginTop:4,
                 }}>✕ Cancelar reserva</button>
+              ):cancelConfirm.step==="choose"?(
+                <div style={{background:"linear-gradient(135deg,#1a0808,#1e293b)",border:"2px solid #ef4444",borderRadius:12,padding:"14px"}}>
+                  <div style={{color:"#f8fafc",fontSize:13,fontWeight:700,textAlign:"center",marginBottom:4}}>⚠️ Motivo de cancelación</div>
+                  <div style={{color:"#a8b8cc",fontSize:11,textAlign:"center",marginBottom:12}}>Selecciona el motivo</div>
+                  <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                    {[
+                      {id:"noshow",label:"👤 El cliente no se presentó"},
+                      {id:"condition",label:"🚫 El cliente no está en condiciones"},
+                      {id:"other",label:"📝 Otros motivos"},
+                    ].map(opt=>(
+                      <button key={opt.id} onClick={()=>setCancelConfirm({step:opt.id==="other"?"custom":"confirm",reason:opt.label,custom:""})} style={{
+                        background:cancelConfirm.reason===opt.label?"#ef444422":"#1e293b",
+                        border:`1px solid ${cancelConfirm.reason===opt.label?"#ef4444":"#475569"}`,
+                        borderRadius:8,padding:"10px 14px",color:"#f8fafc",fontSize:12,fontWeight:600,
+                        cursor:"pointer",textAlign:"left",
+                      }}>{opt.label}</button>
+                    ))}
+                    <button onClick={()=>setCancelConfirm(null)} style={{
+                      background:"transparent",border:"1px solid #475569",borderRadius:8,
+                      padding:"8px 0",color:"#a8b8cc",fontSize:11,cursor:"pointer",
+                    }}>← Volver</button>
+                  </div>
+                </div>
+              ):cancelConfirm.step==="custom"?(
+                <div style={{background:"linear-gradient(135deg,#1a0808,#1e293b)",border:"2px solid #ef4444",borderRadius:12,padding:"14px"}}>
+                  <div style={{color:"#f8fafc",fontSize:13,fontWeight:700,marginBottom:10}}>📝 Describe el motivo</div>
+                  <textarea
+                    value={cancelConfirm.custom||""}
+                    onChange={e=>setCancelConfirm({...cancelConfirm,custom:e.target.value})}
+                    placeholder="Escribe el motivo aquí..."
+                    style={{width:"100%",background:"#0f172a",border:"1px solid #475569",borderRadius:8,
+                      padding:"10px",color:"#f8fafc",fontSize:12,minHeight:80,resize:"none",
+                      outline:"none",boxSizing:"border-box",marginBottom:10}}
+                  />
+                  <div style={{display:"flex",gap:8}}>
+                    <button onClick={()=>setCancelConfirm({step:"choose",reason:"",custom:""})} style={{
+                      flex:1,background:"#1e293b",border:"1px solid #475569",borderRadius:8,
+                      padding:"10px 0",color:"#a8b8cc",fontSize:12,cursor:"pointer",
+                    }}>← Volver</button>
+                    <button onClick={()=>setCancelConfirm({...cancelConfirm,step:"confirm",reason:`📝 ${cancelConfirm.custom||"Otros motivos"}`})}
+                      disabled={!cancelConfirm.custom?.trim()}
+                      style={{
+                        flex:1,background:cancelConfirm.custom?.trim()?"linear-gradient(135deg,#ef4444,#b91c1c)":"#475569",
+                        border:"none",borderRadius:8,padding:"10px 0",
+                        color:"#fff",fontSize:12,fontWeight:700,cursor:cancelConfirm.custom?.trim()?"pointer":"default",
+                      }}>Continuar →</button>
+                  </div>
+                </div>
               ):(
-                <div style={{background:"linear-gradient(135deg,#2a0808,#1e293b)",border:"2px solid #ef4444",borderRadius:12,padding:"14px"}}>
-                  <div style={{color:"#f8fafc",fontSize:13,fontWeight:700,textAlign:"center",marginBottom:4}}>⚠️ ¿Confirmas la cancelación?</div>
+                <div style={{background:"linear-gradient(135deg,#1a0808,#1e293b)",border:"2px solid #ef4444",borderRadius:12,padding:"14px"}}>
+                  <div style={{color:"#f8fafc",fontSize:13,fontWeight:700,textAlign:"center",marginBottom:6}}>⚠️ ¿Confirmar cancelación?</div>
+                  <div style={{background:"#ef444415",border:"1px solid #ef444433",borderRadius:8,padding:"8px 12px",marginBottom:12}}>
+                    <div style={{color:"#ef4444",fontSize:11,fontWeight:700}}>{cancelConfirm.reason}</div>
+                  </div>
                   <div style={{color:"#a8b8cc",fontSize:11,textAlign:"center",marginBottom:12}}>Esta acción no se puede deshacer</div>
                   <div style={{display:"flex",gap:8}}>
-                    <button onClick={()=>setCancelConfirm(false)} style={{
+                    <button onClick={()=>setCancelConfirm(null)} style={{
                       flex:1,background:"#1e293b",border:"1px solid #475569",borderRadius:8,
                       padding:"10px 0",color:"#a8b8cc",fontSize:12,fontWeight:600,cursor:"pointer",
                     }}>No, volver</button>
                     <button onClick={()=>{
-                      onCancelTrip&&onCancelTrip(upcoming.id,"Cancelado por el conductor");
-                      setCancelConfirm(false);
+                      onCancelTrip&&onCancelTrip(upcoming.id, cancelConfirm.reason);
+                      setCancelConfirm(null);
                       setArrivedBookingId(null);
                       setShowQuickMsgs(false);
                       setDriverStatus("free");
                       setTripStarted(false);
+                      try{localStorage.setItem("nexttrip_trip_started","0");localStorage.setItem("nexttrip_arrived_id","");}catch{}
                       fbGet("nexttrip/status").then(cur=>{const u={...(cur||{})};delete u.driverArrived;fbSet("nexttrip/status",{...u,updatedAt:Date.now()});});
-                      setToast("❌ Reserva cancelada");
+                      setToast("❌ Reserva cancelada: "+cancelConfirm.reason);
                     }} style={{
                       flex:1,background:"linear-gradient(135deg,#ef4444,#b91c1c)",border:"none",borderRadius:8,
                       padding:"10px 0",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",
