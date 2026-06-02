@@ -2189,8 +2189,17 @@ export default function NextTripClientApp() {
   const [installPrompt,setInstallPrompt]=useState(null);
   const [showInstall,setShowInstall]=useState(false);
   const [showProfile,setShowProfile]=useState(false);
-  const [profilePhone,setProfilePhone]=useState(()=>currentClient?.phone||"");
+  const [profilePhone,setProfilePhone]=useState("");
+  useEffect(()=>{if(showProfile)setProfilePhone(currentClient?.phone||"");},[showProfile,currentClient]);
   const [profileSaved,setProfileSaved]=useState(false);
+  const saveProfilePhone=()=>{
+    const clients=loadClients();
+    const updated=clients.map(cl=>cl.email===currentClient?.email?{...cl,phone:profilePhone}:cl);
+    saveClients(updated);
+    setCurrentClient(prev=>({...prev,phone:profilePhone}));
+    setProfileSaved(true);
+    setTimeout(()=>setProfileSaved(false),2000);
+  };
   const [showIOSInstall,setShowIOSInstall]=useState(false);
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
   const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
@@ -2316,14 +2325,6 @@ export default function NextTripClientApp() {
         return updated;
       });
     }
-  };
-  const saveProfilePhone = () => {
-    const clients = loadClients();
-    const updated = clients.map(cl=>cl.email===currentClient?.email?{...cl,phone:profilePhone}:cl);
-    saveClients(updated);
-    setCurrentClient({...currentClient,phone:profilePhone});
-    setProfileSaved(true);
-    setTimeout(()=>setProfileSaved(false),2000);
   };
   const handleMarkRead=(bookingId,count)=>setReadCounts(prev=>({...prev,[String(bookingId)]:count}));
   const handleRate=(bookingId,stars)=>{
