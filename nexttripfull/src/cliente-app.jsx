@@ -1079,12 +1079,13 @@ function ClientAuth({ onLogin, onBack, lang, setLang }) {
       <div style={{color:"#334155",fontSize:13,fontWeight:700,marginTop:8,marginBottom:28,textAlign:"center"}}>{t.tagline}</div>
 
       {/* Toggle */}
-      <div style={{display:"flex",background:"#e2e8f0",borderRadius:12,padding:3,marginBottom:24,gap:2,width:"100%",maxWidth:340}}>
+      <div style={{display:"flex",background:"#dbeafe",borderRadius:14,padding:4,marginBottom:24,gap:3,width:"100%",maxWidth:340,border:"2px solid #2563eb33",boxShadow:"0 2px 8px rgba(37,99,235,0.12)"}}>
         {[{id:"login",label:t.signIn},{id:"register",label:t.createAccount}].map(m=>(
           <button key={m.id} onClick={()=>{setMode(m.id);setError("");setPin("");setPin2("");}} style={{
-            flex:1,padding:"8px 0",border:"none",borderRadius:9,cursor:"pointer",
-            background:mode===m.id?"linear-gradient(135deg,#2563eb,#1d4ed8)":"transparent",
-            color:mode===m.id?"#fff":"#475569",fontSize:12,fontWeight:mode===m.id?600:400,transition:"all 0.2s",
+            flex:1,padding:"12px 0",border:"none",borderRadius:10,cursor:"pointer",
+            background:mode===m.id?"linear-gradient(135deg,#1e3a8a,#2563eb)":"transparent",
+            color:mode===m.id?"#ffffff":"#1e3a8a",fontSize:13,fontWeight:700,transition:"all 0.2s",
+            boxShadow:mode===m.id?"0 2px 8px rgba(30,58,138,0.3)":"none",
           }}>{m.label}</button>
         ))}
       </div>
@@ -1981,26 +1982,28 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
             <input value={form.guest} onChange={e=>setForm({...form,guest:e.target.value})} style={inputStyle}/>
           </div>
           <div style={{marginBottom:14}}>
-            <label style={{color:"#334155",fontSize:11,letterSpacing:2,display:"block",marginBottom:5}}>{t.phone}</label>
-            <input type="tel" value={form.guestPhone} placeholder={t.phonePlaceholder} onChange={e=>setForm({...form,guestPhone:e.target.value})} style={inputStyle}/>
+            <label style={{color:form.guestPhone?"#334155":"#d97706",fontSize:11,letterSpacing:2,display:"block",marginBottom:5}}>{t.phone}{!form.guestPhone&&" *"}</label>
+            <input type="tel" value={form.guestPhone} placeholder={t.phonePlaceholder} onChange={e=>setForm({...form,guestPhone:e.target.value})} style={{...inputStyle,border:form.guestPhone?"2px solid #2563eb":"2px solid #f59e0b",background:form.guestPhone?"#f0f7ff":"#fffbeb"}}/>
           </div>
           <div style={{marginBottom:14}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
-              <label style={{color:"#334155",fontSize:11,letterSpacing:2}}>{t.origin}</label>
+              <label style={{color:form.origin?"#334155":"#d97706",fontSize:11,letterSpacing:2}}>{t.origin}{!form.origin&&" *"}</label>
               <button onClick={()=>getLocation(addr=>setForm(f=>({...f,origin:addr})))} disabled={geoLoading} style={{
-                background:"none",border:"none",cursor:geoLoading?"default":"pointer",padding:0,
-                display:"flex",alignItems:"center",gap:4,
-                color:geoLoading?"#475569":"#2563eb",fontSize:11,
+                background:geoLoading?"#e2e8f0":"linear-gradient(135deg,#2563eb,#1d4ed8)",
+                border:"none",borderRadius:20,cursor:geoLoading?"default":"pointer",
+                padding:"5px 12px",display:"flex",alignItems:"center",gap:5,
+                color:"#ffffff",fontSize:11,fontWeight:700,
+                boxShadow:geoLoading?"none":"0 2px 8px rgba(37,99,235,0.35)",
               }}>
                 <span style={{fontSize:13}}>📍</span>{geoLoading?(lang==="en"?"Getting...":"Obteniendo..."):(lang==="en"?"Use my location":"Usar mi ubicación")}
               </button>
             </div>
             {geoError==="denied"?<GeoErrorMsg onClose={()=>setGeoState({loading:false,error:null,denied:false})}/>:geoError&&<div style={{color:"#ef4444",fontSize:11,marginBottom:6}}>{geoError}</div>}
-            <input value={form.origin} placeholder={t.originPlaceholder} onChange={e=>setForm({...form,origin:e.target.value})} style={inputStyle}/>
+            <input value={form.origin} placeholder={t.originPlaceholder} onChange={e=>setForm({...form,origin:e.target.value})} style={{...inputStyle,border:form.origin?"2px solid #2563eb":"2px solid #f59e0b",background:form.origin?"#f0f7ff":"#fffbeb"}}/>
           </div>
           <div style={{marginBottom:14}}>
-            <label style={{color:"#334155",fontSize:11,letterSpacing:2,display:"block",marginBottom:5}}>{t.destination}</label>
-            <input value={form.destination} placeholder={t.destPlaceholder} onChange={e=>setForm({...form,destination:e.target.value})} style={inputStyle}/>
+            <label style={{color:form.destination?"#334155":"#d97706",fontSize:11,letterSpacing:2,display:"block",marginBottom:5}}>{t.destination}{!form.destination&&" *"}</label>
+            <input value={form.destination} placeholder={t.destPlaceholder} onChange={e=>setForm({...form,destination:e.target.value})} style={{...inputStyle,border:form.destination?"2px solid #2563eb":"2px solid #f59e0b",background:form.destination?"#f0f7ff":"#fffbeb"}}/>
           </div>
           <TripEstimateBox origin={form.origin} destination={form.destination} lang={lang}/>
           <DistancePriceCalcClient origin={form.origin} destination={form.destination} pricePerKm={pricePerKm} lang={lang} onPriceCalculated={(price,km,durMin)=>setForm(f=>({...f,fare:price,tripKm:km,durationMin:durMin}))}/>
