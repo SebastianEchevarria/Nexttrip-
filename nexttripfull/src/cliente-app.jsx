@@ -1370,59 +1370,60 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
           padding:"14px 16px",marginBottom:14,
           position:"relative",overflow:"hidden",
         }}>
-          {/* Subtle glow */}
-          <div style={{position:"absolute",top:-20,right:-20,width:80,height:80,borderRadius:"50%",background:"#2563eb08",pointerEvents:"none"}}/>
-
-          {/* Status row */}
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+          {/* ── Fila 1: Estado + Badge ── */}
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
             <div style={{display:"flex",alignItems:"center",gap:8}}>
-              <div style={{width:7,height:7,borderRadius:"50%",background:driverStatus==="onroute"?"#ef4444":"#2563eb",animation:"pulse 1.5s infinite",flexShrink:0}}/>
-              <span style={{color:driverStatus==="onroute"?"#ef4444":"#1d4ed8",fontSize:12,fontWeight:800,letterSpacing:0.5}}>
+              <div style={{width:8,height:8,borderRadius:"50%",background:driverStatus==="onroute"?"#ef4444":"#16a34a",animation:"pulse 1.5s infinite",flexShrink:0}}/>
+              <span style={{color:driverStatus==="onroute"?"#ef4444":"#15803d",fontSize:13,fontWeight:800}}>
                 {driverStatus==="onroute"?t.onRoute:t.driverAvailable}
               </span>
             </div>
-            <div style={{background:"#2563eb18",border:"1px solid #2563eb33",borderRadius:20,padding:"2px 10px"}}>
-              <span style={{color:"#2563eb",fontSize:9,fontWeight:700,letterSpacing:2}}>PRIVATE TRANSFERS</span>
+            <div style={{background:"#1e3a8a",borderRadius:20,padding:"3px 12px"}}>
+              <span style={{color:"#ffffff",fontSize:9,fontWeight:700,letterSpacing:2}}>PRIVATE TRANSFERS</span>
             </div>
           </div>
 
-          {/* Divider */}
-          <div style={{height:1,background:"linear-gradient(90deg,transparent,#2563eb33,transparent)",marginBottom:12}}/>
-
-          {/* Vehicle info */}
-          <div style={{display:"flex",alignItems:"center",gap:12}}>
-            {/* Tesla T logo */}
-            <div style={{
-              width:42,height:42,borderRadius:10,
-              background:"linear-gradient(135deg,#dbeafe,#bfdbfe)",
-              border:"1px solid #2563eb66",
-              display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,
-            }}>
-              <svg width="22" height="22" viewBox="0 0 100 100" fill="none">
-                <path d="M50 12 C30 12 15 18 10 26 C18 24 34 22 50 22 C66 22 82 24 90 26 C85 18 70 12 50 12Z" fill="#2563eb"/>
-                <path d="M10 26 C18 24 34 22 50 22 L50 88 C40 60 25 42 10 26Z" fill="#2563eb"/>
-                <path d="M90 26 C82 24 66 22 50 22 L50 88 C60 60 75 42 90 26Z" fill="#2563eb"/>
+          {/* ── Fila 2: Coche + Matrícula ── */}
+          <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
+            {/* Icono Tesla */}
+            <div style={{width:48,height:48,borderRadius:12,background:"linear-gradient(135deg,#dbeafe,#bfdbfe)",border:"1.5px solid #2563eb55",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+              <svg width="26" height="26" viewBox="0 0 100 100" fill="none">
+                <path d="M50 12 C30 12 15 18 10 26 C18 24 34 22 50 22 C66 22 82 24 90 26 C85 18 70 12 50 12Z" fill="#1e3a8a"/>
+                <path d="M10 26 C18 24 34 22 50 22 L50 88 C40 60 25 42 10 26Z" fill="#1e3a8a"/>
+                <path d="M90 26 C82 24 66 22 50 22 L50 88 C60 60 75 42 90 26Z" fill="#1e3a8a"/>
               </svg>
             </div>
             <div style={{flex:1}}>
-              <div style={{display:"flex",alignItems:"baseline",gap:6,marginBottom:3}}>
-                <span style={{color:"#0f172a",fontSize:16,fontFamily:"'DM Sans',sans-serif",fontWeight:800,letterSpacing:0.5}}>Tesla Model 3</span>
-                
-              </div>
-              <div style={{display:"flex",alignItems:"center",gap:6}}>
-                <div style={{width:12,height:12,borderRadius:"50%",background:"#f1f5f9",border:"1.5px solid #444",boxShadow:"inset 0 0 4px rgba(255,255,255,0.1)"}}/>
-                <span style={{color:"#334155",fontSize:11}}>{lang==="en"?"Midnight Black · Electric":"Negro Medianoche · Eléctrico"}</span>
-                <div style={{display:"flex",alignItems:"center",gap:8,marginTop:5,flexWrap:"wrap"}}>
-                  <span style={{color:"#2563eb",fontSize:12,fontWeight:700,letterSpacing:2,background:"#2563eb15",border:"1px solid #2563eb44",borderRadius:6,padding:"2px 8px"}}>🔲 5361MZC</span>
-                  <span style={{color:"#334155",fontSize:11}}>· Sebastián Echevarría</span>
-                </div>
-              </div>
+              {/* Nombre coche */}
+              <div style={{color:"#0f172a",fontSize:18,fontWeight:900,letterSpacing:0.3,marginBottom:2}}>Tesla Model 3</div>
+              {/* Color y tipo */}
+              <div style={{color:"#475569",fontSize:11,fontWeight:600}}>{lang==="en"?"Midnight Black · Electric":"Negro Medianoche · Eléctrico"}</div>
             </div>
-            {/* Electric bolt */}
-            <div style={{flexShrink:0}}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="#2563eb" opacity="0.7">
-                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-              </svg>
+            {/* Rayo eléctrico */}
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#2563eb" style={{flexShrink:0}}>
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+            </svg>
+          </div>
+
+          {/* ── Separador ── */}
+          <div style={{height:"1px",background:"linear-gradient(90deg,transparent,#2563eb44,transparent)",marginBottom:12}}/>
+
+          {/* ── Fila 3: Matrícula + Conductor ── */}
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            {/* Matrícula grande */}
+            <div style={{background:"#1e3a8a",borderRadius:8,padding:"6px 16px",display:"flex",alignItems:"center",gap:8}}>
+              <div style={{width:10,height:14,background:"#ffffff",borderRadius:2,opacity:0.8}}/>
+              <span style={{color:"#ffffff",fontSize:17,fontWeight:900,letterSpacing:3}}>5361MZC</span>
+            </div>
+            {/* Conductor */}
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <div style={{width:32,height:32,borderRadius:"50%",background:"linear-gradient(135deg,#1e3a8a,#2563eb)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                <span style={{color:"#ffffff",fontSize:12,fontWeight:800}}>SE</span>
+              </div>
+              <div>
+                <div style={{color:"#0f172a",fontSize:13,fontWeight:800}}>Sebastián Echevarría</div>
+                <div style={{color:"#2563eb",fontSize:10,fontWeight:700}}>{lang==="en"?"Your driver":"Tu conductor"}</div>
+              </div>
             </div>
           </div>
         </div>
