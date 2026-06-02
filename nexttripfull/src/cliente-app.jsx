@@ -1567,7 +1567,7 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
               const isFree=!occupied&&!isDriverBlocked;
               return (
                 <div key={slotTime} style={{display:"flex",alignItems:"center",borderBottom:`1px solid ${isHour?"#222":"#181818"}`,minHeight:isHour?40:28,
-                  background:occupied?"linear-gradient(90deg,#2a0000,#1a0000)":isDriverBlocked?"linear-gradient(90deg,#2a0505,#111)":"transparent",
+                  background:occupied?"#fef2f2":isDriverBlocked?"#fff7ed":"transparent",
                 }}>
                   <div style={{width:52,flexShrink:0,padding:"0 10px",borderRight:`1px solid ${isHour?"#222":"#181818"}`,display:"flex",alignItems:"center"}}>
                     <span style={{color:isHour?"#0f172a":isHalfHour?"#334155":"#475569",fontSize:isHour?13:11,fontWeight:700}}>{slotTime}</span>
@@ -2455,9 +2455,9 @@ export default function NextTripClientApp() {
 
       <div style={{padding:"8px 14px 8px",borderBottom:"2px solid #e2e8f0",background:"#ffffff",position:"sticky",top:0,zIndex:50,boxShadow:"0 2px 8px rgba(0,0,0,0.08)"}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-          {/* Logo izquierda — grande */}
-          <div style={{flexShrink:0}}>
-            <RivieraLogo size={60}/>
+          {/* Logo izquierda — grande y centrado */}
+          <div style={{flexShrink:0,display:"flex",alignItems:"center"}}>
+            <RivieraLogo size={80}/>
           </div>
           {/* Derecha: columna con 2 filas */}
           <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:5}}>

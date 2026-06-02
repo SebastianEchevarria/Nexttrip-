@@ -1704,10 +1704,12 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
   },[]);
   const [historyOpen,setHistoryOpen]=useState(false);
   const [rejOpen,setRejOpen]=useState(false);
-  const [arrivedBookingId,setArrivedBookingId]=useState(null);
+  const [arrivedBookingId,setArrivedBookingId]=useState(()=>{try{return localStorage.getItem("nexttrip_arrived_id")||null;}catch{return null;}});
+  useEffect(()=>{try{localStorage.setItem("nexttrip_arrived_id",arrivedBookingId||"");}catch{}},[arrivedBookingId]);
   const [cancelConfirm,setCancelConfirm]=useState(false);
   const [showQuickMsgs,setShowQuickMsgs]=useState(false);
-  const [tripStarted,setTripStarted]=useState(false); // true after "Iniciar viaje" is pressed
+  const [tripStarted,setTripStarted]=useState(()=>{try{return localStorage.getItem("nexttrip_trip_started")==="1";}catch{return false;}}); // true after "Iniciar viaje" is pressed
+  useEffect(()=>{try{localStorage.setItem("nexttrip_trip_started",tripStarted?"1":"0");}catch{}},[tripStarted]);
   const [showPriceConfig,setShowPriceConfig]=useState(false);
   const [priceClient,setPriceClient]=useState(()=>{try{return Number(localStorage.getItem("ntprice_client")||3.15);}catch{return 3.15;}});
   const [priceRecep,setPriceRecep]=useState(()=>{try{return Number(localStorage.getItem("ntprice_recep")||3.15);}catch{return 3.15;}});
@@ -2271,7 +2273,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
                       ].map((msg,i)=>(
                         <button key={i} onClick={()=>{
                           onSendMessage&&onSendMessage(upcoming.id,{from:"driver",fromName:"Conductor",text:msg.es,ts:Date.now()});
-                          if(i===0){ setDriverStatus("onroute"); setTripStarted(false); } // First msg = "Estoy en camino" → activates EN RUTA + shows Iniciar viaje
+                          if(i===0){ setDriverStatus("onroute"); setTripStarted(false); try{localStorage.setItem("nexttrip_trip_started","0");}catch{} } // First msg = "Estoy en camino" → activates EN RUTA + shows Iniciar viaje
                           setShowQuickMsgs(false);
                           setToast("✅ Mensaje enviado");
                         }} style={{
@@ -5113,7 +5115,7 @@ export default function RivieraApp() {
   const handleReject    =(id,reason)=>fbMutateBookings(p=>p.map(b=>b.id===id?{...b,status:"rejected",rejectionReason:reason||""}:b),setBookings);
   const handleUpdateFare=(id,fare)=>fbMutateBookings(p=>p.map(b=>b.id===id?{...b,fare}:b),setBookings);
   const handlePayCommission=(id,proof)=>fbMutateBookings(p=>p.map(b=>b.id===id?{...b,commissionStatus:"paid",commissionProof:proof}:b),setBookings);
-  const handleStartTrip  =id=>{fbMutateBookings(p=>p.map(b=>b.id===id?{...b,status:"inprogress"}:b),setBookings); setDriverStatus("onroute");};
+  const handleStartTrip  =id=>{fbMutateBookings(p=>p.map(b=>b.id===id?{...b,status:"inprogress"}:b),setBookings); setDriverStatus("onroute"); try{localStorage.setItem("nexttrip_trip_started","1");}catch{}};
   const handleEndTrip=id=>{
     fbMutateBookings(p=>p.map(b=>{
       if(b.id!==id) return b;
@@ -5124,6 +5126,7 @@ export default function RivieraApp() {
       };
     }), setBookings);
     setDriverStatus("free");
+    try{localStorage.setItem("nexttrip_trip_started","0");localStorage.setItem("nexttrip_arrived_id","");}catch{}
     sendNotification("Viaje completado", "El viaje ha finalizado. ¡Gracias!", "end-"+id);
   };;
   const handleCancelBooking=(id,reason)=>{
