@@ -2137,8 +2137,13 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
         if(!upcoming) return null;
         const tripDt=new Date(`${upcoming.date}T${upcoming.time}:00`);
         const diffMs=tripDt-nowTick;
-        const isOngoing=diffMs<0&&diffMs>-TRIP_DURATION*60*1000;
-        const absDiff=Math.abs(diffMs);
+        // isOngoing: SOLO cuando el conductor pulsó Iniciar viaje (status inprogress)
+        const isOngoing=upcoming.status==="inprogress"||tripStarted;
+        // isWaiting: hora llegó a 0 pero no se inició viaje — espera máx 10 min
+        const isWaiting=diffMs<0&&diffMs>-10*60*1000&&!isOngoing;
+        // waitCountdown: cuenta regresiva de los 10 min de espera
+        const waitMs=10*60*1000+diffMs; // ms restantes de los 10 min
+        const absDiff=isWaiting?Math.abs(waitMs):Math.abs(diffMs);
         const totalSecs=Math.floor(absDiff/1000);
         const days=Math.floor(totalSecs/86400);
         const hrs=Math.floor((totalSecs%86400)/3600);
@@ -2146,25 +2151,25 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
         const secs=totalSecs%60;
         const pad=n=>String(n).padStart(2,"0");
         const countdownStr=days>0?`${days}d ${pad(hrs)}h ${pad(mins)}m`:`${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
-        const urgency=!isOngoing&&diffMs<30*60*1000;
+        const urgency=!isOngoing&&!isWaiting&&diffMs<30*60*1000&&diffMs>0;
         const mapsUrl=upcoming.origin?`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(upcoming.origin)}`:"";
         return(
           <div style={{
             marginBottom:16,
-            background:isOngoing?"linear-gradient(135deg,#0a2a0a,#1e293b)":urgency?"linear-gradient(135deg,#2a1500,#1e293b)":"linear-gradient(135deg,#0a1628,#1e293b)",
-            border:`2px solid ${isOngoing?"#22c55e":urgency?"#f59e0b":"#c9a96e44"}`,
+            background:isOngoing?"linear-gradient(135deg,#0a2a0a,#1e293b)":isWaiting?"linear-gradient(135deg,#2a0808,#1e293b)":urgency?"linear-gradient(135deg,#2a1500,#1e293b)":"linear-gradient(135deg,#0a1628,#1e293b)",
+            border:`2px solid ${isOngoing?"#22c55e":isWaiting?"#ef4444":urgency?"#f59e0b":"#c9a96e44"}`,
             borderRadius:18,overflow:"hidden",
-            boxShadow:isOngoing?"0 0 20px #22c55e33":urgency?"0 0 20px #f59e0b33":"none",
+            boxShadow:isOngoing?"0 0 20px #22c55e33":isWaiting?"0 0 20px #ef444444":urgency?"0 0 20px #f59e0b33":"none",
           }}>
             <div style={{padding:"10px 16px 0",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
               <div style={{display:"flex",alignItems:"center",gap:7}}>
-                <div style={{width:8,height:8,borderRadius:"50%",background:isOngoing?"#22c55e":urgency?"#f59e0b":"#c9a96e",animation:"pulse 1s infinite",flexShrink:0}}/>
-                <span style={{color:"#a8b8cc",fontSize:10,letterSpacing:2,fontWeight:600}}>
-                  {isOngoing?"EN CURSO":urgency?"PRÓXIMO VIAJE — ¡PRONTO!":"PRÓXIMO VIAJE"}
+                <div style={{width:8,height:8,borderRadius:"50%",background:isOngoing?"#22c55e":isWaiting?"#ef4444":urgency?"#f59e0b":"#c9a96e",animation:"pulse 1s infinite",flexShrink:0}}/>
+                <span style={{color:isWaiting?"#ef4444":"#a8b8cc",fontSize:10,letterSpacing:2,fontWeight:700}}>
+                  {isOngoing?"EN CURSO":isWaiting?"⏳ EN ESPERA — CLIENTE NO LLEGÓ":urgency?"PRÓXIMO VIAJE — ¡PRONTO!":"PRÓXIMO VIAJE"}
                 </span>
               </div>
-              <span style={{background:isOngoing?"#22c55e22":urgency?"#f59e0b22":"#c9a96e22",border:`1px solid ${isOngoing?"#22c55e44":urgency?"#f59e0b44":"#c9a96e44"}`,borderRadius:8,padding:"3px 10px",color:isOngoing?"#22c55e":urgency?"#f59e0b":"#c9a96e",fontSize:10,fontWeight:700}}>
-                {upcoming.status==="pending"?"⏳ Pendiente":"✅ Confirmado"}
+              <span style={{background:isOngoing?"#22c55e22":isWaiting?"#ef444422":urgency?"#f59e0b22":"#c9a96e22",border:`1px solid ${isOngoing?"#22c55e44":isWaiting?"#ef444444":urgency?"#f59e0b44":"#c9a96e44"}`,borderRadius:8,padding:"3px 10px",color:isOngoing?"#22c55e":isWaiting?"#ef4444":urgency?"#f59e0b":"#c9a96e",fontSize:10,fontWeight:700}}>
+                {isWaiting?"🔴 EN ESPERA":upcoming.status==="pending"?"⏳ Pendiente":"✅ Confirmado"}
               </span>
             </div>
             <div style={{padding:"10px 16px 0"}}>
@@ -3783,9 +3788,9 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
           }}>
             <div style={{padding:"10px 16px 0",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
               <div style={{display:"flex",alignItems:"center",gap:7}}>
-                <div style={{width:8,height:8,borderRadius:"50%",background:isOngoing?"#22c55e":urgency?"#f59e0b":"#c9a96e",animation:"pulse 1s infinite",flexShrink:0}}/>
-                <span style={{color:"#a8b8cc",fontSize:10,letterSpacing:2,fontWeight:600}}>
-                  {isOngoing?"EN CURSO":urgency?"PRÓXIMO VIAJE — ¡PRONTO!":"PRÓXIMO VIAJE"}
+                <div style={{width:8,height:8,borderRadius:"50%",background:isOngoing?"#22c55e":isWaiting?"#ef4444":urgency?"#f59e0b":"#c9a96e",animation:"pulse 1s infinite",flexShrink:0}}/>
+                <span style={{color:isWaiting?"#ef4444":"#a8b8cc",fontSize:10,letterSpacing:2,fontWeight:700}}>
+                  {isOngoing?"EN CURSO":isWaiting?"⏳ EN ESPERA — CLIENTE NO LLEGÓ":urgency?"PRÓXIMO VIAJE — ¡PRONTO!":"PRÓXIMO VIAJE"}
                 </span>
               </div>
               <span style={{background:isOngoing?"#22c55e22":urgency?"#f59e0b22":"#c9a96e22",border:`1px solid ${isOngoing?"#22c55e44":urgency?"#f59e0b44":"#c9a96e44"}`,borderRadius:8,padding:"3px 10px",color:isOngoing?"#22c55e":urgency?"#f59e0b":"#c9a96e",fontSize:10,fontWeight:700}}>
