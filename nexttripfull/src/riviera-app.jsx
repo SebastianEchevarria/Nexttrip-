@@ -4280,15 +4280,16 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
       {/* ── NEW BOOKING TAB ── */}
       {tab==="new"&&(
         <div>
-          <div style={{color:"#0f172a",fontSize:18,fontFamily:"'Inter',sans-serif",marginBottom:18}}>Nueva reserva de transfer</div>
+          <div style={{color:"#1e3a8a",fontSize:20,fontFamily:"'Inter',sans-serif",fontWeight:800,marginBottom:18}}>Nueva reserva de transfer</div>
           <div style={{marginBottom:14}}>
             <label style={{color:"#64748b",fontSize:11,letterSpacing:2,display:"block",marginBottom:5}}>FECHA</label>
             <input type="date" value={form.date} onChange={e=>setForm({...form,date:e.target.value,time:""})} style={inputStyle}/>
           </div>
           {form.time&&(
-            <div style={{background:"#ffffff",border:"1px solid #2563eb33",borderRadius:12,padding:"14px 16px",marginBottom:18,textAlign:"center"}}>
-              <div style={{color:"#64748b",fontSize:10,letterSpacing:2,marginBottom:6}}>HORA SELECCIONADA</div>
-              <div style={{color:"#2563eb",fontSize:36,fontFamily:"'Inter',sans-serif",fontWeight:700,lineHeight:1}}>{form.time}</div>
+            <div style={{background:"#eff6ff",border:"2.5px solid #1e3a8a",borderRadius:14,padding:"16px 20px",marginBottom:18,textAlign:"center",boxShadow:"0 4px 12px rgba(30,58,138,0.12)"}}>
+              <div style={{color:"#1e3a8a",fontSize:11,letterSpacing:3,marginBottom:6,fontWeight:700}}>HORA SELECCIONADA</div>
+              <div style={{color:"#1e3a8a",fontSize:42,fontFamily:"'Inter',sans-serif",fontWeight:900,lineHeight:1}}>{form.time}</div>
+              <div style={{color:"#1e40af",fontSize:12,fontWeight:700,marginTop:4}}>{form.date}</div>
             </div>
           )}
           {!form.time&&(
@@ -4298,7 +4299,7 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
           )}
           {/* Hotel / lugar de trabajo — shows fixed origin data */}
           <div style={{marginBottom:14}}>
-            <label style={{color:"#64748b",fontSize:11,letterSpacing:2,display:"block",marginBottom:5}}>TU HOTEL O LUGAR DE TRABAJO</label>
+            <label style={{color:"#1e3a8a",fontSize:11,letterSpacing:2,display:"block",marginBottom:5,fontWeight:700}}>TU HOTEL O LUGAR DE TRABAJO</label>
             <div style={{...inputStyle,color:"#2563eb",display:"flex",flexDirection:"column",gap:2,height:"auto",padding:"10px 14px"}}>
               <span style={{fontWeight:600,fontSize:14}}>{fixedOrigin.name||employee.hotel}</span>
               {fixedOrigin.address&&<span style={{fontSize:11,opacity:0.75}}>{fixedOrigin.address}</span>}
@@ -4308,12 +4309,12 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
             {label:"NOMBRE DEL HUÉSPED",key:"guest",type:"text",ph:"Mr. / Ms. ..."},
           ].map(f=>(
             <div key={f.key} style={{marginBottom:14}}>
-              <label style={{color:"#64748b",fontSize:11,letterSpacing:2,display:"block",marginBottom:5}}>{f.label}</label>
+              <label style={{color:"#1e3a8a",fontSize:11,letterSpacing:2,display:"block",marginBottom:5,fontWeight:700}}>{f.label}</label>
               <input type={f.type} value={form[f.key]} placeholder={f.ph} onChange={e=>setForm({...form,[f.key]:e.target.value})} style={inputStyle}/>
             </div>
           ))}
           <div style={{marginBottom:14}}>
-            <label style={{color:"#64748b",fontSize:11,letterSpacing:2,display:"block",marginBottom:5}}>TELÉFONO DEL PASAJERO</label>
+            <label style={{color:"#1e3a8a",fontSize:11,letterSpacing:2,display:"block",marginBottom:5,fontWeight:700}}>TELÉFONO DEL PASAJERO</label>
             <div style={{position:"relative"}}>
               <span style={{position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",fontSize:16,pointerEvents:"none"}}>📞</span>
               <input type="tel" value={form.guestPhone} placeholder="+34 600 000 000" onChange={e=>setForm({...form,guestPhone:e.target.value})} style={{...inputStyle,paddingLeft:42}}/>
@@ -4323,30 +4324,42 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
           {/* ORIGIN — editable with geolocation */}
           <div style={{marginBottom:14}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
-              <label style={{color:"#64748b",fontSize:11,letterSpacing:2}}>PUNTO DE PARTIDA</label>
-              <button onClick={()=>getLocation(addr=>{setForm(f=>({...f,origin:addr}));try{const o={name:"Mi ubicación",address:addr};setFixedOrigin(o);localStorage.setItem(ORIGIN_KEY,JSON.stringify(o));}catch{};})} disabled={geoLoading} style={{background:"none",border:"none",color:geoLoading?"#64748b":"#2563eb",fontSize:11,cursor:geoLoading?"default":"pointer",padding:0,display:"flex",alignItems:"center",gap:4}}>
+              <label style={{color:"#1e3a8a",fontSize:11,letterSpacing:2,fontWeight:700}}>PUNTO DE PARTIDA</label>
+              <button onClick={()=>getLocation(addr=>{setForm(f=>({...f,origin:addr}));try{const o={name:"Mi ubicación",address:addr};setFixedOrigin(o);localStorage.setItem(ORIGIN_KEY,JSON.stringify(o));}catch{};})} disabled={geoLoading} style={{
+                background:geoLoading?"#e2e8f0":"linear-gradient(135deg,#2563eb,#1d4ed8)",
+                border:"none",borderRadius:20,cursor:geoLoading?"default":"pointer",
+                padding:"5px 12px",display:"flex",alignItems:"center",gap:5,
+                color:"#ffffff",fontSize:11,fontWeight:700,
+                boxShadow:geoLoading?"none":"0 2px 8px rgba(37,99,235,0.35)",
+              }}>
                 <span style={{fontSize:13}}>📍</span>{geoLoading?"Obteniendo...":"Usar mi ubicación"}
               </button>
             </div>
             {geoError==="denied"?<GeoErrorMsg onClose={()=>setGeoState({loading:false,error:null,denied:false})}/>:geoError&&<div style={{color:"#ef4444",fontSize:11,marginBottom:6}}>{geoError}</div>}
             <div style={{position:"relative"}}>
-              <input type="text" value={form.origin} placeholder="Dirección de recogida" onChange={e=>{setForm(f=>({...f,origin:e.target.value}));try{const o={name:e.target.value,address:e.target.value};setFixedOrigin(o);localStorage.setItem(ORIGIN_KEY,JSON.stringify(o));}catch{};}} style={inputStyle}/>
+              <input type="text" value={form.origin} placeholder="Dirección de recogida" onChange={e=>{setForm(f=>({...f,origin:e.target.value}));try{const o={name:e.target.value,address:e.target.value};setFixedOrigin(o);localStorage.setItem(ORIGIN_KEY,JSON.stringify(o));}catch{};}} style={{...inputStyle,border:form.origin?"2px solid #2563eb":"2px solid #f59e0b",background:form.origin?"#f0f7ff":"#fffbeb"}}/>
             </div>
           </div>
           <div style={{marginBottom:14}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-              <label style={{color:"#64748b",fontSize:11,letterSpacing:2}}>DESTINO</label>
+              <label style={{color:"#1e3a8a",fontSize:11,letterSpacing:2,fontWeight:700}}>DESTINO</label>
             </div>
             {/* no geo error here anymore */}
             {false&&null}
-            <input type="text" value={form.destination} placeholder="Dirección de destino" onChange={e=>setForm({...form,destination:e.target.value})} style={inputStyle}/>
+            <input type="text" value={form.destination} placeholder="Dirección de destino" onChange={e=>setForm({...form,destination:e.target.value})} style={{...inputStyle,border:form.destination?"2px solid #2563eb":"2px solid #f59e0b",background:form.destination?"#f0f7ff":"#fffbeb"}}/>
           </div>
           <TripEstimateBox origin={form.origin} destination={form.destination}/>
           <div style={{marginBottom:14}}>
-            <label style={{color:"#64748b",fontSize:11,letterSpacing:2,display:"block",marginBottom:5}}>PASAJEROS (máx. 4)</label>
+            <label style={{color:"#1e3a8a",fontSize:11,letterSpacing:2,display:"block",marginBottom:5,fontWeight:700}}>PASAJEROS (máx. 4)</label>
             <div style={{display:"flex",gap:8}}>
               {[1,2,3,4].map(n=>(
-                <button key={n} onClick={()=>setForm({...form,passengers:n})} style={{flex:1,height:48,borderRadius:10,border:"none",cursor:"pointer",background:form.passengers===n?"linear-gradient(135deg,#2563eb,#a07840)":"#f1f5f9",color:form.passengers===n?"#f8fafc":"#64748b",fontSize:18,fontWeight:form.passengers===n?700:400,transition:"all 0.15s"}}>{n}</button>
+                <button key={n} onClick={()=>setForm({...form,passengers:n})} style={{flex:1,height:56,borderRadius:14,cursor:"pointer",
+                  border:form.passengers===n?"none":"2px solid #cbd5e1",
+                  background:form.passengers===n?"linear-gradient(135deg,#1e3a8a,#2563eb)":"#f8fafc",
+                  color:form.passengers===n?"#ffffff":"#0f172a",fontSize:22,fontWeight:700,
+                  transition:"all 0.15s",
+                  boxShadow:form.passengers===n?"0 4px 12px rgba(30,58,138,0.35)":"0 1px 3px rgba(0,0,0,0.08)",
+                  transform:form.passengers===n?"scale(1.05)":"scale(1)"}}>{n}</button>
               ))}
             </div>
             <div style={{color:"#64748b",fontSize:10,marginTop:6,textAlign:"center"}}>{"👤".repeat(form.passengers)} {form.passengers} persona{form.passengers>1?"s":""}</div>
@@ -4399,7 +4412,7 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
                 </div>
               </div>
             )}
-            <div style={{background:slotAvailable&&advanceOk?"#dcfce7":"#2a0f0f",border:`1px solid ${slotAvailable&&advanceOk?"#2563eb":"#ef4444"}`,borderRadius:10,padding:"11px 14px",marginBottom:18,display:"flex",alignItems:"center",gap:10}}>
+            <div style={{background:slotAvailable&&advanceOk?"#f0fdf4":"#fff0f0",border:`2px solid ${slotAvailable&&advanceOk?"#22c55e":"#ef4444"}`,borderRadius:10,padding:"11px 14px",marginBottom:18,display:"flex",alignItems:"center",gap:10}}>
               <div style={{width:10,height:10,borderRadius:"50%",background:slotAvailable&&advanceOk?"#2563eb":"#ef4444",animation:"pulse 1.5s infinite",flexShrink:0}}/>
               <div>
                 <div style={{color:slotAvailable&&advanceOk?"#2563eb":"#ef4444",fontSize:13,fontWeight:600}}>{slotAvailable&&advanceOk?"Horario disponible":"Horario no disponible"}</div>
@@ -4413,9 +4426,9 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
             return (
               <button onClick={handleSubmit} disabled={disabled}
                 style={{width:"100%",
-                  background:disabled?"#f1f5f9":"linear-gradient(135deg,#2563eb,#a07840)",
+                  background:disabled?"#f1f5f9":"linear-gradient(135deg,#1e3a8a,#2563eb)",
                   border:"none",borderRadius:12,padding:"16px 0",
-                  color:disabled?"#5a7a9a":"#f8fafc",
+                  color:disabled?"#94a3b8":"#ffffff",
                   fontSize:14,fontWeight:700,letterSpacing:1,cursor:disabled?"not-allowed":"pointer",transition:"all 0.2s"}}>
                 {isOffline?"🔴 Conductor fuera de servicio":"ENVIAR RESERVA AL CONDUCTOR"}
               </button>
