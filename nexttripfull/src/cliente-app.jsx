@@ -2193,6 +2193,12 @@ export default function NextTripClientApp() {
   const [showProfile,setShowProfile]=useState(false);
   const [profilePhone,setProfilePhone]=useState("");
   const [profileSaved,setProfileSaved]=useState(false);
+  const [pinView,setPinView]=useState(false);       // true = mostrar formulario cambio PIN
+  const [pinCurrent,setPinCurrent]=useState("");    // PIN actual
+  const [pinNew,setPinNew]=useState("");            // PIN nuevo
+  const [pinConfirm,setPinConfirm]=useState("");    // Confirmación PIN nuevo
+  const [pinError,setPinError]=useState("");        // Mensaje de error
+  const [pinSuccess,setPinSuccess]=useState(false); // PIN guardado ok
   const [showIOSInstall,setShowIOSInstall]=useState(false);
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
   const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
@@ -2298,6 +2304,30 @@ export default function NextTripClientApp() {
   const handleClientAcceptPrice=id=>_clientMutate(p=>p.map(b=>b.id===id?{...b,status:"confirmed",fare:b.proposedPrice}:b));
   const handleClientRejectPrice=id=>_clientMutate(p=>p.map(b=>b.id===id?{...b,status:"client_rejected"}:b));
   const handleClientCancelTrip=id=>_clientMutate(p=>p.map(b=>b.id===id?{...b,status:"cancelled",cancelReason:lang==="en"?"Cancelled by client":"Cancelado por el cliente"}:b));
+  const savePinChange=()=>{
+    setPinError("");
+    // Verificar PIN actual
+    if(currentClient?.pin&&pinCurrent!==currentClient.pin){
+      setPinError(lang==="en"?"Current PIN is incorrect":"El PIN actual es incorrecto");
+      return;
+    }
+    if(!/^\d{4}$/.test(pinNew)){
+      setPinError(lang==="en"?"New PIN must be 4 digits":"El PIN nuevo debe tener 4 dígitos");
+      return;
+    }
+    if(pinNew!==pinConfirm){
+      setPinError(lang==="en"?"PINs do not match":"Los PINs no coinciden");
+      return;
+    }
+    // Guardar nuevo PIN
+    const clients=loadClients();
+    const updated=clients.map(cl=>cl.email===currentClient?.email?{...cl,pin:pinNew}:cl);
+    saveClients(updated);
+    setCurrentClient(prev=>({...prev,pin:pinNew}));
+    setPinSuccess(true);
+    setPinCurrent(""); setPinNew(""); setPinConfirm("");
+    setTimeout(()=>{setPinSuccess(false);setPinView(false);},1800);
+  };
   const saveProfilePhone=()=>{
     const clients=loadClients();
     const updated=clients.map(cl=>cl.email===currentClient?.email?{...cl,phone:profilePhone}:cl);
@@ -2585,9 +2615,47 @@ export default function NextTripClientApp() {
                 </div>
               </div>
               {/* Cambiar PIN */}
-              <button onClick={()=>{setShowProfile(false);}} style={{width:"100%",background:"#f8fafc",border:"1.5px solid #e2e8f0",borderRadius:10,padding:"12px 0",color:"#0f172a",fontSize:13,fontWeight:700,cursor:"pointer",marginBottom:10,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-                🔑 {lang==="en"?"Change PIN":"Cambiar PIN"}
-              </button>
+              {!pinView?(
+                <button onClick={()=>{setPinView(true);setPinError("");setPinCurrent("");setPinNew("");setPinConfirm("");setPinSuccess(false);}} style={{width:"100%",background:"#f8fafc",border:"1.5px solid #e2e8f0",borderRadius:10,padding:"12px 0",color:"#0f172a",fontSize:13,fontWeight:700,cursor:"pointer",marginBottom:10,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                  🔑 {lang==="en"?"Change PIN":"Cambiar PIN"}
+                </button>
+              ):(
+                <div style={{background:"#f8fafc",border:"1.5px solid #2563eb33",borderRadius:12,padding:"14px",marginBottom:10}}>
+                  <div style={{color:"#1e3a8a",fontSize:12,fontWeight:800,marginBottom:10,display:"flex",alignItems:"center",gap:6}}>
+                    🔑 {lang==="en"?"Change PIN":"Cambiar PIN"}
+                    <button onClick={()=>setPinView(false)} style={{marginLeft:"auto",background:"none",border:"none",color:"#94a3b8",fontSize:16,cursor:"pointer",padding:0,lineHeight:1}}>✕</button>
+                  </div>
+                  {/* PIN actual */}
+                  <div style={{marginBottom:10}}>
+                    <label style={{color:"#475569",fontSize:10,letterSpacing:1,fontWeight:700,display:"block",marginBottom:4}}>{lang==="en"?"CURRENT PIN":"PIN ACTUAL"}</label>
+                    <input type="password" inputMode="numeric" maxLength={4} value={pinCurrent} onChange={e=>setPinCurrent(e.target.value.replace(/\D/g,"").slice(0,4))}
+                      placeholder="••••"
+                      style={{width:"100%",background:"#ffffff",border:"2px solid "+(pinCurrent.length===4?"#2563eb":"#e2e8f0"),borderRadius:8,padding:"10px 12px",color:"#0f172a",fontSize:18,fontWeight:700,outline:"none",letterSpacing:6,boxSizing:"border-box",textAlign:"center"}}/>
+                  </div>
+                  {/* PIN nuevo */}
+                  <div style={{marginBottom:10}}>
+                    <label style={{color:"#475569",fontSize:10,letterSpacing:1,fontWeight:700,display:"block",marginBottom:4}}>{lang==="en"?"NEW PIN":"PIN NUEVO"}</label>
+                    <input type="password" inputMode="numeric" maxLength={4} value={pinNew} onChange={e=>setPinNew(e.target.value.replace(/\D/g,"").slice(0,4))}
+                      placeholder="••••"
+                      style={{width:"100%",background:"#ffffff",border:"2px solid "+(pinNew.length===4?"#2563eb":"#e2e8f0"),borderRadius:8,padding:"10px 12px",color:"#0f172a",fontSize:18,fontWeight:700,outline:"none",letterSpacing:6,boxSizing:"border-box",textAlign:"center"}}/>
+                  </div>
+                  {/* Confirmar PIN */}
+                  <div style={{marginBottom:12}}>
+                    <label style={{color:"#475569",fontSize:10,letterSpacing:1,fontWeight:700,display:"block",marginBottom:4}}>{lang==="en"?"CONFIRM NEW PIN":"CONFIRMAR PIN NUEVO"}</label>
+                    <input type="password" inputMode="numeric" maxLength={4} value={pinConfirm} onChange={e=>setPinConfirm(e.target.value.replace(/\D/g,"").slice(0,4))}
+                      placeholder="••••"
+                      style={{width:"100%",background:"#ffffff",border:"2px solid "+(pinConfirm.length===4?(pinNew===pinConfirm?"#22c55e":"#ef4444"):"#e2e8f0"),borderRadius:8,padding:"10px 12px",color:"#0f172a",fontSize:18,fontWeight:700,outline:"none",letterSpacing:6,boxSizing:"border-box",textAlign:"center"}}/>
+                  </div>
+                  {/* Error */}
+                  {pinError&&<div style={{background:"#fff0f0",border:"1px solid #ef444455",borderRadius:8,padding:"8px 10px",color:"#ef4444",fontSize:11,fontWeight:700,marginBottom:10}}>{pinError}</div>}
+                  {/* Éxito */}
+                  {pinSuccess&&<div style={{background:"#f0fdf4",border:"1px solid #22c55e55",borderRadius:8,padding:"8px 10px",color:"#16a34a",fontSize:11,fontWeight:700,marginBottom:10}}>✅ {lang==="en"?"PIN updated successfully":"PIN actualizado correctamente"}</div>}
+                  {/* Botón guardar */}
+                  <button onClick={savePinChange} style={{width:"100%",background:"linear-gradient(135deg,#1e3a8a,#2563eb)",border:"none",borderRadius:8,padding:"11px 0",color:"#ffffff",fontSize:13,fontWeight:700,cursor:"pointer"}}>
+                    {lang==="en"?"Save new PIN":"Guardar nuevo PIN"}
+                  </button>
+                </div>
+              )}
               {/* Salir */}
               <button onClick={()=>{setShowProfile(false);setScreen("auth");setCurrentClient(null);}} style={{width:"100%",background:"linear-gradient(135deg,#ef4444,#b91c1c)",border:"none",borderRadius:10,padding:"13px 0",color:"#ffffff",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
                 🚪 {TRANSLATIONS[lang]?.exit||"Salir"}
