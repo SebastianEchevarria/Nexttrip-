@@ -3967,9 +3967,9 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
               const isBlockStart=occupied.length>0&&totalMins===t2m(occupied[0].time);
               const isPrepZone=occupied.length>0&&totalMins>=t2m(occupied[0].time)-TRAVEL_PREP&&totalMins<t2m(occupied[0].time);
               return (
-                <div key={slotTime} style={{display:"flex",alignItems:"center",borderBottom:`1px solid ${isHour?"#2a2a2a":"#161616"}`,minHeight:isHour?44:32,background:!isFree?"linear-gradient(90deg,#1a0808,#111)":"transparent"}}>
-                  <div style={{width:54,flexShrink:0,padding:"0 14px",borderRight:`1px solid ${isHour?"#2a2a2a":"#161616"}`,display:"flex",alignItems:"center"}}>
-                    <span style={{color:isHour?"#f8fafc":isHalfHour?"#d0dce8":"#64748b",fontSize:isHour?12:10,fontWeight:isHour?600:400}}>{slotTime}</span>
+                <div key={slotTime} style={{display:"flex",alignItems:"center",borderBottom:`1px solid ${isHour?"#e2e8f0":"#f1f5f9"}`,minHeight:isHour?44:32,background:!isFree?"#fff5f5":"transparent"}}>
+                  <div style={{width:54,flexShrink:0,padding:"0 14px",borderRight:`1px solid ${isHour?"#e2e8f0":"#f1f5f9"}`,display:"flex",alignItems:"center"}}>
+                    <span style={{color:isHour?"#0f172a":isHalfHour?"#334155":"#94a3b8",fontSize:isHour?12:10,fontWeight:isHour?700:400}}>{slotTime}</span>
                   </div>
                   <div style={{flex:1,padding:`${isHour?"7px":"4px"} 12px`,display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
                     {!isFree?(
@@ -3998,25 +3998,26 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
                           </div>
                         </div>
                       ):(
-                        <span style={{color:"#3a1515",fontSize:10}}>▓ bloqueado</span>
+                        <span style={{color:"#ef444488",fontSize:10}}>▓ bloqueado</span>
                       )
                     ):isAdvanceBlocked?(
                       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%",gap:8}}>
                         <div style={{display:"flex",alignItems:"center",gap:5}}>
-                          <div style={{width:5,height:5,borderRadius:"50%",background:"#475569",flexShrink:0}}/>
-                          <span style={{color:"#475569",fontSize:isHour?12:10}}>Menos de {MIN_ADVANCE_HOURS}h</span>
+                          <div style={{width:5,height:5,borderRadius:"50%",background:"#94a3b8",flexShrink:0}}/>
+                          <span style={{color:"#94a3b8",fontSize:isHour?12:10}}>Menos de {MIN_ADVANCE_HOURS}h</span>
                         </div>
-                        {isHour&&<span style={{background:"#f1f5f9",border:"1px solid #334155",borderRadius:6,padding:"2px 8px",color:"#475569",fontSize:9,fontWeight:600}}>NO DISPONIBLE</span>}
+                        {isHour&&<span style={{background:"#f1f5f9",border:"1px solid #e2e8f0",borderRadius:6,padding:"2px 8px",color:"#94a3b8",fontSize:9,fontWeight:600}}>NO DISPONIBLE</span>}
                       </div>
                     ):driverFree?(
                       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%",gap:8}}>
                         <div style={{display:"flex",alignItems:"center",gap:5}}>
                           <div style={{width:5,height:5,borderRadius:"50%",background:"#2563eb",opacity:isHour?1:0.7,flexShrink:0}}/>
-                          <span style={{color:"#2563eb",fontSize:isHour?12:10,opacity:isHour?1:0.7}}>Libre</span>
+                          <span style={{color:"#2563eb",fontSize:isHour?12:10,opacity:isHour?1:0.7}}>• Libre</span>
                         </div>
                         <button disabled={isOffline} onClick={()=>{if(!isOffline){setForm(f=>({...f,time:slotTime}));setTab("new");}}} style={{opacity:isOffline?0.3:1,
-                          background:"linear-gradient(135deg,#2563eb,#a07840)",border:"none",borderRadius:7,
-                          color:"#0f172a",fontSize:isHour?11:10,fontWeight:700,padding:isHour?"5px 12px":"3px 10px",cursor:"pointer",
+                          background:"#2563eb",border:"none",borderRadius:7,
+                          color:"#ffffff",fontSize:isHour?11:10,fontWeight:700,padding:isHour?"5px 12px":"3px 10px",cursor:"pointer",
+                          boxShadow:"0 2px 6px rgba(37,99,235,0.3)",
                         }}>+ Reservar</button>
                       </div>
                     ):(
@@ -4025,9 +4026,9 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
                   </div>
                   {!isFree&&<div style={{width:60,flexShrink:0,padding:"0 8px",textAlign:"center"}}>
                     <span style={{fontSize:9,
-                      color:isAdvanceBlocked?"#475569":isDriverBlocked&&occupied.length===0?"#f97316":"#ef4444",
-                      background:isAdvanceBlocked?"#f1f5f9":isDriverBlocked&&occupied.length===0?"#f9731615":"#ef444415",
-                      border:`1px solid ${isAdvanceBlocked?"#33415544":isDriverBlocked&&occupied.length===0?"#f9731633":"#ef444433"}`,
+                      color:isAdvanceBlocked?"#94a3b8":isDriverBlocked&&occupied.length===0?"#f97316":"#ef4444",
+                      background:isAdvanceBlocked?"#f8fafc":isDriverBlocked&&occupied.length===0?"#f9731615":"#fee2e2",
+                      border:`1px solid ${isAdvanceBlocked?"#e2e8f0":isDriverBlocked&&occupied.length===0?"#f9731633":"#ef444433"}`,
                       borderRadius:6,padding:"1px 5px",display:"block"}}>
                       {isAdvanceBlocked?"<2h":isDriverBlocked&&occupied.length===0?"BLOQ.":"NO DISP."}
                     </span>
