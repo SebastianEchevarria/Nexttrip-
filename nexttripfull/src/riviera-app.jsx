@@ -3830,7 +3830,8 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
         const secs=totalSecs%60;
         const pad=n=>String(n).padStart(2,"0");
         const countdownStr=days>0?`${days}d ${pad(hrs)}h ${pad(mins)}m`:`${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
-        const urgency=!isOngoing&&diffMs>0&&diffMs<30*60*1000;
+        const isWaiting=diffMs<0&&diffMs>-10*60*1000&&!isOngoing;
+        const urgency=!isOngoing&&!isWaiting&&diffMs>0&&diffMs<30*60*1000;
         return(
           <div style={{
             marginBottom:16,
