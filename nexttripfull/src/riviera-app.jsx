@@ -716,12 +716,12 @@ function PinKeypad({ correctPin, onSuccess, onBack, subtitle, accentColor="#2563
         {[1,2,3,4,5,6,7,8,9,"",0,"⌫"].map((d,i)=>(
           <button key={i} onClick={()=>d==="⌫"?setPin(p=>p.slice(0,-1)):d!==""?handleDigit(String(d)):null}
             disabled={d===""} style={{height:60,borderRadius:12,
-              background:d===""?"transparent":d==="⌫"?"#f8fafc":"#ffffff",
-              border:d===""?"none":`2px solid ${d==="⌫"?"#e2e8f0":accentColor+"44"}`,
-              color:d==="⌫"?"#94a3b8":"#0f172a",
-              fontSize:d==="⌫"?20:22,fontFamily:"'Inter',sans-serif",fontWeight:700,
+              background:d===""?"transparent":d==="⌫"?"#f1f5f9":"#eff6ff",
+              border:d===""?"none":`2px solid ${d==="⌫"?"#e2e8f0":accentColor+"88"}`,
+              color:d==="⌫"?"#94a3b8":accentColor,
+              fontSize:d==="⌫"?20:24,fontFamily:"'Inter',sans-serif",fontWeight:800,
               cursor:d===""?"default":"pointer",transition:"all 0.12s",
-              boxShadow:d===""||d==="⌫"?"none":`0 2px 8px ${accentColor}22`}}
+              boxShadow:d===""||d==="⌫"?"none":`0 3px 10px ${accentColor}33`}}
             onMouseDown={e=>{if(d!=="")e.currentTarget.style.transform="scale(0.92)";if(d!=="⌫"&&d!=="")e.currentTarget.style.background="#eff6ff";}}
             onMouseUp={e=>{e.currentTarget.style.transform="none";if(d!=="⌫"&&d!=="")e.currentTarget.style.background="#ffffff";}}>{d}</button>
         ))}
@@ -739,7 +739,7 @@ function RoleSelector({ onSelect, installPrompt }) {
     <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:24}}>
       <RivieraLogo size={320}/>
       <div style={{marginBottom:36}}/>
-      <div style={{color:"#0f172a",fontSize:20,letterSpacing:4,fontWeight:900,marginBottom:28}}>SELECCIONA TU PERFIL</div>
+      <div style={{color:"#64748b",fontSize:11,letterSpacing:4,fontWeight:600,marginBottom:28}}>SELECCIONA TU PERFIL</div>
       {[
         {id:"reception",icon:"🏨",title:"Recepción Hotel", sub:"Accede con tu código de empleado", color:"#38bdf8"},
       ].map(r=>(
@@ -1115,12 +1115,12 @@ function ReceptionAuth({ onLogin, onBack }) {
             {[1,2,3,4,5,6,7,8,9,"",0,"⌫"].map((d,i)=>(
               <button key={i} onClick={()=>d==="⌫"?setLoginPin(p=>{setLoginError("");return p.slice(0,-1);}):d!==""?handleLoginDigit(String(d)):null}
                 disabled={d===""} style={{height:60,borderRadius:12,
-                  background:d===""?"transparent":d==="⌫"?"#f8fafc":"#ffffff",
-                  border:d===""?"none":`2px solid ${d==="⌫"?"#e2e8f0":"#2563eb33"}`,
-                  color:d==="⌫"?"#94a3b8":"#0f172a",
-                  fontSize:d==="⌫"?20:22,fontFamily:"'Inter',sans-serif",fontWeight:700,
+                  background:d===""?"transparent":d==="⌫"?"#f1f5f9":"#eff6ff",
+                  border:d===""?"none":`2px solid ${d==="⌫"?"#e2e8f0":"#2563eb88"}`,
+                  color:d==="⌫"?"#94a3b8":"#1e3a8a",
+                  fontSize:d==="⌫"?20:24,fontFamily:"'Inter',sans-serif",fontWeight:800,
                   cursor:d===""?"default":"pointer",transition:"all 0.12s",
-                  boxShadow:d===""||d==="⌫"?"none":"0 2px 8px rgba(37,99,235,0.12)"}}
+                  boxShadow:d===""||d==="⌫"?"none":"0 3px 10px rgba(37,99,235,0.18)"}}
                 onMouseDown={e=>{if(d!=="")e.currentTarget.style.transform="scale(0.92)";e.currentTarget.style.background=d==="⌫"?"#e2e8f0":"#eff6ff";}}
                 onMouseUp={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.background=d===""?"transparent":d==="⌫"?"#f8fafc":"#ffffff";}}>{d}</button>
             ))}
