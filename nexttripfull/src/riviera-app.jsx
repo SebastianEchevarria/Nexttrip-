@@ -395,7 +395,7 @@ function TripEstimateBox({ origin, destination }) {
 
   return (
     <div style={{
-      background:"#0f172a",
+      background:"#f8fafc",
       border:"1px solid #3b82f633",
       borderRadius:10, padding:"10px 14px", marginBottom:14,
       display:"flex", alignItems:"center", gap:10,
@@ -543,15 +543,15 @@ function ReminderBanner({ alert, onDismiss }) {
           <div style={{ color: "#f59e0b", fontSize: 13, fontWeight: 700, marginBottom: 2 }}>
             Viaje en {minsLeft} minuto{minsLeft !== 1 ? "s" : ""}
           </div>
-          <div style={{ color: "#0f172a", fontSize: 14, fontFamily: "'Inter',sans-serif", marginBottom: 2 }}>{b.guest}</div>
+          <div style={{ color: "#f8fafc", fontSize: 14, fontFamily: "'Inter',sans-serif", marginBottom: 2 }}>{b.guest}</div>
           <div style={{ color: "#3b82f6", fontSize: 12, marginBottom: 10 }}>📍 {b.origin}</div>
           <div style={{ display: "flex", gap: 8 }}>
             <a href={mapsLink} target="_blank" rel="noopener noreferrer" style={{
               display: "flex", alignItems: "center", gap: 6,
               background: "#f59e0b", borderRadius: 8, padding: "8px 14px",
-              textDecoration: "none", color: "#0f172a", fontSize: 12, fontWeight: 700,
+              textDecoration: "none", color: "#f8fafc", fontSize: 12, fontWeight: 700,
             }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0f172a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f8fafc" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
               </svg>
               Ir al punto de recogida
@@ -599,12 +599,12 @@ function NotifPermissionPrompt({ onDismiss }) {
     }}>
       <span style={{ fontSize: 20 }}>🔔</span>
       <div style={{ flex: 1 }}>
-        <div style={{ color: "#0f172a", fontSize: 13, marginBottom: 2 }}>Activar recordatorios</div>
+        <div style={{ color: "#f8fafc", fontSize: 13, marginBottom: 2 }}>Activar recordatorios</div>
         <div style={{ color: "#64748b", fontSize: 11 }}>Recibe alertas 30 min antes de cada viaje</div>
       </div>
       <button onClick={() => { Notification.requestPermission(); setAsked(true); onDismiss(); }} style={{
         background: "linear-gradient(135deg,#2563eb,#a07840)", border: "none",
-        borderRadius: 8, color: "#0f172a", fontSize: 12, fontWeight: 700,
+        borderRadius: 8, color: "#f8fafc", fontSize: 12, fontWeight: 700,
         padding: "7px 12px", cursor: "pointer", flexShrink: 0,
       }}>Activar</button>
     </div>
@@ -716,7 +716,7 @@ function PinKeypad({ correctPin, onSuccess, onBack, subtitle, accentColor="#2563
           <button key={i} onClick={()=>d==="⌫"?setPin(p=>p.slice(0,-1)):d!==""?handleDigit(String(d)):null}
             disabled={d===""} style={{height:60,borderRadius:12,
               background:d===""?"transparent":d==="⌫"?"#f1f5f9":"linear-gradient(135deg,#1e293b,#0f172a)",
-              border:d===""?"none":"1px solid #1e3a5f",color:d==="⌫"?"#64748b":"#0f172a",
+              border:d===""?"none":"1px solid #1e3a5f",color:d==="⌫"?"#64748b":"#f8fafc",
               fontSize:d==="⌫"?18:20,fontFamily:"'Inter',sans-serif",fontWeight:600,
               cursor:d===""?"default":"pointer",transition:"all 0.1s"}}
             onMouseDown={e=>{if(d!=="")e.currentTarget.style.transform="scale(0.93)"}}
@@ -749,10 +749,10 @@ function RoleSelector({ onSelect, installPrompt }) {
             onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-3px)";e.currentTarget.style.boxShadow="0 0 0 2px #2563eb, 0 12px 40px rgba(201,169,110,0.4)";e.currentTarget.style.borderColor="#2563eb"}}
             onMouseLeave={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="none";e.currentTarget.style.borderColor="#2563eb99"}}>
             {/* Hotel illustration SVG — green driver app colors */}
-            <svg width="100%" viewBox="-60 -70 460 200" xmlns="http://www.w3.org/2000/svg" style={{display:"block",background:"#000000"}}>
+            <svg width="100%" viewBox="-60 -70 460 200" xmlns="http://www.w3.org/2000/svg" style={{display:"block",background:"#ffffff"}}>
               <defs>
                 <linearGradient id="hSkyGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#000000"/>
+                  <stop offset="0%" stopColor="#ffffff"/>
                   <stop offset="100%" stopColor="#050505"/>
                 </linearGradient>
                 <linearGradient id="hGoldFade" x1="0" y1="0" x2="1" y2="0">
@@ -774,15 +774,15 @@ function RoleSelector({ onSelect, installPrompt }) {
               <rect width="340" height="140" fill="url(#hGlow)"/>
               <rect x="0" y="115" width="340" height="2" fill="url(#hGoldFade)" opacity="0.4"/>
               {/* Main tower */}
-              <rect x="130" y="30" width="80" height="85" fill="#000000" stroke="#2563eb" strokeWidth="0.8" opacity="0.9"/>
+              <rect x="130" y="30" width="80" height="85" fill="#ffffff" stroke="#2563eb" strokeWidth="0.8" opacity="0.9"/>
               {/* Rooftop steps */}
-              <rect x="138" y="24" width="64" height="8" fill="#000000" stroke="#2563eb" strokeWidth="0.8"/>
-              <rect x="148" y="18" width="44" height="8" fill="#000000" stroke="#2563eb" strokeWidth="0.8"/>
-              <rect x="160" y="12" width="20" height="8" fill="#000000" stroke="#2563eb" strokeWidth="0.8"/>
+              <rect x="138" y="24" width="64" height="8" fill="#ffffff" stroke="#2563eb" strokeWidth="0.8"/>
+              <rect x="148" y="18" width="44" height="8" fill="#ffffff" stroke="#2563eb" strokeWidth="0.8"/>
+              <rect x="160" y="12" width="20" height="8" fill="#ffffff" stroke="#2563eb" strokeWidth="0.8"/>
               <rect x="168" y="6"  width="4"  height="8" fill="#2563eb" opacity="0.8"/>
               {/* Wings */}
-              <rect x="70"  y="55" width="62" height="60" fill="#000000" stroke="#2563eb" strokeWidth="0.6" opacity="0.85"/>
-              <rect x="208" y="55" width="62" height="60" fill="#000000" stroke="#2563eb" strokeWidth="0.6" opacity="0.85"/>
+              <rect x="70"  y="55" width="62" height="60" fill="#ffffff" stroke="#2563eb" strokeWidth="0.6" opacity="0.85"/>
+              <rect x="208" y="55" width="62" height="60" fill="#ffffff" stroke="#2563eb" strokeWidth="0.6" opacity="0.85"/>
               {/* Windows main tower — lit in warm green-tinted yellow */}
               {[40,52,64,76,88].map(y=>
                 [145,162,179,196].map(x=>(
@@ -845,7 +845,7 @@ function RoleSelector({ onSelect, installPrompt }) {
         onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-3px)";e.currentTarget.style.boxShadow="0 0 0 2px #2563eb, 0 12px 40px rgba(201,169,110,0.4)";e.currentTarget.style.borderColor="#2563eb"}}
         onMouseLeave={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="none";e.currentTarget.style.borderColor="#2563eb99"}}>
         {/* Car photo */}
-        <img src={CAR_IMAGE} alt="Conductor" style={{width:"80%",height:"auto",objectFit:"contain",display:"block",background:"#0f172a",margin:"18px auto 0",padding:"0 0 6px"}}/>
+        <img src={CAR_IMAGE} alt="Conductor" style={{width:"80%",height:"auto",objectFit:"contain",display:"block",background:"#f8fafc",margin:"18px auto 0",padding:"0 0 6px"}}/>
         {/* Dark gradient overlay */}
         <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg,rgba(0,0,0,0) 50%,rgba(0,0,0,0.75) 100%)"}}/>
         {/* Centered top badge */}
@@ -1080,7 +1080,7 @@ function ReceptionAuth({ onLogin, onBack }) {
           <button key={t.id} onClick={()=>{setMode(t.id);setLoginPin("");setLoginError("");setRegStep(1);setRegError("");setRegPin("");setRegPin2("");}}
             style={{flex:1,padding:"9px 4px",border:"none",borderRadius:9,cursor:"pointer",
               background:mode===t.id?"linear-gradient(135deg,#2563eb,#a07840)":"transparent",
-              color:mode===t.id?"#0f172a":"#64748b",fontSize:12,fontWeight:mode===t.id?600:400,transition:"all 0.2s"}}>
+              color:mode===t.id?"#f8fafc":"#64748b",fontSize:12,fontWeight:mode===t.id?600:400,transition:"all 0.2s"}}>
             {t.label}
           </button>
         ))}
@@ -1104,7 +1104,7 @@ function ReceptionAuth({ onLogin, onBack }) {
               <button key={i} onClick={()=>d==="⌫"?setLoginPin(p=>{setLoginError("");return p.slice(0,-1);}):d!==""?handleLoginDigit(String(d)):null}
                 disabled={d===""} style={{height:60,borderRadius:12,
                   background:d===""?"transparent":d==="⌫"?"#f1f5f9":"linear-gradient(135deg,#1e293b,#0f172a)",
-                  border:d===""?"none":"1px solid #1e3a5f",color:d==="⌫"?"#64748b":"#0f172a",
+                  border:d===""?"none":"1px solid #1e3a5f",color:d==="⌫"?"#64748b":"#f8fafc",
                   fontSize:d==="⌫"?18:20,fontFamily:"'Inter',sans-serif",fontWeight:600,
                   cursor:d===""?"default":"pointer",transition:"all 0.1s"}}
                 onMouseDown={e=>{if(d!=="")e.currentTarget.style.transform="scale(0.93)"}}
@@ -1131,7 +1131,7 @@ function ReceptionAuth({ onLogin, onBack }) {
                 <div style={{width:24,height:24,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,
                   background:regStep>=n?"linear-gradient(135deg,#2563eb,#a07840)":"#f1f5f9",
                   border:`1px solid ${regStep>=n?"#2563eb":"#e2e8f0"}`,
-                  color:regStep>=n?"#0f172a":"#64748b"}}>{n}</div>
+                  color:regStep>=n?"#f8fafc":"#64748b"}}>{n}</div>
                 {n<3&&<div style={{width:20,height:1,background:regStep>n?"#2563eb":"#e2e8f0"}}/>}
               </div>
             ))}
@@ -1210,7 +1210,7 @@ function ReceptionAuth({ onLogin, onBack }) {
                   <button key={i} onClick={()=>d==="⌫"?setRegPin(p=>p.slice(0,-1)):d!==""?handleRegPinDigit(String(d)):null}
                     disabled={d===""} style={{height:60,borderRadius:12,
                       background:d===""?"transparent":d==="⌫"?"#f1f5f9":"linear-gradient(135deg,#1e293b,#0f172a)",
-                      border:d===""?"none":"1px solid #1e3a5f",color:d==="⌫"?"#64748b":"#0f172a",
+                      border:d===""?"none":"1px solid #1e3a5f",color:d==="⌫"?"#64748b":"#f8fafc",
                       fontSize:d==="⌫"?18:20,fontFamily:"'Inter',sans-serif",fontWeight:600,
                       cursor:d===""?"default":"pointer"}}
                     onMouseDown={e=>{if(d!=="")e.currentTarget.style.transform="scale(0.93)"}}
@@ -1239,7 +1239,7 @@ function ReceptionAuth({ onLogin, onBack }) {
                   <button key={i} onClick={()=>d==="⌫"?setRegPin2(p=>p.slice(0,-1)):d!==""?handleRegPin2Digit(String(d)):null}
                     disabled={d===""} style={{height:60,borderRadius:12,
                       background:d===""?"transparent":d==="⌫"?"#f1f5f9":"linear-gradient(135deg,#1e293b,#0f172a)",
-                      border:d===""?"none":"1px solid #1e3a5f",color:d==="⌫"?"#64748b":"#0f172a",
+                      border:d===""?"none":"1px solid #1e3a5f",color:d==="⌫"?"#64748b":"#f8fafc",
                       fontSize:d==="⌫"?18:20,fontFamily:"'Inter',sans-serif",fontWeight:600,
                       cursor:d===""?"default":"pointer"}}
                     onMouseDown={e=>{if(d!=="")e.currentTarget.style.transform="scale(0.93)"}}
@@ -1256,7 +1256,7 @@ function ReceptionAuth({ onLogin, onBack }) {
 
 function DriverLogin({ onLogin, onBack }) {
   return (
-    <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:24,background:"#0f172a"}}>
+    <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:24,background:"#f8fafc"}}>
       <button onClick={onBack} style={{position:"absolute",top:24,left:20,background:"none",border:"none",color:"#64748b",cursor:"pointer",fontSize:13,letterSpacing:1}}>← VOLVER</button>
       <div style={{width:"100%",maxWidth:340,display:"flex",flexDirection:"column",alignItems:"center"}}>
         <RivieraLogo size={110}/>
@@ -1494,11 +1494,11 @@ function BookingDetailModal({ booking, onClose, onAccept, onReject, onUpdateFare
               <span style={{fontSize:16}}>⚡</span>
               <div style={{color:"#64748b",fontSize:11,letterSpacing:2}}>CAPTURA BOLT (PRECIO VERIFICADO)</div>
             </div>
-            <div style={{background:"#0a1020",border:"1.5px solid #2563eb33",borderRadius:10,overflow:"hidden"}}>
+            <div style={{background:"#f8fafc",border:"1.5px solid #2563eb33",borderRadius:10,overflow:"hidden"}}>
               <img
                 src={b.boltScreenshot.data}
                 alt="Captura Bolt"
-                style={{width:"100%",objectFit:"contain",maxHeight:300,background:"#0f172a",display:"block"}}
+                style={{width:"100%",objectFit:"contain",maxHeight:300,background:"#f8fafc",display:"block"}}
                 onClick={()=>window.open(b.boltScreenshot.data,"_blank")}
               />
               <div style={{padding:"8px 12px",display:"flex",alignItems:"center",gap:7,background:"#2563eb10"}}>
@@ -1512,7 +1512,7 @@ function BookingDetailModal({ booking, onClose, onAccept, onReject, onUpdateFare
               </div>
             </div>
             {b.fare && (
-              <div style={{marginTop:8,background:"#0a1a0a",border:"1px solid #22c55e33",borderRadius:8,padding:"8px 12px",display:"flex",alignItems:"center",gap:8}}>
+              <div style={{marginTop:8,background:"#f0fdf4",border:"1px solid #22c55e33",borderRadius:8,padding:"8px 12px",display:"flex",alignItems:"center",gap:8}}>
                 <span style={{fontSize:14}}>✅</span>
                 <span style={{color:"#22c55e",fontSize:11}}>
                   Tarifa declarada: <strong>{fmt(b.fare)} €</strong> — verifica que coincide con la captura
@@ -1579,7 +1579,7 @@ function Calendar({ bookings, date, hotelFilter, employee, onTripClick }) {
                       onMouseEnter={e=>{if(onTripClick)e.currentTarget.style.background="rgba(201,169,110,0.1)"}}
                       onMouseLeave={e=>{if(onTripClick)e.currentTarget.style.background="rgba(201,169,110,0.04)"}}>
                       <span style={{color:statusColor(trip.status),fontSize:8}}>●</span>
-                      <span style={{color:isMe?"#0f172a":"#3b82f6",fontSize:12,fontWeight:isMe?600:400,flex:1,
+                      <span style={{color:isMe?"#f8fafc":"#3b82f6",fontSize:12,fontWeight:isMe?600:400,flex:1,
                         overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{trip.guest}</span>
                       <span style={{color:"#7a9ab8",fontSize:10,flexShrink:0}}>·{trip.time}</span>
                       {isMe&&<span style={{color:employee.avatar,fontSize:9,background:employee.avatar+"20",padding:"1px 5px",borderRadius:4,flexShrink:0}}>tú</span>}
@@ -1644,7 +1644,7 @@ function HistoryGroup({guest,trips,fmt,COMMISSION_RATE,initials,EMPLOYEES,loadUs
   const total=trips.filter(b=>b.status==="completed").reduce((s,b)=>s+(b.fare||0),0);
   return (
     <div style={{marginBottom:6}}>
-      <button onClick={()=>setOpen(o=>!o)} style={{width:"100%",background:"#0f172a",border:"1px solid #1e293b",borderRadius:10,padding:"10px 14px",cursor:"pointer",display:"flex",alignItems:"center",gap:10,textAlign:"left"}}>
+      <button onClick={()=>setOpen(o=>!o)} style={{width:"100%",background:"#f8fafc",border:"1px solid #1e293b",borderRadius:10,padding:"10px 14px",cursor:"pointer",display:"flex",alignItems:"center",gap:10,textAlign:"left"}}>
         <div style={{flex:1}}>
           <div style={{color:"#0f172a",fontSize:13,fontFamily:"'Inter',sans-serif",fontWeight:700}}>{guest}</div>
           <div style={{color:"#64748b",fontSize:10,marginTop:1}}>{trips.length} viaje{trips.length>1?"s":""}{total>0&&<span style={{color:"#2563eb",marginLeft:6}}>· {fmt(total)} €</span>}</div>
@@ -1655,7 +1655,7 @@ function HistoryGroup({guest,trips,fmt,COMMISSION_RATE,initials,EMPLOYEES,loadUs
         const isCompleted=b.status==="completed";
         const emp=[...EMPLOYEES,...loadUsers()].find(e=>e.id===b.employeeId);
         return (
-          <div key={b.id} style={{background:"#0d1117",padding:"10px 14px",borderLeft:"3px solid "+(isCompleted?"#22c55e":"#f97316"),border:"1px solid #1e293b",borderTop:"none",marginBottom:2}}>
+          <div key={b.id} style={{background:"#f8fafc",padding:"10px 14px",borderLeft:"3px solid "+(isCompleted?"#22c55e":"#f97316"),border:"1px solid #1e293b",borderTop:"none",marginBottom:2}}>
             <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
               <span style={{color:"#64748b",fontSize:11}}>{b.date} · {b.time}</span>
               <span style={{color:isCompleted?"#22c55e":"#f97316",fontSize:10,fontWeight:700}}>{isCompleted?"✅":"✕"} {isCompleted?"COMPLETADO":"CANCELADO"}</span>
@@ -1767,13 +1767,13 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
         borderRadius:12,padding:"14px 16px",cursor:"pointer",marginBottom:10,transition:"all 0.2s",position:"relative"}}
         onMouseEnter={e=>e.currentTarget.style.transform="translateX(3px)"}
         onMouseLeave={e=>e.currentTarget.style.transform="none"}>
-        {showActions&&<div style={{position:"absolute",top:8,right:8,background:"#2563eb",borderRadius:6,padding:"2px 8px",fontSize:10,color:"#0f172a",fontWeight:700}}>NUEVA</div>}
+        {showActions&&<div style={{position:"absolute",top:8,right:8,background:"#2563eb",borderRadius:6,padding:"2px 8px",fontSize:10,color:"#ffffff",fontWeight:700}}>NUEVA</div>}
         {/* Source badge */}
         <div style={{position:"absolute",top:b.status==="price_proposed"?8:showActions?28:8,right:8,display:"flex",flexDirection:"column",gap:3,alignItems:"flex-end"}}>
           {b.isClientBooking?(
             <span style={{background:"#a78bfa",borderRadius:6,padding:"2px 8px",fontSize:9,color:"#fff",fontWeight:700}}>💜 VIP CLIENT</span>
           ):(
-            <span style={{background:"#2563eb",borderRadius:6,padding:"2px 8px",fontSize:9,color:"#0f172a",fontWeight:700}}>🏨 RECEPCIÓN</span>
+            <span style={{background:"#2563eb",borderRadius:6,padding:"2px 8px",fontSize:9,color:"#ffffff",fontWeight:700}}>🏨 RECEPCIÓN</span>
           )}
         </div>
         {b.status==="price_proposed"&&<div style={{background:"#a78bfa15",border:"1px solid #a78bfa44",borderRadius:8,padding:"6px 10px",marginBottom:8,display:"flex",gap:8,alignItems:"center"}}>
@@ -1856,7 +1856,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
               style={{
                 display:"flex",alignItems:"center",justifyContent:"center",gap:8,
                 width:"100%",marginBottom:6,
-                background:"#0f172a",border:"1px solid #1e3a6e",
+                background:"#f8fafc",border:"1px solid #1e3a6e",
                 borderRadius:8,padding:"8px 0",textDecoration:"none",
                 color:"#6ea8fe",fontSize:11,fontWeight:600,
               }}>
@@ -1868,7 +1868,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
               <div style={{display:"flex",gap:6}}>
                 <button onClick={e=>{e.stopPropagation();setDocModal(b);}} style={{
                   flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,
-                  background:"#0f2a1a",border:"1px solid #22c55e44",borderRadius:8,
+                  background:"#dcfce7",border:"1px solid #22c55e44",borderRadius:8,
                   padding:"7px 0",cursor:"pointer",color:"#22c55e",fontSize:11,fontWeight:700,
                 }}>
                   👁 Ver Hoja de Ruta
@@ -1946,7 +1946,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
         {!b.routeDoc&&b.status==="confirmed"&&(
           <div style={{
             marginTop:5,padding:"5px 10px",borderRadius:6,
-            background:"#1a0d00",border:"1px solid #f9731633",
+            background:"#fff7ed",border:"1px solid #f9731633",
             color:"#f97316",fontSize:10,textAlign:"center",
           }}>
             ⚠️ Sube la hoja de ruta para poder iniciar el viaje
@@ -1982,7 +1982,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
             color:"#64748b",fontSize:12,fontWeight:600,
             transition:"all 0.15s",position:"relative",
           }}
-            onMouseEnter={e=>{e.currentTarget.style.borderColor="#2563eb44";e.currentTarget.style.color="#0f172a"}}
+            onMouseEnter={e=>{e.currentTarget.style.borderColor="#2563eb44";e.currentTarget.style.color="#f8fafc"}}
             onMouseLeave={e=>{e.currentTarget.style.borderColor="#e2e8f0";e.currentTarget.style.color="#64748b"}}>
             💬 Chat con recepción
             {(messages[String(b.id)]||[]).length>0&&(
@@ -2043,7 +2043,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
               </>
             ) : b.isClientBooking && b.status==="confirmed" ? (
               /* Client booking confirmed — no action needed */
-              <div style={{flex:1,background:"#0a2a0a",border:"1px solid #22c55e44",borderRadius:8,padding:"9px 0",textAlign:"center",color:"#22c55e",fontSize:12,fontWeight:700}}>
+              <div style={{flex:1,background:"#f0fdf4",border:"1px solid #22c55e44",borderRadius:8,padding:"9px 0",textAlign:"center",color:"#22c55e",fontSize:12,fontWeight:700}}>
                 ✅ Confirmado por el cliente
               </div>
             ) : !b.isClientBooking ? (
@@ -2076,13 +2076,13 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
           </div>
           <span style={{
             background:fPend.length>0?"#f59e0b":"#e2e8f0",
-            color:fPend.length>0?"#0f172a":"#64748b",
+            color:fPend.length>0?"#f8fafc":"#64748b",
             borderRadius:20,padding:"2px 10px",fontSize:12,fontWeight:700,minWidth:24,textAlign:"center",
           }}>{fPend.length}</span>
         </button>
         <button onClick={()=>setConfirmedOpen(v=>!v)} style={{
           flex:1,display:"flex",alignItems:"center",justifyContent:"space-between",
-          background:confirmedOpen?"linear-gradient(135deg,#1a1300,#1e293b)":"#0f0e00",
+          background:confirmedOpen?"linear-gradient(135deg,#1a1300,#1e293b)":"#fefce8",
           border:`2px solid ${fConf.length>0?"#2563eb44":"#2a2a2a"}`,
           borderRadius:14,padding:"12px 14px",cursor:"pointer",transition:"all 0.2s",
         }}>
@@ -2092,7 +2092,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
           </div>
           <span style={{
             background:fConf.length>0?"#2563eb":"#f1f5f9",
-            color:fConf.length>0?"#0f172a":"#475569",
+            color:fConf.length>0?"#f8fafc":"#475569",
             borderRadius:20,padding:"2px 10px",fontSize:12,fontWeight:700,minWidth:24,textAlign:"center",
           }}>{fConf.length}</span>
         </button>
@@ -2100,7 +2100,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
 
       {/* Pending drawer */}
       {pendingOpen&&fPend.length>0&&(
-        <div style={{marginBottom:14,background:"#0f0a00",border:"1px solid #f59e0b33",borderRadius:14,padding:"12px"}}>
+        <div style={{marginBottom:14,background:"#fffbeb",border:"1px solid #f59e0b33",borderRadius:14,padding:"12px"}}>
           {fPend.map(b=><Card key={b.id} b={b} showActions/>)}
         </div>
       )}
@@ -2112,7 +2112,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
 
       {/* Confirmed drawer */}
       {confirmedOpen&&fConf.length>0&&(
-        <div style={{marginBottom:14,background:"#0f0e00",border:"1px solid #2563eb33",borderRadius:14,padding:"12px"}}>
+        <div style={{marginBottom:14,background:"#fefce8",border:"1px solid #2563eb33",borderRadius:14,padding:"12px"}}>
           {fInProgress.map(b=><Card key={b.id} b={b} showActions={false}/>)}
           {[...fConf].sort((a,b)=>{
             const dA=new Date(`${a.date}T${a.time}`),dB=new Date(`${b.date}T${b.time}`);
@@ -2121,7 +2121,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
         </div>
       )}
       {confirmedOpen&&fConf.length===0&&(
-        <div style={{marginBottom:14,background:"#0f0e00",border:"1px solid #2563eb18",borderRadius:14,padding:"16px",textAlign:"center",color:"#475569",fontSize:12}}>
+        <div style={{marginBottom:14,background:"#fefce8",border:"1px solid #2563eb18",borderRadius:14,padding:"16px",textAlign:"center",color:"#475569",fontSize:12}}>
           No hay viajes confirmados
         </div>
       )}
@@ -2154,7 +2154,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
         return(
           <div style={{
             marginBottom:16,
-            background:isOngoing?"linear-gradient(135deg,#dcfce7,#f0fdf4)":isWaiting?"#fff0f0":urgency?"#fffbeb":"#0f172a",
+            background:isOngoing?"linear-gradient(135deg,#dcfce7,#f0fdf4)":isWaiting?"#fff0f0":urgency?"#fffbeb":"#f8fafc",
             border:`2px solid ${isOngoing?"#22c55e":isWaiting?"#ef4444":urgency?"#f59e0b":"#2563eb33"}`,
             borderRadius:18,overflow:"hidden",
             boxShadow:isOngoing?"0 0 20px #22c55e33":isWaiting?"0 0 20px #ef444444":urgency?"0 0 20px #f59e0b33":"none",
@@ -2198,7 +2198,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
               {/* Countdown */}
               <div style={{flex:1,background:isOngoing?"#22c55e12":urgency?"#f59e0b12":"#2563eb10",borderRadius:12,padding:"10px 14px"}}>
                 <div style={{color:"#64748b",fontSize:9,letterSpacing:2,marginBottom:3}}>{isOngoing?"EN CURSO":"TIEMPO RESTANTE"}</div>
-                <div style={{color:isOngoing?"#22c55e":urgency?"#f59e0b":"#0f172a",fontSize:26,fontFamily:"'Inter',sans-serif",fontWeight:700,letterSpacing:2}}>{countdownStr}</div>
+                <div style={{color:isOngoing?"#22c55e":urgency?"#f59e0b":"#f8fafc",fontSize:26,fontFamily:"'Inter',sans-serif",fontWeight:700,letterSpacing:2}}>{countdownStr}</div>
               </div>
               {upcoming.fare>0&&(
                 <div style={{background:"#2563eb10",borderRadius:12,padding:"10px 14px",textAlign:"right"}}>
@@ -2413,7 +2413,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
               {!cancelConfirm?(
                 <button onClick={()=>setCancelConfirm({step:"choose",reason:"",custom:""})} style={{
                   width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:7,
-                  background:"#1a0808",border:"1.5px solid #ef444466",borderRadius:10,padding:"10px 0",
+                  background:"#fff5f5",border:"1.5px solid #ef444466",borderRadius:10,padding:"10px 0",
                   color:"#ef4444aa",fontSize:12,fontWeight:700,cursor:"pointer",marginTop:4,
                 }}>✕ Cancelar reserva</button>
               ):cancelConfirm.step==="choose"?(
@@ -2644,7 +2644,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
                 </span>
               )}
             </div>
-            <div style={{background:"#0f172a",borderRadius:14,padding:"16px 16px 8px",border:"1px solid #1e293b"}}>
+            <div style={{background:"#f8fafc",borderRadius:14,padding:"16px 16px 8px",border:"1px solid #1e293b"}}>
               {/* Bar chart */}
               <div style={{display:"flex",alignItems:"flex-end",gap:8,height:80,marginBottom:8}}>
                 {months.map((m,i)=>{
@@ -3048,13 +3048,13 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
           <button onClick={()=>setCalDate(new Date().toISOString().slice(0,10))} style={{
             background:calDate===new Date().toISOString().slice(0,10)?"linear-gradient(135deg,#2563eb,#a07840)":"#f1f5f9",
             border:"none",borderRadius:8,padding:"5px 12px",
-            color:calDate===new Date().toISOString().slice(0,10)?"#0f172a":"#64748b",
+            color:calDate===new Date().toISOString().slice(0,10)?"#f8fafc":"#64748b",
             fontSize:10,fontWeight:700,cursor:"pointer",letterSpacing:1,
           }}>HOY</button>
         </div>
         <input type="date" value={calDate} onChange={e=>setCalDate(e.target.value)}
           style={{background:"#f1f5f9",border:"1px solid #1e3a5f",borderRadius:10,color:"#0f172a",fontSize:13,padding:"9px 14px",outline:"none",colorScheme:"dark",width:"100%",boxSizing:"border-box",marginBottom:12}}/>
-        <div style={{background:"#0f172a",borderRadius:14,overflow:"hidden",border:"1px solid #1e3a5f"}}>
+        <div style={{background:"#f8fafc",borderRadius:14,overflow:"hidden",border:"1px solid #1e3a5f"}}>
           {Array.from({length:65},(_,i)=>i).map(i=>{
             const totalMins = 6*60 + i*15;
             if(totalMins > 22*60) return null;
@@ -3118,7 +3118,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
                         <span style={{color:"#ef444488",fontSize:9}}>{blockingSlot} — {m2t(t2m(blockingSlot)+TRIP_DURATION)}</span>
                       </div>
                       <button onClick={e=>{e.stopPropagation();onToggleBlock(calDate,blockingSlot);}} style={{
-                        background:"#0a2a0a",border:"1px solid #22c55e66",borderRadius:6,
+                        background:"#f0fdf4",border:"1px solid #22c55e66",borderRadius:6,
                         color:"#22c55e",fontSize:9,fontWeight:700,padding:"3px 8px",cursor:"pointer",flexShrink:0,
                       }}>✓ Desbloquear</button>
                     </div>
@@ -3128,7 +3128,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
                   )}
                   {!hasBooking&&!isInBlockedRange&&(isHour||isHalfHour)&&(
                     <button onClick={e=>{e.stopPropagation();onToggleBlock(calDate,slotTime);}} style={{
-                      background:"#2a0808",border:"1px solid #ef444466",borderRadius:6,
+                      background:"#fff0f0",border:"1px solid #ef444466",borderRadius:6,
                       color:"#ef4444",fontSize:9,fontWeight:700,padding:"3px 8px",cursor:"pointer",letterSpacing:0.3,
                     }}>⊘ Bloquear</button>
                   )}
@@ -3184,7 +3184,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
                 </span>
               )}
             </div>
-            <div style={{background:"#0f172a",borderRadius:14,padding:"16px 16px 8px",border:"1px solid #1e293b"}}>
+            <div style={{background:"#f8fafc",borderRadius:14,padding:"16px 16px 8px",border:"1px solid #1e293b"}}>
               {/* Bar chart */}
               <div style={{display:"flex",alignItems:"flex-end",gap:8,height:80,marginBottom:8}}>
                 {months.map((m,i)=>{
@@ -3429,7 +3429,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
 
       {/* ── DOCUMENT VIEWER MODAL ── */}
       {docModal&&(
-        <div style={{position:"fixed",inset:0,background:"#0f172a",zIndex:400,display:"flex",flexDirection:"column"}}>
+        <div style={{position:"fixed",inset:0,background:"#f8fafc",zIndex:400,display:"flex",flexDirection:"column"}}>
           {/* Header */}
           <div style={{
             display:"flex",alignItems:"center",justifyContent:"space-between",
@@ -3704,7 +3704,7 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
           borderRadius:14,padding:"12px 16px",marginBottom:16,
           position:"relative",overflow:"hidden",
         }}>
-          <div style={{position:"absolute",top:-15,right:-15,width:60,height:60,borderRadius:"50%",background:"#2563eb06",pointerEvents:"none"}}/>
+          <div style={{position:"absolute",top:-15,right:-15,width:60,height:60,borderRadius:"50%",background:"#2563eb08",pointerEvents:"none"}}/>
           {/* Status row */}
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
             <div style={{display:"flex",alignItems:"center",gap:8}}>
@@ -3742,7 +3742,7 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
               
               </div>
               <div style={{display:"flex",alignItems:"center",gap:5}}>
-                <div style={{width:10,height:10,borderRadius:"50%",background:"#0f172a",border:"1.5px solid #444"}}/>
+                <div style={{width:10,height:10,borderRadius:"50%",background:"#f8fafc",border:"1.5px solid #444"}}/>
                 <span style={{color:"#64748b",fontSize:10}}>Negro Medianoche · Eléctrico</span>
                 <div style={{display:"flex",alignItems:"center",gap:8,marginTop:6,flexWrap:"wrap"}}>
                   <span style={{color:"#2563eb",fontSize:11,fontWeight:700,letterSpacing:2,background:"#2563eb15",border:"1px solid #2563eb33",borderRadius:6,padding:"2px 8px"}}>🔲 5361MZC</span>
@@ -3779,7 +3779,7 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
         return(
           <div style={{
             marginBottom:16,
-            background:isOngoing?"linear-gradient(135deg,#dcfce7,#f0fdf4)":urgency?"#fffbeb":"#0f172a",
+            background:isOngoing?"linear-gradient(135deg,#dcfce7,#f0fdf4)":urgency?"#fffbeb":"#f8fafc",
             border:`2px solid ${isOngoing?"#22c55e":urgency?"#f59e0b":"#2563eb33"}`,
             borderRadius:16,overflow:"hidden",
             boxShadow:isOngoing?"0 0 20px #22c55e33":urgency?"0 0 20px #f59e0b33":"none",
@@ -3820,7 +3820,7 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
               })()}
               <div style={{background:isOngoing?"#22c55e12":urgency?"#f59e0b12":"#2563eb10",borderRadius:10,padding:"8px 12px",display:"inline-block"}}>
                 <div style={{color:"#64748b",fontSize:9,letterSpacing:2,marginBottom:2}}>{isOngoing?"EN CURSO":"TIEMPO RESTANTE"}</div>
-                <div style={{color:isOngoing?"#22c55e":urgency?"#f59e0b":"#0f172a",fontSize:24,fontFamily:"'Inter',sans-serif",fontWeight:700,letterSpacing:2}}>{countdownStr}</div>
+                <div style={{color:isOngoing?"#22c55e":urgency?"#f59e0b":"#f8fafc",fontSize:24,fontFamily:"'Inter',sans-serif",fontWeight:700,letterSpacing:2}}>{countdownStr}</div>
               </div>
             </div>
           </div>
@@ -3832,7 +3832,7 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
         {[{id:"avail",label:"🕐 Disponib."},{id:"mine",label:"📋 Mis Reservas"},{id:"earnings",label:"💶 Comisiones"}].map(t=>(
           <button key={t.id} onClick={()=>setTab(t.id)} style={{flex:1,padding:"8px 4px",border:"none",borderRadius:9,cursor:"pointer",
             background:tab===t.id?"linear-gradient(135deg,#2563eb,#a07840)":"transparent",
-            color:tab===t.id?"#0f172a":"#64748b",fontSize:11,fontWeight:tab===t.id?600:400,transition:"all 0.2s"}}>
+            color:tab===t.id?"#f8fafc":"#64748b",fontSize:11,fontWeight:tab===t.id?600:400,transition:"all 0.2s"}}>
             {t.label}
           </button>
         ))}
@@ -3867,7 +3867,7 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
             <button onClick={()=>setForm(f=>({...f,date:new Date().toISOString().slice(0,10),time:""}))} style={{
               background:form.date===new Date().toISOString().slice(0,10)?"linear-gradient(135deg,#2563eb,#a07840)":"#f1f5f9",
               border:"none",borderRadius:8,padding:"4px 10px",
-              color:form.date===new Date().toISOString().slice(0,10)?"#0f172a":"#64748b",
+              color:form.date===new Date().toISOString().slice(0,10)?"#f8fafc":"#64748b",
               fontSize:10,fontWeight:700,cursor:"pointer",
             }}>HOY</button>
           </div>
@@ -3884,7 +3884,7 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
               </div>
             </div>
           )}
-          <div style={{background:"#0f172a",borderRadius:14,overflow:"hidden",border:"1px solid #1e3a5f"}}>
+          <div style={{background:"#f8fafc",borderRadius:14,overflow:"hidden",border:"1px solid #1e3a5f"}}>
             {Array.from({length:65},(_,i)=>i).map(i=>{
               const totalMins=6*60+i*15;
               if(totalMins>22*60) return null;
@@ -3911,7 +3911,7 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
               return (
                 <div key={slotTime} style={{display:"flex",alignItems:"center",borderBottom:`1px solid ${isHour?"#2a2a2a":"#161616"}`,minHeight:isHour?44:32,background:!isFree?"linear-gradient(90deg,#1a0808,#111)":"transparent"}}>
                   <div style={{width:54,flexShrink:0,padding:"0 14px",borderRight:`1px solid ${isHour?"#2a2a2a":"#161616"}`,display:"flex",alignItems:"center"}}>
-                    <span style={{color:isHour?"#0f172a":isHalfHour?"#d0dce8":"#64748b",fontSize:isHour?12:10,fontWeight:isHour?600:400}}>{slotTime}</span>
+                    <span style={{color:isHour?"#f8fafc":isHalfHour?"#d0dce8":"#64748b",fontSize:isHour?12:10,fontWeight:isHour?600:400}}>{slotTime}</span>
                   </div>
                   <div style={{flex:1,padding:`${isHour?"7px":"4px"} 12px`,display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
                     {!isFree?(
@@ -4063,7 +4063,7 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
               {b.status==="completed"&&<div style={{marginTop:7,fontSize:11,color:"#22c55e"}}>✅ Viaje Completado — comisión acumulada</div>}
               {b.status==="cancelled"&&<div style={{marginTop:7,fontSize:11,color:"#f97316"}}>✕ Cancelado: {b.cancelReason||"Sin motivo"} — sin comisión</div>}
               <button onClick={e=>{e.stopPropagation();const rel=(messages[String(b.id)]||[]).filter(m=>m.from==="driver");onMarkRead&&onMarkRead(String(b.id),rel.length);setChatBooking(b);}} style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,width:"100%",marginTop:10,background:"#ffffff",border:"1px solid #2a3a4a",borderRadius:8,padding:"7px 0",cursor:"pointer",color:"#64748b",fontSize:12,fontWeight:600,transition:"all 0.15s",position:"relative"}}
-                onMouseEnter={e=>{e.currentTarget.style.borderColor="#2563eb44";e.currentTarget.style.color="#0f172a"}}
+                onMouseEnter={e=>{e.currentTarget.style.borderColor="#2563eb44";e.currentTarget.style.color="#f8fafc"}}
                 onMouseLeave={e=>{e.currentTarget.style.borderColor="#e2e8f0";e.currentTarget.style.color="#64748b"}}>
                 💬 Chat con el conductor
                 {(messages[b.id]||[]).length>0&&<span style={{position:"absolute",top:-4,right:8,background:"#ef4444",borderRadius:10,padding:"1px 6px",fontSize:9,color:"#fff",fontWeight:700}}>{(messages[String(b.id)]||[]).length}</span>}
@@ -4287,7 +4287,7 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
             <label style={{color:"#64748b",fontSize:11,letterSpacing:2,display:"block",marginBottom:5}}>PASAJEROS (máx. 4)</label>
             <div style={{display:"flex",gap:8}}>
               {[1,2,3,4].map(n=>(
-                <button key={n} onClick={()=>setForm({...form,passengers:n})} style={{flex:1,height:48,borderRadius:10,border:"none",cursor:"pointer",background:form.passengers===n?"linear-gradient(135deg,#2563eb,#a07840)":"#f1f5f9",color:form.passengers===n?"#0f172a":"#64748b",fontSize:18,fontWeight:form.passengers===n?700:400,transition:"all 0.15s"}}>{n}</button>
+                <button key={n} onClick={()=>setForm({...form,passengers:n})} style={{flex:1,height:48,borderRadius:10,border:"none",cursor:"pointer",background:form.passengers===n?"linear-gradient(135deg,#2563eb,#a07840)":"#f1f5f9",color:form.passengers===n?"#f8fafc":"#64748b",fontSize:18,fontWeight:form.passengers===n?700:400,transition:"all 0.15s"}}>{n}</button>
               ))}
             </div>
             <div style={{color:"#64748b",fontSize:10,marginTop:6,textAlign:"center"}}>{"👤".repeat(form.passengers)} {form.passengers} persona{form.passengers>1?"s":""}</div>
@@ -4332,7 +4332,7 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
           {form.date&&form.time&&(
             <>
             {!advanceOk&&(
-              <div style={{background:"#0f1a2e",border:"1.5px solid #3b82f6",borderRadius:10,padding:"11px 14px",marginBottom:10,display:"flex",alignItems:"center",gap:10}}>
+              <div style={{background:"#f1f5f9",border:"1.5px solid #3b82f6",borderRadius:10,padding:"11px 14px",marginBottom:10,display:"flex",alignItems:"center",gap:10}}>
                 <span style={{fontSize:18,flexShrink:0}}>⏰</span>
                 <div>
                   <div style={{color:"#3b82f6",fontSize:13,fontWeight:600}}>Menos de {MIN_ADVANCE_HOURS}h de antelación</div>
@@ -4340,7 +4340,7 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
                 </div>
               </div>
             )}
-            <div style={{background:slotAvailable&&advanceOk?"#0f2a1a":"#2a0f0f",border:`1px solid ${slotAvailable&&advanceOk?"#2563eb":"#ef4444"}`,borderRadius:10,padding:"11px 14px",marginBottom:18,display:"flex",alignItems:"center",gap:10}}>
+            <div style={{background:slotAvailable&&advanceOk?"#dcfce7":"#2a0f0f",border:`1px solid ${slotAvailable&&advanceOk?"#2563eb":"#ef4444"}`,borderRadius:10,padding:"11px 14px",marginBottom:18,display:"flex",alignItems:"center",gap:10}}>
               <div style={{width:10,height:10,borderRadius:"50%",background:slotAvailable&&advanceOk?"#2563eb":"#ef4444",animation:"pulse 1.5s infinite",flexShrink:0}}/>
               <div>
                 <div style={{color:slotAvailable&&advanceOk?"#2563eb":"#ef4444",fontSize:13,fontWeight:600}}>{slotAvailable&&advanceOk?"Horario disponible":"Horario no disponible"}</div>
@@ -4356,7 +4356,7 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
                 style={{width:"100%",
                   background:disabled?"#f1f5f9":"linear-gradient(135deg,#2563eb,#a07840)",
                   border:"none",borderRadius:12,padding:"16px 0",
-                  color:disabled?"#5a7a9a":"#0f172a",
+                  color:disabled?"#5a7a9a":"#f8fafc",
                   fontSize:14,fontWeight:700,letterSpacing:1,cursor:disabled?"not-allowed":"pointer",transition:"all 0.2s"}}>
                 {isOffline?"🔴 Conductor fuera de servicio":"ENVIAR RESERVA AL CONDUCTOR"}
               </button>
@@ -4521,7 +4521,7 @@ function ChatModal({ booking, messages, onSend, currentUser, isDriver, onClose, 
                   borderRadius:mine?"14px 14px 4px 14px":"14px 14px 14px 4px",
                   padding:"9px 13px",
                 }}>
-                  <div style={{color:mine?"#0f172a":"#0f172a",fontSize:13,lineHeight:1.4}}>{msg.text}</div>
+                  <div style={{color:mine?"#f8fafc":"#f8fafc",fontSize:13,lineHeight:1.4}}>{msg.text}</div>
                   <div style={{color:mine?"rgba(0,0,0,0.45)":"#475569",fontSize:10,marginTop:3,textAlign:"right"}}>{msg.ts}</div>
                 </div>
               </div>
@@ -4553,7 +4553,7 @@ function ChatModal({ booking, messages, onSend, currentUser, isDriver, onClose, 
           <button onClick={send} disabled={!text.trim()} style={{
             width:42,height:42,borderRadius:"50%",border:"none",cursor:"pointer",flexShrink:0,
             background:text.trim()?`linear-gradient(135deg,${COLOR},${COLOR_DARK})`:"#f1f5f9",
-            color:text.trim()?"#0f172a":"#334155",
+            color:text.trim()?"#f8fafc":"#334155",
             fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",
             transition:"all 0.15s",
           }}>➤</button>
@@ -4667,7 +4667,7 @@ function DistancePriceCalc({ origin, destination, onPriceCalculated, pricePerKm=
     <div style={{marginBottom:14}}>
       {state.status==="loading"&&<div style={{background:"#f1f5f9",borderRadius:10,padding:"10px 14px",display:"flex",alignItems:"center",gap:8}}><div style={{width:10,height:10,borderRadius:"50%",border:"2px solid #2563eb",borderTopColor:"transparent",animation:"spin 0.8s linear infinite"}}/><span style={{color:"#64748b",fontSize:11}}>🗺️ Calculando ruta...</span></div>}
       {state.status==="ok"&&<div style={{background:"linear-gradient(135deg,#0f1a00,#1e293b)",border:"1.5px solid #2563eb44",borderRadius:12,padding:"12px 14px"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}><div><span style={{color:"#0f172a",fontSize:13,fontWeight:700}}>🗺️ {state.km} km</span>{state.duration&&<span style={{color:"#64748b",fontSize:11,marginLeft:8}}>· {state.duration}</span>}</div><span style={{color:"#22c55e",fontSize:20,fontFamily:"'Inter',sans-serif",fontWeight:700}}>{state.price} €</span></div><div style={{color:"#475569",fontSize:9,textAlign:"right"}}>{PRICE_PER_KM} €/km · mín. 30 €</div></div>}
-      {state.status==="error"&&<div style={{background:"#1a0808",border:"1px solid #ef444433",borderRadius:10,padding:"8px 12px",color:"#ef4444",fontSize:11}}>⚠️ No se pudo calcular — introduce el precio manualmente</div>}
+      {state.status==="error"&&<div style={{background:"#fff5f5",border:"1px solid #ef444433",borderRadius:10,padding:"8px 12px",color:"#ef4444",fontSize:11}}>⚠️ No se pudo calcular — introduce el precio manualmente</div>}
     </div>
   );
 }
@@ -4692,7 +4692,7 @@ function BoltPriceGuide() {
       </button>
       {open && (
         <div style={{
-          background:"#0f172a", border:"1px solid #2563eb33",
+          background:"#f8fafc", border:"1px solid #2563eb33",
           borderTop:"none", borderRadius:"0 0 10px 10px",
           padding:"16px 18px",
         }}>
@@ -4716,7 +4716,7 @@ function BoltPriceGuide() {
                 color:s.warn?"#f59e0b":"#2563eb",fontSize:12,fontWeight:700,
               }}>{s.n}</div>
               <div>
-                <div style={{color:s.warn?"#f59e0b":"#0f172a",fontSize:13,fontWeight:700,marginBottom:2}}>{s.text}</div>
+                <div style={{color:s.warn?"#f59e0b":"#f8fafc",fontSize:13,fontWeight:700,marginBottom:2}}>{s.text}</div>
                 <div style={{color:"#64748b",fontSize:11,lineHeight:1.4}}>{s.sub}</div>
               </div>
             </div>
@@ -4959,7 +4959,7 @@ class ErrorBoundary extends React.Component {
     if (this.state.error) {
       return (
         <div style={{
-          minHeight:"100vh", background:"#0f172a", display:"flex", flexDirection:"column",
+          minHeight:"100vh", background:"#f8fafc", display:"flex", flexDirection:"column",
           alignItems:"center", justifyContent:"center", padding:24, fontFamily:"sans-serif",
         }}>
           <div style={{
@@ -5290,7 +5290,7 @@ export default function RivieraApp() {
 
   return (
     <ErrorBoundary>
-    <div style={{background:"#000000",minHeight:"100vh",fontFamily:"'DM Sans',sans-serif",color:"#0f172a",width:"100%",position:"relative"}}>
+    <div style={{background:"#ffffff",minHeight:"100vh",fontFamily:"'DM Sans',sans-serif",color:"#0f172a",width:"100%",position:"relative"}}>
       <style>{GLOBAL_CSS}</style>
 
       {/* ── OFFLINE BANNER ── */}
@@ -5419,7 +5419,7 @@ export default function RivieraApp() {
                 </div>
                 <button onClick={()=>{setDraftPriceClient(String(driverPriceClient));setDraftPriceRecep(String(driverPriceRecep));setDriverPriceConfig(true);}} style={{
                   display:"inline-flex",alignItems:"center",gap:6,
-                  background:"#0f172a",
+                  background:"#f8fafc",
                   border:"1.5px solid #22c55e55",borderRadius:20,padding:"6px 14px",
                   cursor:"pointer",marginLeft:8,
                 }}>
@@ -5447,7 +5447,7 @@ export default function RivieraApp() {
       )}
       {inAppAlert&&<ReminderBanner alert={inAppAlert} onDismiss={dismissAlert}/>}
       {driverAlert&&isApp&&<DriverAlertBanner alert={driverAlert} onDismiss={()=>setDriverAlert(null)}/>}
-      {showInstall&&<div style={{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",zIndex:9998,background:"#0f172a",border:"1.5px solid #2563eb",borderRadius:16,padding:"14px 20px",display:"flex",alignItems:"center",gap:12,boxShadow:"0 8px 32px #000a"}}>
+      {showInstall&&<div style={{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",zIndex:9998,background:"#f8fafc",border:"1.5px solid #2563eb",borderRadius:16,padding:"14px 20px",display:"flex",alignItems:"center",gap:12,boxShadow:"0 8px 32px #000a"}}>
         <div style={{width:40,height:40,borderRadius:10,overflow:"hidden",flexShrink:0}}>
           <img src="/icon-driver.svg" width="40" height="40" alt="NEXTTRIP"/>
         </div>
@@ -5460,8 +5460,8 @@ export default function RivieraApp() {
       </div>}
       {/* ── PRICE CONFIG MODAL ── */}
       {driverPriceConfig&&(
-        <div style={{position:"fixed",inset:0,background:"#000000cc",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
-          <div style={{background:"#0f172a",border:"1.5px solid #22c55e44",borderRadius:20,padding:24,width:"100%",maxWidth:380}}>
+        <div style={{position:"fixed",inset:0,background:"rgba(15,23,42,0.5)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+          <div style={{background:"#f8fafc",border:"1.5px solid #22c55e44",borderRadius:20,padding:24,width:"100%",maxWidth:380}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
               <div>
                 <div style={{color:"#0f172a",fontSize:16,fontFamily:"'Inter',sans-serif",fontWeight:700}}>⚙️ Precio por km</div>
