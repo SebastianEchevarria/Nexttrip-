@@ -1692,7 +1692,7 @@ function HistoryGroup({guest,trips,fmt,COMMISSION_RATE,initials,EMPLOYEES,loadUs
     </div>
   );
 }
-function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommission, onStartTrip, onEndTrip, onCancelTrip, onUploadDoc, onProposePrice, onSaveNote, setToast, messages, onSendMessage, onMarkRead, driverStatus, setDriverStatus, blockedSlots, onToggleBlock, serviceStatus, onSetService }) {
+function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommission, onStartTrip, onEndTrip, onCancelTrip, onUploadDoc, onProposePrice, onSaveNote, setToast, messages, onSendMessage, onMarkRead, driverStatus, setDriverStatus, blockedSlots, onToggleBlock, serviceStatus, onSetService, showDriverMenu=false, setShowDriverMenu=()=>{}, goHome=()=>{} }) {
   const [selected,setSelected]=useState(null);
   const [calModal,setCalModal]=useState(null);
   const [hotelModal,setHotelModal]=useState(null);
@@ -2079,6 +2079,42 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
 
   return (
     <div style={{paddingBottom:80}}>
+      {/* ── DRIVER MENU DRAWER ── */}
+      {showDriverMenu&&(
+        <div onClick={()=>setShowDriverMenu(false)} style={{position:"fixed",inset:0,background:"rgba(15,23,42,0.4)",zIndex:1000,display:"flex",alignItems:"flex-start",justifyContent:"flex-end"}}>
+          <div onClick={e=>e.stopPropagation()} style={{background:"#ffffff",borderRadius:"0 0 0 16px",padding:"20px 20px 28px",width:260,boxShadow:"0 8px 32px rgba(0,0,0,0.18)",border:"1px solid #e2e8f0",marginTop:60}}>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:20,paddingBottom:14,borderBottom:"1px solid #e2e8f0"}}>
+              <div style={{width:40,height:40,borderRadius:"50%",background:"linear-gradient(135deg,#1e3a8a,#2563eb)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                </svg>
+              </div>
+              <div>
+                <div style={{color:"#0f172a",fontSize:14,fontWeight:800}}>DRIVER</div>
+                <div style={{color:"#2563eb",fontSize:11,fontWeight:600}}>Panel del conductor</div>
+              </div>
+            </div>
+            <button onClick={()=>{setDraftClient(String(priceClient));setDraftRecep(String(priceRecep));setShowPriceConfig(true);setShowDriverMenu(false);}} style={{width:"100%",display:"flex",alignItems:"center",gap:10,background:"#f8fafc",border:"1.5px solid #2563eb22",borderRadius:12,padding:"12px 14px",cursor:"pointer",marginBottom:10}}>
+              <span style={{fontSize:18}}>💶</span>
+              <div style={{textAlign:"left"}}>
+                <div style={{color:"#0f172a",fontSize:13,fontWeight:700}}>Precios por KM</div>
+                <div style={{color:"#64748b",fontSize:10}}>Cliente: {priceClient}€ · Recep: {priceRecep}€</div>
+              </div>
+            </button>
+            <button onClick={()=>{setReturnDateDraft(serviceStatus?.returnDate||"");setLastActiveDraft(serviceStatus?.lastActiveDate||"");setShowServiceModal(true);setShowDriverMenu(false);}} style={{width:"100%",display:"flex",alignItems:"center",gap:10,background:isOffline?"#fff0f0":"#f0fdf4",border:`1.5px solid ${isOffline?"#ef444433":"#22c55e33"}`,borderRadius:12,padding:"12px 14px",cursor:"pointer",marginBottom:10}}>
+              <span style={{fontSize:18}}>{isOffline?"🔴":"🟢"}</span>
+              <div style={{textAlign:"left"}}>
+                <div style={{color:isOffline?"#ef4444":"#15803d",fontSize:13,fontWeight:700}}>{isOffline?"Fuera de servicio":"En servicio"}</div>
+                <div style={{color:"#64748b",fontSize:10}}>Toca para gestionar</div>
+              </div>
+            </button>
+            <button onClick={()=>{setShowDriverMenu(false);goHome();}} style={{width:"100%",display:"flex",alignItems:"center",gap:10,background:"linear-gradient(135deg,#ef4444,#b91c1c)",border:"none",borderRadius:12,padding:"12px 14px",cursor:"pointer"}}>
+              <span style={{fontSize:18}}>🚪</span>
+              <span style={{color:"#ffffff",fontSize:13,fontWeight:700}}>Salir</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── TOP BUTTONS: PENDIENTES + CONFIRMADOS ── */}
       <div style={{display:"flex",gap:8,marginBottom:14}}>
@@ -5016,6 +5052,7 @@ export default function RivieraApp() {
   },[]);
   const [installPrompt,setInstallPrompt]=useState(null);
   const [showInstall,setShowInstall]=useState(false);
+  const [showDriverMenu,setShowDriverMenu]=useState(false);
   useEffect(()=>{
     const handler=e=>{e.preventDefault();setInstallPrompt(e);setShowInstall(true);};
     window.addEventListener('beforeinstallprompt',handler);
@@ -5415,49 +5452,45 @@ export default function RivieraApp() {
       {isApp&&(
         <div className="app-inner">
         <>
-          <div style={{padding:"16px 20px 12px",borderBottom:"1px solid #1e293b",background:"rgba(10,15,30,0.97)",backdropFilter:"blur(10px)",position:"sticky",top:0,zIndex:50}}>
+          <div style={{padding:"8px 16px",borderBottom:"2px solid #e2e8f0",background:"#ffffff",position:"sticky",top:0,zIndex:150,boxShadow:"0 2px 8px rgba(37,99,235,0.08)"}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-              <div style={{width:60}}/>
-              <RivieraLogo size={60}/>
-              <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:4,width:60}}>
-                <button onClick={goHome} style={{background:"#f1f5f9",border:"1px solid #2a3a4a",borderRadius:8,color:"#64748b",fontSize:11,padding:"5px 10px",cursor:"pointer"}}>Salir</button>
-                {isDriverScreen&&pendingCount>0&&<button onClick={()=>document.getElementById("section-pending")?.scrollIntoView({behavior:"smooth"})} style={{background:"#f59e0b",borderRadius:20,padding:"3px 8px",fontSize:10,fontWeight:700,color:"#0f172a",animation:"pulse 1.5s infinite",border:"none",cursor:"pointer"}}>{pendingCount} nuevo{pendingCount>1?"s":""} ↓</button>}
+              {/* Logo izquierda — grande */}
+              <div style={{flexShrink:0,display:"flex",alignItems:"center"}}>
+                <RivieraLogo size={72}/>
               </div>
-            </div>
-            <div style={{marginTop:10,display:"inline-flex",alignItems:"center",gap:7,
-              background:isDriverScreen?"#1a130a":(currentEmployee?.avatar+"12"),
-              border:`1px solid ${isDriverScreen?"#2563eb25":((currentEmployee?.avatar??"#2563eb")+"33")}`,borderRadius:20,padding:"5px 12px"}}>
+              {/* Derecha: botón DRIVER (driver) o pill empleado (recepción) */}
               {isDriverScreen?(
-                <>
-                <div style={{display:"flex",alignItems:"center",gap:8}}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/>
-                    <line x1="12" y1="2" x2="12" y2="9"/><line x1="4.93" y1="4.93" x2="9.17" y2="9.17"/><line x1="19.07" y1="4.93" x2="14.83" y2="9.17"/>
-                  </svg>
-                  <span style={{color:"#2563eb",fontSize:12,fontWeight:700,letterSpacing:3,fontFamily:"'DM Sans',sans-serif"}}>DRIVER</span>
-                </div>
-                <button onClick={()=>{setDraftPriceClient(String(driverPriceClient));setDraftPriceRecep(String(driverPriceRecep));setDriverPriceConfig(true);}} style={{
-                  display:"inline-flex",alignItems:"center",gap:6,
-                  background:"#f8fafc",
-                  border:"1.5px solid #22c55e55",borderRadius:20,padding:"6px 14px",
-                  cursor:"pointer",marginLeft:8,
+                <button onClick={()=>setShowDriverMenu(v=>!v)} style={{
+                  display:"flex",alignItems:"center",gap:7,
+                  background:"#eff6ff",border:"1.5px solid #1e3a8a44",
+                  borderRadius:20,padding:"6px 14px 6px 8px",cursor:"pointer",
+                  boxShadow:"0 1px 6px rgba(30,58,138,0.12)"
                 }}>
-                  <span style={{color:"#22c55e",fontSize:12,fontWeight:700,letterSpacing:2,fontFamily:"'DM Sans',sans-serif"}}>PRECIOS KM</span>
+                  <div style={{width:28,height:28,borderRadius:"50%",background:"linear-gradient(135deg,#1e3a8a,#2563eb)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                    </svg>
+                  </div>
+                  <span style={{color:"#0f172a",fontSize:13,fontWeight:800}}>DRIVER</span>
+                  <span style={{color:"#1e3a8a",fontSize:11}}>▾</span>
+                  {pendingCount>0&&<div style={{background:"#ef4444",borderRadius:"50%",width:18,height:18,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:"#fff",marginLeft:2}}>{pendingCount}</div>}
                 </button>
-                </>
-                )
-              :currentEmployee?(<>
-                <div style={{width:18,height:18,borderRadius:"50%",background:currentEmployee.avatar+"25",border:`1.5px solid ${currentEmployee.avatar}55`,display:"flex",alignItems:"center",justifyContent:"center",color:currentEmployee.avatar,fontSize:9,fontWeight:700}}>{initials(currentEmployee.name)}</div>
-                <span style={{color:currentEmployee.avatar,fontSize:11}}>{currentEmployee.name}</span>
-                <span style={{color:"#64748b",fontSize:10}}>· {currentEmployee.hotel.split(" ").slice(-1)[0]}</span>
-              </>):null}
+              ):currentEmployee?(
+                <div style={{display:"flex",alignItems:"center",gap:6,background:"#eff6ff",border:"1.5px solid #1e3a8a33",borderRadius:20,padding:"4px 12px"}}>
+                  <div style={{width:22,height:22,borderRadius:"50%",background:currentEmployee.avatar+"25",border:`1.5px solid ${currentEmployee.avatar}55`,display:"flex",alignItems:"center",justifyContent:"center",color:currentEmployee.avatar,fontSize:9,fontWeight:700}}>{initials(currentEmployee.name)}</div>
+                  <span style={{color:"#0f172a",fontSize:12,fontWeight:700}}>{currentEmployee.name}</span>
+                  <span style={{color:"#64748b",fontSize:10}}>· {currentEmployee.hotel.split(" ").slice(-1)[0]}</span>
+                </div>
+              ):null}
             </div>
           </div>
+
+
 
           <div style={{padding:"20px 20px 0"}}>
             {isDriverScreen&&!notifDismissed&&<NotifPermissionPrompt onDismiss={()=>setNotifDismissed(true)}/>}
             {isDriverScreen
-              ?<DriverView bookings={bookings} onAccept={handleAccept} onReject={handleReject} onUpdateFare={handleUpdateFare} onPayCommission={handlePayCommission} onStartTrip={handleStartTrip} onEndTrip={handleEndTrip} onCancelTrip={handleCancelTrip} onUploadDoc={handleUploadDoc} onProposePrice={handleProposePrice} onSaveNote={handleSaveNote} setToast={setToast} messages={messages} onSendMessage={handleSendMessage} onMarkRead={handleMarkRead} driverStatus={driverStatus} setDriverStatus={setDriverStatus} blockedSlots={blockedSlots} onToggleBlock={handleToggleBlock} serviceStatus={serviceStatus} onSetService={handleSetService}/>
+              ?<DriverView bookings={bookings} onAccept={handleAccept} onReject={handleReject} onUpdateFare={handleUpdateFare} onPayCommission={handlePayCommission} onStartTrip={handleStartTrip} onEndTrip={handleEndTrip} onCancelTrip={handleCancelTrip} onUploadDoc={handleUploadDoc} onProposePrice={handleProposePrice} onSaveNote={handleSaveNote} setToast={setToast} messages={messages} onSendMessage={handleSendMessage} onMarkRead={handleMarkRead} driverStatus={driverStatus} setDriverStatus={setDriverStatus} blockedSlots={blockedSlots} onToggleBlock={handleToggleBlock} serviceStatus={serviceStatus} onSetService={handleSetService} showDriverMenu={showDriverMenu} setShowDriverMenu={setShowDriverMenu} goHome={goHome}/>
               :<ReceptionistView employee={currentEmployee} bookings={bookings} onNewBooking={handleNewBooking} onCancelBooking={handleCancelBooking} messages={messages} onSendMessage={handleSendMessage} onMarkRead={handleMarkRead} driverStatus={driverStatus} blockedSlots={blockedSlots} serviceStatus={serviceStatus}/>
             }
           </div>
