@@ -734,26 +734,27 @@ function RoleSelector({ onSelect, installPrompt }) {
   const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
   return (
     <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:24}}>
-      <RivieraLogo size={140}/>
+      <RivieraLogo size={320}/>
       <div style={{marginBottom:36}}/>
-      <div style={{color:"#64748b",fontSize:11,letterSpacing:3,marginBottom:18}}>SELECCIONA TU PERFIL</div>
+      <div style={{color:"#0f172a",fontSize:20,letterSpacing:4,fontWeight:900,marginBottom:28}}>SELECCIONA TU PERFIL</div>
       {[
         {id:"reception",icon:"🏨",title:"Recepción Hotel", sub:"Accede con tu código de empleado", color:"#38bdf8"},
       ].map(r=>(
         r.id==="reception" ? (
           <button key={r.id} onClick={()=>onSelect(r.id)} style={{
-            width:"100%",maxWidth:340,marginBottom:12,cursor:"pointer",
-            borderRadius:20,overflow:"hidden",border:"1.5px solid #2563eb99",
+            width:"100%",maxWidth:360,marginBottom:20,cursor:"pointer",
+            borderRadius:22,overflow:"hidden",border:"3px solid #2563eb",
             position:"relative",transition:"all 0.25s",padding:0,background:"none",
+            boxShadow:"0 8px 32px rgba(37,99,235,0.35)",
           }}
-            onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-3px)";e.currentTarget.style.boxShadow="0 0 0 2px #2563eb, 0 12px 40px rgba(201,169,110,0.4)";e.currentTarget.style.borderColor="#2563eb"}}
-            onMouseLeave={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="none";e.currentTarget.style.borderColor="#2563eb99"}}>
+            onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-4px) scale(1.01)";e.currentTarget.style.boxShadow="0 0 0 4px #2563eb, 0 20px 48px rgba(37,99,235,0.5)";}}
+            onMouseLeave={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="0 8px 32px rgba(37,99,235,0.35)";}}>
             {/* Hotel illustration SVG — green driver app colors */}
             <svg width="100%" viewBox="-60 -70 460 200" xmlns="http://www.w3.org/2000/svg" style={{display:"block",background:"#ffffff"}}>
               <defs>
                 <linearGradient id="hSkyGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#ffffff"/>
-                  <stop offset="100%" stopColor="#050505"/>
+                  <stop offset="100%" stopColor="#f0f7ff"/>
                 </linearGradient>
                 <linearGradient id="hGoldFade" x1="0" y1="0" x2="1" y2="0">
                   <stop offset="0%" stopColor="#2563eb" stopOpacity="0"/>
@@ -769,7 +770,7 @@ function RoleSelector({ onSelect, installPrompt }) {
               <rect width="340" height="140" fill="url(#hSkyGrad)"/>
               {/* Stars */}
               {[[30,20],[80,12],[130,25],[200,8],[260,18],[310,28],[50,40],[170,15],[290,10],[150,35]].map(([x,y],i)=>(
-                <circle key={i} cx={x} cy={y} r="0.8" fill="#2563eb" opacity="0.25"/>
+                <circle key={i} cx={x} cy={y} r="0.8" fill="#2563eb" opacity="0.5"/>
               ))}
               <rect width="340" height="140" fill="url(#hGlow)"/>
               <rect x="0" y="115" width="340" height="2" fill="url(#hGoldFade)" opacity="0.4"/>
@@ -787,21 +788,21 @@ function RoleSelector({ onSelect, installPrompt }) {
               {[40,52,64,76,88].map(y=>
                 [145,162,179,196].map(x=>(
                   <rect key={`m${x}${y}`} x={x} y={y} width="9" height="7"
-                    fill="#f5e0b0" opacity="0.7"/>
+                    fill="#2563eb" opacity="1.0"/>
                 ))
               )}
               {/* Windows left wing */}
               {[65,77,89,101].map(y=>
                 [78,94,110].map(x=>(
                   <rect key={`l${x}${y}`} x={x} y={y} width="8" height="6"
-                    fill="#f5e0b0" opacity="0.55"/>
+                    fill="#2563eb" opacity="0.9"/>
                 ))
               )}
               {/* Windows right wing */}
               {[65,77,89,101].map(y=>
                 [218,234,250].map(x=>(
                   <rect key={`r${x}${y}`} x={x} y={y} width="8" height="6"
-                    fill="#f5e0b0" opacity="0.55"/>
+                    fill="#2563eb" opacity="0.9"/>
                 ))
               )}
               {/* Entrance */}
@@ -821,15 +822,15 @@ function RoleSelector({ onSelect, installPrompt }) {
               <rect x="130" y="115" width="80" height="20" fill="#2563eb" opacity="0.04"/>
             </svg>
                         {/* Overlay */}
-            <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg,rgba(0,0,0,0) 55%,rgba(0,0,0,0.5) 100%)"}}/>
+            <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg,rgba(37,99,235,0) 60%,rgba(37,99,235,0.08) 100%)"}}/>
             {/* Centered top badge */}
             <div style={{
               position:"absolute",top:14,left:"50%",transform:"translateX(-50%)",
-              background:"#2563eb18",border:"1px solid #2563ebaa",
-              borderRadius:20,padding:"5px 20px",backdropFilter:"blur(6px)",
-              whiteSpace:"nowrap",
+              background:"#2563eb",border:"none",
+              borderRadius:20,padding:"7px 22px",backdropFilter:"blur(6px)",
+              whiteSpace:"nowrap",boxShadow:"0 2px 12px rgba(37,99,235,0.4)",
             }}>
-              <span style={{color:"#2563eb",fontSize:11,fontWeight:700,letterSpacing:2}}>GESTIÓN DE RESERVAS</span>
+              <span style={{color:"#ffffff",fontSize:14,fontWeight:900,letterSpacing:2}}>GESTIÓN DE RESERVAS</span>
             </div>
           </button>
         ) : null
@@ -838,24 +839,25 @@ function RoleSelector({ onSelect, installPrompt }) {
 
       {/* Premium driver button with car image */}
       <button onClick={()=>onSelect("driver")} style={{
-        width:"100%",maxWidth:340,marginBottom:12,cursor:"pointer",
-        borderRadius:20,overflow:"hidden",border:"1.5px solid #2563eb99",
+        width:"100%",maxWidth:360,marginBottom:20,cursor:"pointer",
+        borderRadius:22,overflow:"hidden",border:"3px solid #1d4ed8",
         position:"relative",transition:"all 0.25s",padding:0,background:"none",
+        boxShadow:"0 8px 32px rgba(29,78,216,0.35)",
       }}
-        onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-3px)";e.currentTarget.style.boxShadow="0 0 0 2px #2563eb, 0 12px 40px rgba(201,169,110,0.4)";e.currentTarget.style.borderColor="#2563eb"}}
-        onMouseLeave={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="none";e.currentTarget.style.borderColor="#2563eb99"}}>
+        onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-4px) scale(1.01)";e.currentTarget.style.boxShadow="0 0 0 4px #1d4ed8, 0 20px 48px rgba(29,78,216,0.5)";}}
+        onMouseLeave={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="0 8px 32px rgba(29,78,216,0.35)";}}>
         {/* Car photo */}
         <img src={CAR_IMAGE} alt="Conductor" style={{width:"80%",height:"auto",objectFit:"contain",display:"block",background:"#f8fafc",margin:"18px auto 0",padding:"0 0 6px"}}/>
         {/* Dark gradient overlay */}
-        <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg,rgba(0,0,0,0) 50%,rgba(0,0,0,0.75) 100%)"}}/>
+        <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg,rgba(29,78,216,0) 60%,rgba(29,78,216,0.06) 100%)"}}/>
         {/* Centered top badge */}
         <div style={{
           position:"absolute",top:14,left:"50%",transform:"translateX(-50%)",
-          background:"#2563eb18",border:"1px solid #2563ebaa",
-          borderRadius:20,padding:"5px 20px",backdropFilter:"blur(6px)",
-          whiteSpace:"nowrap",
+          background:"#1d4ed8",border:"none",
+          borderRadius:20,padding:"7px 22px",backdropFilter:"blur(6px)",
+          whiteSpace:"nowrap",boxShadow:"0 2px 12px rgba(29,78,216,0.4)",
         }}>
-          <span style={{color:"#2563eb",fontSize:12,fontWeight:700,letterSpacing:3}}>DRIVER APP</span>
+          <span style={{color:"#ffffff",fontSize:15,fontWeight:900,letterSpacing:3}}>DRIVER APP</span>
         </div>
       </button>
 
