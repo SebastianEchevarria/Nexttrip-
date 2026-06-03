@@ -701,13 +701,14 @@ function PinKeypad({ correctPin, onSuccess, onBack, subtitle, accentColor="#2563
   return (
     <div style={{display:"flex",flexDirection:"column",alignItems:"center",width:"100%"}}>
       {onBack&&<button onClick={onBack} style={{alignSelf:"flex-start",background:"none",border:"none",color:"#64748b",cursor:"pointer",fontSize:13,letterSpacing:1,marginBottom:20}}>← VOLVER</button>}
-      {subtitle&&<div style={{color:"#64748b",fontSize:12,letterSpacing:1,marginBottom:22}}>{subtitle}</div>}
-      <div style={{display:"flex",gap:14,marginBottom:26}}>
+      {subtitle&&<div style={{color:"#0f172a",fontSize:14,letterSpacing:3,fontWeight:800,marginBottom:22}}>{subtitle}</div>}
+      <div style={{display:"flex",gap:18,marginBottom:28}}>
         {[0,1,2,3].map(i=>(
-          <div key={i} style={{width:13,height:13,borderRadius:"50%",
-            background:pin.length>i?(error?"#ef4444":accentColor):"#f1f5f9",
-            border:`2px solid ${error?"#ef4444":pin.length>i?accentColor:"#e2e8f0"}`,
-            transition:"all 0.15s",transform:pin.length>i?"scale(1.2)":"scale(1)"}}/>
+          <div key={i} style={{width:18,height:18,borderRadius:"50%",
+            background:pin.length>i?(error?"#ef4444":accentColor):"#e2e8f0",
+            border:`2.5px solid ${error?"#ef4444":pin.length>i?accentColor:"#cbd5e1"}`,
+            transition:"all 0.2s",transform:pin.length>i?"scale(1.3)":"scale(1)",
+            boxShadow:pin.length>i&&!error?`0 2px 8px ${accentColor}66`:"none"}}/>
         ))}
       </div>
       {error&&<div style={{color:"#ef4444",fontSize:11,marginBottom:12,letterSpacing:1}}>PIN INCORRECTO</div>}
@@ -715,12 +716,14 @@ function PinKeypad({ correctPin, onSuccess, onBack, subtitle, accentColor="#2563
         {[1,2,3,4,5,6,7,8,9,"",0,"⌫"].map((d,i)=>(
           <button key={i} onClick={()=>d==="⌫"?setPin(p=>p.slice(0,-1)):d!==""?handleDigit(String(d)):null}
             disabled={d===""} style={{height:60,borderRadius:12,
-              background:d===""?"transparent":d==="⌫"?"#f1f5f9":"linear-gradient(135deg,#1e293b,#0f172a)",
-              border:d===""?"none":"1px solid #1e3a5f",color:d==="⌫"?"#64748b":"#f8fafc",
-              fontSize:d==="⌫"?18:20,fontFamily:"'Inter',sans-serif",fontWeight:600,
-              cursor:d===""?"default":"pointer",transition:"all 0.1s"}}
-            onMouseDown={e=>{if(d!=="")e.currentTarget.style.transform="scale(0.93)"}}
-            onMouseUp={e=>e.currentTarget.style.transform="none"}>{d}</button>
+              background:d===""?"transparent":d==="⌫"?"#f8fafc":"#ffffff",
+              border:d===""?"none":`2px solid ${d==="⌫"?"#e2e8f0":accentColor+"44"}`,
+              color:d==="⌫"?"#94a3b8":"#0f172a",
+              fontSize:d==="⌫"?20:22,fontFamily:"'Inter',sans-serif",fontWeight:700,
+              cursor:d===""?"default":"pointer",transition:"all 0.12s",
+              boxShadow:d===""||d==="⌫"?"none":`0 2px 8px ${accentColor}22`}}
+            onMouseDown={e=>{if(d!=="")e.currentTarget.style.transform="scale(0.92)";if(d!=="⌫"&&d!=="")e.currentTarget.style.background="#eff6ff";}}
+            onMouseUp={e=>{e.currentTarget.style.transform="none";if(d!=="⌫"&&d!=="")e.currentTarget.style.background="#ffffff";}}>{d}</button>
         ))}
       </div>
     </div>
@@ -1070,19 +1073,25 @@ function ReceptionAuth({ onLogin, onBack }) {
   const hotelUserCount = users.filter(u => u.hotel === regWorkplace).length;
 
   return (
-    <div style={{minHeight:"100vh",padding:"28px 24px",display:"flex",flexDirection:"column",alignItems:"center"}}>
-      <button onClick={onBack} style={{alignSelf:"flex-start",background:"none",border:"none",color:"#64748b",cursor:"pointer",fontSize:13,letterSpacing:1,marginBottom:24}}>← VOLVER</button>
+    <div style={{minHeight:"100vh",padding:"28px 24px",display:"flex",flexDirection:"column",alignItems:"center",background:"#ffffff"}}>
+      <button onClick={onBack} style={{alignSelf:"flex-start",display:"flex",alignItems:"center",gap:8,background:"#f1f5f9",border:"none",borderRadius:20,padding:"8px 16px",color:"#1e3a8a",cursor:"pointer",fontSize:12,fontWeight:700,letterSpacing:1,marginBottom:24,boxShadow:"0 1px 4px rgba(37,99,235,0.1)"}}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" strokeWidth="2.5" strokeLinecap="round">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        VOLVER
+      </button>
 
-      <RivieraLogo size={92}/>
-      <div style={{marginBottom:20}}/>
+      <RivieraLogo size={180}/>
+      <div style={{marginBottom:24}}/>
 
       {/* Mode toggle */}
-      <div style={{display:"flex",background:"#f1f5f9",borderRadius:12,padding:3,marginBottom:28,gap:2,width:"100%",maxWidth:320}}>
+      <div style={{display:"flex",background:"#dbeafe",borderRadius:50,padding:5,marginBottom:28,gap:4,width:"100%",maxWidth:320,boxShadow:"0 2px 8px rgba(37,99,235,0.15)"}}>
         {[{id:"login",label:"Iniciar sesión"},{id:"register",label:"Crear cuenta"}].map(t=>(
           <button key={t.id} onClick={()=>{setMode(t.id);setLoginPin("");setLoginError("");setRegStep(1);setRegError("");setRegPin("");setRegPin2("");}}
-            style={{flex:1,padding:"9px 4px",border:"none",borderRadius:9,cursor:"pointer",
-              background:mode===t.id?"linear-gradient(135deg,#2563eb,#a07840)":"transparent",
-              color:mode===t.id?"#f8fafc":"#64748b",fontSize:12,fontWeight:mode===t.id?600:400,transition:"all 0.2s"}}>
+            style={{flex:1,padding:"11px 4px",border:"none",borderRadius:46,cursor:"pointer",
+              background:mode===t.id?"#2563eb":"transparent",
+              color:mode===t.id?"#ffffff":"#1e3a8a",fontSize:13,fontWeight:700,transition:"all 0.2s",
+              boxShadow:mode===t.id?"0 2px 8px rgba(37,99,235,0.35)":"none"}}>
             {t.label}
           </button>
         ))}
@@ -1091,13 +1100,14 @@ function ReceptionAuth({ onLogin, onBack }) {
       {/* ── LOGIN ── */}
       {mode==="login"&&(
         <div style={{width:"100%",maxWidth:320,display:"flex",flexDirection:"column",alignItems:"center"}}>
-          <div style={{color:"#64748b",fontSize:11,letterSpacing:2,marginBottom:22}}>INTRODUCE TU PIN</div>
-          <div style={{display:"flex",gap:14,marginBottom:26}}>
+          <div style={{color:"#0f172a",fontSize:14,letterSpacing:3,fontWeight:800,marginBottom:22}}>INTRODUCE TU PIN</div>
+          <div style={{display:"flex",gap:18,marginBottom:28}}>
             {[0,1,2,3].map(i=>(
-              <div key={i} style={{width:13,height:13,borderRadius:"50%",
-                background:loginPin.length>i?(loginError?"#ef4444":"#2563eb"):"#f1f5f9",
-                border:`2px solid ${loginError?"#ef4444":loginPin.length>i?"#2563eb":"#e2e8f0"}`,
-                transition:"all 0.15s",transform:loginPin.length>i?"scale(1.2)":"scale(1)"}}/>
+              <div key={i} style={{width:18,height:18,borderRadius:"50%",
+                background:loginPin.length>i?(loginError?"#ef4444":"#2563eb"):"#e2e8f0",
+                border:`2.5px solid ${loginError?"#ef4444":loginPin.length>i?"#2563eb":"#cbd5e1"}`,
+                transition:"all 0.2s",transform:loginPin.length>i?"scale(1.3)":"scale(1)",
+                boxShadow:loginPin.length>i&&!loginError?"0 2px 8px rgba(37,99,235,0.4)":"none"}}/>
             ))}
           </div>
           {loginError&&<div style={{color:"#ef4444",fontSize:11,marginBottom:14,letterSpacing:0.5,textAlign:"center"}}>{loginError}</div>}
@@ -1105,12 +1115,14 @@ function ReceptionAuth({ onLogin, onBack }) {
             {[1,2,3,4,5,6,7,8,9,"",0,"⌫"].map((d,i)=>(
               <button key={i} onClick={()=>d==="⌫"?setLoginPin(p=>{setLoginError("");return p.slice(0,-1);}):d!==""?handleLoginDigit(String(d)):null}
                 disabled={d===""} style={{height:60,borderRadius:12,
-                  background:d===""?"transparent":d==="⌫"?"#f1f5f9":"linear-gradient(135deg,#1e293b,#0f172a)",
-                  border:d===""?"none":"1px solid #1e3a5f",color:d==="⌫"?"#64748b":"#f8fafc",
-                  fontSize:d==="⌫"?18:20,fontFamily:"'Inter',sans-serif",fontWeight:600,
-                  cursor:d===""?"default":"pointer",transition:"all 0.1s"}}
-                onMouseDown={e=>{if(d!=="")e.currentTarget.style.transform="scale(0.93)"}}
-                onMouseUp={e=>e.currentTarget.style.transform="none"}>{d}</button>
+                  background:d===""?"transparent":d==="⌫"?"#f8fafc":"#ffffff",
+                  border:d===""?"none":`2px solid ${d==="⌫"?"#e2e8f0":"#2563eb33"}`,
+                  color:d==="⌫"?"#94a3b8":"#0f172a",
+                  fontSize:d==="⌫"?20:22,fontFamily:"'Inter',sans-serif",fontWeight:700,
+                  cursor:d===""?"default":"pointer",transition:"all 0.12s",
+                  boxShadow:d===""||d==="⌫"?"none":"0 2px 8px rgba(37,99,235,0.12)"}}
+                onMouseDown={e=>{if(d!=="")e.currentTarget.style.transform="scale(0.92)";e.currentTarget.style.background=d==="⌫"?"#e2e8f0":"#eff6ff";}}
+                onMouseUp={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.background=d===""?"transparent":d==="⌫"?"#f8fafc":"#ffffff";}}>{d}</button>
             ))}
           </div>
           {users.length===0&&(
