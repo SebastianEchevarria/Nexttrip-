@@ -1422,7 +1422,16 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
               <span style={{color:"#ffffff",fontSize:12,fontWeight:800}}>SE</span>
             </div>
             <div>
-              <div style={{color:"#0f172a",fontSize:14,fontWeight:800}}>Sebastián Echevarría</div>
+              <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+                <span style={{color:"#0f172a",fontSize:14,fontWeight:800}}>Sebastián Echevarría</span>
+                <div style={{display:"flex",gap:1}}>
+                  {[1,2,3,4,5].map(s=>(
+                    <svg key={s} width="13" height="13" viewBox="0 0 24 24" fill="#f59e0b">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                  ))}
+                </div>
+              </div>
               <div style={{color:"#2563eb",fontSize:10,fontWeight:700}}>{lang==="en"?"Your driver":"Tu conductor"}</div>
             </div>
           </div>
@@ -2514,13 +2523,9 @@ export default function NextTripClientApp() {
           </div>
           {/* Derecha: columna con 2 filas */}
           <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:5}}>
-            {/* Fila 1: banderas + botón salir */}
-            <div style={{display:"flex",alignItems:"center",gap:8}}>
+            {/* Fila 1: solo banderas, más a la derecha */}
+            <div style={{display:"flex",alignItems:"center",justifyContent:"flex-end"}}>
               <LangToggle lang={lang} setLang={setLang}/>
-              <button onClick={()=>{setScreen("auth");setCurrentClient(null);}} style={{
-                background:"#1e3a8a",border:"none",borderRadius:8,
-                color:"#ffffff",fontSize:11,fontWeight:700,padding:"6px 12px",cursor:"pointer",whiteSpace:"nowrap",
-              }}>{TRANSLATIONS[lang]?.exit||"Salir"}</button>
             </div>
             {/* Fila 2: botón perfil */}
             <button onClick={()=>{setProfilePhone(currentClient?.phone||"");setShowProfile(true);}} style={{
