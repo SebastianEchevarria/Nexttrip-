@@ -1692,7 +1692,7 @@ function HistoryGroup({guest,trips,fmt,COMMISSION_RATE,initials,EMPLOYEES,loadUs
     </div>
   );
 }
-function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommission, onStartTrip, onEndTrip, onCancelTrip, onUploadDoc, onProposePrice, onSaveNote, setToast, messages, onSendMessage, onMarkRead, driverStatus, setDriverStatus, blockedSlots, onToggleBlock, serviceStatus, onSetService, showDriverMenu=false, setShowDriverMenu=()=>{}, goHome=()=>{} }) {
+function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommission, onStartTrip, onEndTrip, onCancelTrip, onUploadDoc, onProposePrice, onSaveNote, setToast, messages, onSendMessage, onMarkRead, driverStatus, setDriverStatus, blockedSlots, onToggleBlock, serviceStatus, onSetService, showDriverMenu=false, setShowDriverMenu=()=>{}, goHome=()=>{}, openPriceConfig=()=>{} }) {
   const [selected,setSelected]=useState(null);
   const [calModal,setCalModal]=useState(null);
   const [hotelModal,setHotelModal]=useState(null);
@@ -2094,11 +2094,11 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
                 <div style={{color:"#2563eb",fontSize:11,fontWeight:600}}>Panel del conductor</div>
               </div>
             </div>
-            <button onClick={()=>{setDraftClient(String(priceClient));setDraftRecep(String(priceRecep));setShowPriceConfig(true);setShowDriverMenu(false);}} style={{width:"100%",display:"flex",alignItems:"center",gap:10,background:"#f8fafc",border:"1.5px solid #2563eb22",borderRadius:12,padding:"12px 14px",cursor:"pointer",marginBottom:10}}>
+            <button onClick={()=>{openPriceConfig();setShowDriverMenu(false);}} style={{width:"100%",display:"flex",alignItems:"center",gap:10,background:"#f8fafc",border:"1.5px solid #2563eb33",borderRadius:12,padding:"12px 14px",cursor:"pointer",marginBottom:10}}>
               <span style={{fontSize:18}}>💶</span>
               <div style={{textAlign:"left"}}>
                 <div style={{color:"#0f172a",fontSize:13,fontWeight:700}}>Precios por KM</div>
-                <div style={{color:"#64748b",fontSize:10}}>Cliente: {priceClient}€ · Recep: {priceRecep}€</div>
+                <div style={{color:"#64748b",fontSize:10}}>VELO App: {priceClient}€ · V.Transfer: {priceRecep}€</div>
               </div>
             </button>
             <button onClick={()=>{setReturnDateDraft(serviceStatus?.returnDate||"");setLastActiveDraft(serviceStatus?.lastActiveDate||"");setShowServiceModal(true);setShowDriverMenu(false);}} style={{width:"100%",display:"flex",alignItems:"center",gap:10,background:isOffline?"#fff0f0":"#f0fdf4",border:`1.5px solid ${isOffline?"#ef444433":"#22c55e33"}`,borderRadius:12,padding:"12px 14px",cursor:"pointer",marginBottom:10}}>
@@ -5490,7 +5490,7 @@ export default function RivieraApp() {
           <div style={{padding:"20px 20px 0"}}>
             {isDriverScreen&&!notifDismissed&&<NotifPermissionPrompt onDismiss={()=>setNotifDismissed(true)}/>}
             {isDriverScreen
-              ?<DriverView bookings={bookings} onAccept={handleAccept} onReject={handleReject} onUpdateFare={handleUpdateFare} onPayCommission={handlePayCommission} onStartTrip={handleStartTrip} onEndTrip={handleEndTrip} onCancelTrip={handleCancelTrip} onUploadDoc={handleUploadDoc} onProposePrice={handleProposePrice} onSaveNote={handleSaveNote} setToast={setToast} messages={messages} onSendMessage={handleSendMessage} onMarkRead={handleMarkRead} driverStatus={driverStatus} setDriverStatus={setDriverStatus} blockedSlots={blockedSlots} onToggleBlock={handleToggleBlock} serviceStatus={serviceStatus} onSetService={handleSetService} showDriverMenu={showDriverMenu} setShowDriverMenu={setShowDriverMenu} goHome={goHome}/>
+              ?<DriverView bookings={bookings} onAccept={handleAccept} onReject={handleReject} onUpdateFare={handleUpdateFare} onPayCommission={handlePayCommission} onStartTrip={handleStartTrip} onEndTrip={handleEndTrip} onCancelTrip={handleCancelTrip} onUploadDoc={handleUploadDoc} onProposePrice={handleProposePrice} onSaveNote={handleSaveNote} setToast={setToast} messages={messages} onSendMessage={handleSendMessage} onMarkRead={handleMarkRead} driverStatus={driverStatus} setDriverStatus={setDriverStatus} blockedSlots={blockedSlots} onToggleBlock={handleToggleBlock} serviceStatus={serviceStatus} onSetService={handleSetService} showDriverMenu={showDriverMenu} setShowDriverMenu={setShowDriverMenu} goHome={goHome} openPriceConfig={()=>{setDraftPriceClient(String(driverPriceClient));setDraftPriceRecep(String(driverPriceRecep));setDriverPriceConfig(true);}}/>
               :<ReceptionistView employee={currentEmployee} bookings={bookings} onNewBooking={handleNewBooking} onCancelBooking={handleCancelBooking} messages={messages} onSendMessage={handleSendMessage} onMarkRead={handleMarkRead} driverStatus={driverStatus} blockedSlots={blockedSlots} serviceStatus={serviceStatus}/>
             }
           </div>
@@ -5523,19 +5523,19 @@ export default function RivieraApp() {
             </div>
             <div style={{marginBottom:16}}>
               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
-                <span style={{background:"#a78bfa22",border:"1px solid #a78bfa55",borderRadius:6,padding:"2px 8px",color:"#a78bfa",fontSize:10,fontWeight:700}}>💜 CLIENTE VIP</span>
+                <span style={{background:"#2563eb18",border:"1px solid #2563eb55",borderRadius:6,padding:"2px 8px",color:"#2563eb",fontSize:10,fontWeight:700}}>📱 VELO APP</span>
               </div>
               <div style={{display:"flex",alignItems:"center",gap:8}}>
                 <input type="number" step="0.05" min="1" max="20" value={draftPriceClient}
                   onChange={e=>setDraftPriceClient(e.target.value)}
-                  style={{flex:1,background:"#ffffff",border:"1.5px solid #a78bfa55",borderRadius:10,color:"#0f172a",fontSize:20,fontWeight:700,padding:"10px 14px",outline:"none",textAlign:"center"}}/>
+                  style={{flex:1,background:"#ffffff",border:"1.5px solid #2563eb55",borderRadius:10,color:"#0f172a",fontSize:20,fontWeight:700,padding:"10px 14px",outline:"none",textAlign:"center"}}/>
                 <span style={{color:"#64748b",fontSize:14}}>€/km</span>
               </div>
-              {draftPriceClient&&<div style={{color:"#a78bfa",fontSize:10,marginTop:4}}>Ej. 30km → {Math.max(30,Math.round(30*Number(draftPriceClient)*100)/100)} €</div>}
+              {draftPriceClient&&<div style={{color:"#2563eb",fontSize:10,marginTop:4}}>Ej. 30km → {Math.max(30,Math.round(30*Number(draftPriceClient)*100)/100)} €</div>}
             </div>
             <div style={{marginBottom:24}}>
               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
-                <span style={{background:"#2563eb18",border:"1px solid #2563eb44",borderRadius:6,padding:"2px 8px",color:"#2563eb",fontSize:10,fontWeight:700}}>🏨 RECEPCIÓN</span>
+                <span style={{background:"#1e3a8a18",border:"1px solid #1e3a8a44",borderRadius:6,padding:"2px 8px",color:"#1e3a8a",fontSize:10,fontWeight:700}}>🏢 V. TRANSFER</span>
               </div>
               <div style={{display:"flex",alignItems:"center",gap:8}}>
                 <input type="number" step="0.05" min="1" max="20" value={draftPriceRecep}
@@ -5554,7 +5554,7 @@ export default function RivieraApp() {
                 try{localStorage.setItem("ntprice_client",String(c));localStorage.setItem("ntprice_recep",String(r));}catch{}
                 fbGet("nexttrip/status").then(cur=>{fbSet("nexttrip/status",{...(cur||{}),pricePerKmClient:c,pricePerKmRecep:r,updatedAt:Date.now()});});
                 setDriverPriceConfig(false);
-                setToast("✅ Precios: VIP "+c+"€/km · Recepción "+r+"€/km");
+                setToast("✅ Precios: VELO App "+c+"€/km · V.Transfer "+r+"€/km");
               }} style={{flex:2,background:"linear-gradient(135deg,#22c55e,#16a34a)",border:"none",borderRadius:10,padding:"11px 0",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer"}}>
                 ✓ Guardar
               </button>
