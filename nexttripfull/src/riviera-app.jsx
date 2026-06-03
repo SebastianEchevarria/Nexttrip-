@@ -2209,14 +2209,14 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
           <div style={{
             marginBottom:16,
             background:isOngoing?"linear-gradient(135deg,#dcfce7,#f0fdf4)":isWaiting?"#fff0f0":urgency?"#fffbeb":"#f8fafc",
-            border:`2px solid ${isOngoing?"#22c55e":isWaiting?"#ef4444":urgency?"#f59e0b":"#2563eb33"}`,
+            border:`3px solid ${isOngoing?"#16a34a":isWaiting?"#ef4444":urgency?"#f59e0b":"#2563eb"}`,
             borderRadius:18,overflow:"hidden",
-            boxShadow:isOngoing?"0 0 20px #22c55e33":isWaiting?"0 0 20px #ef444444":urgency?"0 0 20px #f59e0b33":"none",
+            boxShadow:isOngoing?"0 6px 24px rgba(22,163,74,0.25)":isWaiting?"0 6px 24px rgba(239,68,68,0.25)":urgency?"0 6px 24px rgba(245,158,11,0.25)":"0 6px 24px rgba(37,99,235,0.18)",
           }}>
             <div style={{padding:"10px 16px 0",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
               <div style={{display:"flex",alignItems:"center",gap:7}}>
                 <div style={{width:8,height:8,borderRadius:"50%",background:isOngoing?"#22c55e":isWaiting?"#ef4444":urgency?"#f59e0b":"#2563eb",animation:"pulse 1s infinite",flexShrink:0}}/>
-                <span style={{color:isWaiting?"#ef4444":"#64748b",fontSize:10,letterSpacing:2,fontWeight:700}}>
+                <span style={{color:isWaiting?"#ef4444":isOngoing?"#16a34a":"#1e3a8a",fontSize:11,letterSpacing:2,fontWeight:800}}>
                   {isOngoing?"EN CURSO":isWaiting?"⏳ EN ESPERA — CLIENTE NO LLEGÓ":urgency?"PRÓXIMO VIAJE — ¡PRONTO!":"PRÓXIMO VIAJE"}
                 </span>
               </div>
@@ -3843,7 +3843,7 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
             <div style={{padding:"10px 16px 0",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
               <div style={{display:"flex",alignItems:"center",gap:7}}>
                 <div style={{width:8,height:8,borderRadius:"50%",background:isOngoing?"#22c55e":isWaiting?"#ef4444":urgency?"#f59e0b":"#2563eb",animation:"pulse 1s infinite",flexShrink:0}}/>
-                <span style={{color:isWaiting?"#ef4444":"#64748b",fontSize:10,letterSpacing:2,fontWeight:700}}>
+                <span style={{color:isWaiting?"#ef4444":isOngoing?"#16a34a":"#1e3a8a",fontSize:11,letterSpacing:2,fontWeight:800}}>
                   {isOngoing?"EN CURSO":isWaiting?"⏳ EN ESPERA — CLIENTE NO LLEGÓ":urgency?"PRÓXIMO VIAJE — ¡PRONTO!":"PRÓXIMO VIAJE"}
                 </span>
               </div>
