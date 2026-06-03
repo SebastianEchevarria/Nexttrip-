@@ -395,38 +395,40 @@ function TripEstimateBox({ origin, destination }) {
 
   return (
     <div style={{
-      background:"#f8fafc",
-      border:"1px solid #3b82f633",
-      borderRadius:10, padding:"10px 14px", marginBottom:14,
-      display:"flex", alignItems:"center", gap:10,
+      background:"#eff6ff",
+      border:"2px solid #2563eb55",
+      borderRadius:14, padding:"12px 16px", marginBottom:14,
+      display:"flex", alignItems:"center", gap:12,
+      boxShadow:"0 3px 12px rgba(37,99,235,0.12)",
     }}>
-      <span style={{fontSize:22, flexShrink:0}}>🗺️</span>
+      <span style={{fontSize:26, flexShrink:0}}>🗺️</span>
       <div style={{flex:1}}>
-        <div style={{color:"#64748b",fontSize:9,letterSpacing:2,marginBottom:5}}>TIEMPO ESTIMADO DEL VIAJE</div>
+        <div style={{color:"#1e3a8a",fontSize:9,letterSpacing:2,marginBottom:6,fontWeight:700}}>TIEMPO ESTIMADO DEL VIAJE</div>
         {est ? (
-          <div style={{display:"flex",gap:12,alignItems:"center",flexWrap:"wrap"}}>
+          <div style={{display:"flex",gap:14,alignItems:"center",flexWrap:"wrap"}}>
             <div style={{display:"flex",alignItems:"baseline",gap:4}}>
-              <span style={{color:"#0f172a",fontSize:20,fontFamily:"'Inter',sans-serif",fontWeight:700}}>{est.mins}</span>
-              <span style={{color:"#64748b",fontSize:12}}>min</span>
+              <span style={{color:"#1e3a8a",fontSize:24,fontFamily:"'Inter',sans-serif",fontWeight:900}}>{est.mins}</span>
+              <span style={{color:"#2563eb",fontSize:13,fontWeight:600}}>min</span>
             </div>
-            <div style={{width:1,height:18,background:"#2563eb33"}}/>
+            <div style={{width:1,height:22,background:"#2563eb44"}}/>
             <div style={{display:"flex",alignItems:"baseline",gap:4}}>
-              <span style={{color:"#0f172a",fontSize:16,fontFamily:"'Inter',sans-serif",fontWeight:600}}>{est.km}</span>
-              <span style={{color:"#64748b",fontSize:12}}>km aprox.</span>
+              <span style={{color:"#1e3a8a",fontSize:20,fontFamily:"'Inter',sans-serif",fontWeight:800}}>{est.km}</span>
+              <span style={{color:"#2563eb",fontSize:13,fontWeight:600}}>km aprox.</span>
             </div>
             {est.isAirport && <span style={{color:"#f59e0b",fontSize:11}}>✈️ Ruta aeropuerto</span>}
           </div>
         ) : (
-          <div style={{color:"#64748b",fontSize:12}}>Introduce direcciones reconocibles para estimar</div>
+          <div style={{color:"#475569",fontSize:12,fontWeight:600}}>Introduce direcciones reconocibles para estimar</div>
         )}
       </div>
       <a href={routeLink} target="_blank" rel="noopener noreferrer" style={{
-        display:"flex",alignItems:"center",gap:5,flexShrink:0,
-        background:"#3b82f618",border:"1px solid #3b82f644",
-        borderRadius:8,padding:"6px 10px",textDecoration:"none",
-        color:"#3b82f6",fontSize:11,fontWeight:600,
+        display:"flex",alignItems:"center",gap:6,flexShrink:0,
+        background:"#1e3a8a",border:"none",
+        borderRadius:10,padding:"8px 14px",textDecoration:"none",
+        color:"#ffffff",fontSize:12,fontWeight:700,
+        boxShadow:"0 2px 8px rgba(30,58,138,0.3)",
       }}>
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
         Ver ruta
       </a>
     </div>
@@ -4364,17 +4366,7 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
             </div>
             <div style={{color:"#64748b",fontSize:10,marginTop:6,textAlign:"center"}}>{"👤".repeat(form.passengers)} {form.passengers} persona{form.passengers>1?"s":""}</div>
           </div>
-          <div style={{marginBottom:14}}>
-            <label style={{color:"#64748b",fontSize:11,letterSpacing:2,display:"block",marginBottom:5}}>TARIFA (€)</label>
 
-            <input type="number" value={form.fare} placeholder="0.00" min="30" onChange={e=>{setForm({...form,fare:e.target.value});setBoltError("");}}
-              style={{...inputStyle,border:form.fare&&Number(form.fare)<30?"1px solid #ef4444":inputStyle.border}}/>
-            {form.fare&&Number(form.fare)>0&&Number(form.fare)<30&&(
-              <div style={{color:"#ef4444",fontSize:11,marginTop:5,display:"flex",alignItems:"center",gap:5}}>
-                <span>⚠️</span> El precio mínimo es 30 €. No se aceptan reservas por debajo de este importe.
-              </div>
-            )}
-          </div>
           <DistancePriceCalc origin={form.origin} destination={form.destination} pricePerKm={priceRecepFromStatus||3.15} onPriceCalculated={(price,km,durMin)=>setForm(f=>({...f,fare:String(price),tripKm:km,durationMin:durMin}))}/>
           {form.fare&&Number(form.fare)>0&&(
             <div style={{background:"#ffffff",border:"2px solid #e2e8f0",borderRadius:14,padding:"16px",marginBottom:14,boxShadow:"0 2px 10px rgba(0,0,0,0.06)"}}>
