@@ -1667,14 +1667,7 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
             );
           })()}
 
-          {/* ── VIAJES FAVORITOS ── */}
-          <FavRoutes
-            clientId={client.id}
-            myBookings={myBookings}
-            lang={lang}
-            t={t}
-            onBook={r=>{setTab("new");setForm(fm=>({...fm,origin:r.origin,destination:r.destination}));}}
-          />
+
                     <div style={{color:"#1e3a8a",fontSize:14,letterSpacing:2,fontWeight:900,marginBottom:12}}>{t.myTripsSection}</div>
           {myBookings.length===0&&<div style={{color:"#334155",fontSize:13,textAlign:"center",padding:"32px 0"}}>{t.noTrips}</div>}
           {(()=>{
@@ -2586,6 +2579,10 @@ export default function NextTripClientApp() {
                   </button>
                 </div>
                 <div style={{color:"#94a3b8",fontSize:10,marginTop:4}}>{lang==="en"?"Auto-filled in future bookings":"Se rellenará automáticamente en futuras reservas"}</div>
+                <div style={{background:"#fffbeb",border:"1px solid #f59e0b55",borderRadius:8,padding:"8px 10px",marginTop:8,display:"flex",gap:6,alignItems:"flex-start"}}>
+                  <span style={{fontSize:13,flexShrink:0}}>⚠️</span>
+                  <span style={{color:"#92400e",fontSize:11,fontWeight:700}}>{lang==="en"?"Please sign out and sign back in to save changes":"Vuelve a iniciar sesión para guardar los cambios"}</span>
+                </div>
               </div>
               {/* Cambiar PIN */}
               <button onClick={()=>{setShowProfile(false);}} style={{width:"100%",background:"#f8fafc",border:"1.5px solid #e2e8f0",borderRadius:10,padding:"12px 0",color:"#0f172a",fontSize:13,fontWeight:700,cursor:"pointer",marginBottom:10,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
