@@ -3835,10 +3835,10 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
         return(
           <div style={{
             marginBottom:16,
-            background:isOngoing?"linear-gradient(135deg,#dcfce7,#f0fdf4)":urgency?"#fffbeb":"#f8fafc",
-            border:`2px solid ${isOngoing?"#22c55e":urgency?"#f59e0b":"#2563eb33"}`,
+            background:isOngoing?"linear-gradient(135deg,#dcfce7,#f0fdf4)":isWaiting?"#fff5f5":urgency?"#fffbeb":"#ffffff",
+            border:`3px solid ${isOngoing?"#16a34a":isWaiting?"#ef4444":urgency?"#f59e0b":"#2563eb"}`,
             borderRadius:16,overflow:"hidden",
-            boxShadow:isOngoing?"0 0 20px #22c55e33":urgency?"0 0 20px #f59e0b33":"none",
+            boxShadow:isOngoing?"0 6px 24px rgba(22,163,74,0.25)":isWaiting?"0 6px 24px rgba(239,68,68,0.25)":urgency?"0 6px 24px rgba(245,158,11,0.25)":"0 6px 24px rgba(37,99,235,0.18)",
           }}>
             <div style={{padding:"10px 16px 0",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
               <div style={{display:"flex",alignItems:"center",gap:7}}>
@@ -3874,9 +3874,9 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
                   </div>
                 );
               })()}
-              <div style={{background:isOngoing?"#22c55e12":urgency?"#f59e0b12":"#2563eb10",borderRadius:10,padding:"8px 12px",display:"inline-block"}}>
-                <div style={{color:"#64748b",fontSize:9,letterSpacing:2,marginBottom:2}}>{isOngoing?"EN CURSO":"TIEMPO RESTANTE"}</div>
-                <div style={{color:isOngoing?"#22c55e":urgency?"#f59e0b":"#f8fafc",fontSize:24,fontFamily:"'Inter',sans-serif",fontWeight:700,letterSpacing:2}}>{countdownStr}</div>
+              <div style={{background:isOngoing?"#dcfce7":isWaiting?"#fee2e2":urgency?"#fef3c7":"#eff6ff",borderRadius:10,padding:"8px 12px",display:"inline-block"}}>
+                <div style={{color:isWaiting?"#ef4444":isOngoing?"#16a34a":"#1e3a8a",fontSize:10,letterSpacing:2,fontWeight:700,marginBottom:2}}>{isOngoing?"EN CURSO":isWaiting?"⏳ EN ESPERA":"TIEMPO RESTANTE"}</div>
+                <div style={{color:isOngoing?"#16a34a":isWaiting?"#ef4444":urgency?"#d97706":"#0f172a",fontSize:24,fontFamily:"'Inter',sans-serif",fontWeight:900,letterSpacing:2}}>{countdownStr}</div>
               </div>
             </div>
           </div>
@@ -3884,11 +3884,12 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
       })()}
 
       {/* Tab bar */}
-      <div style={{display:"flex",background:"#f1f5f9",borderRadius:12,padding:3,marginBottom:18,gap:2}}>
+      <div style={{display:"flex",background:"#dbeafe",borderRadius:50,padding:5,marginBottom:18,gap:4,border:"2px solid #2563eb33",boxShadow:"0 2px 10px rgba(37,99,235,0.15)"}}>
         {[{id:"avail",label:"🕐 Disponib."},{id:"mine",label:"📋 Mis Reservas"},{id:"earnings",label:"💶 Comisiones"}].map(t=>(
-          <button key={t.id} onClick={()=>setTab(t.id)} style={{flex:1,padding:"8px 4px",border:"none",borderRadius:9,cursor:"pointer",
-            background:tab===t.id?"linear-gradient(135deg,#2563eb,#a07840)":"transparent",
-            color:tab===t.id?"#f8fafc":"#64748b",fontSize:11,fontWeight:tab===t.id?600:400,transition:"all 0.2s"}}>
+          <button key={t.id} onClick={()=>setTab(t.id)} style={{flex:1,padding:"11px 4px",border:"none",borderRadius:46,cursor:"pointer",
+            background:tab===t.id?"#2563eb":"transparent",
+            color:tab===t.id?"#ffffff":"#1e3a8a",fontSize:12,fontWeight:700,transition:"all 0.2s",
+            boxShadow:tab===t.id?"0 2px 10px rgba(37,99,235,0.35)":"none"}}>
             {t.label}
           </button>
         ))}
@@ -3899,18 +3900,19 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
         <div>
           {/* ── AVISO ANTELACIÓN MÍNIMA ── */}
           <div style={{
-            background:"linear-gradient(135deg,#0f1a2e,#1e293b)",
-            border:"1.5px solid #3b82f6",
+            background:"#eff6ff",
+            border:"2px solid #2563eb44",
             borderRadius:12,padding:"12px 14px",marginBottom:14,
             display:"flex",alignItems:"flex-start",gap:10,
+            boxShadow:"0 2px 8px rgba(37,99,235,0.08)",
           }}>
             <div style={{
               width:32,height:32,borderRadius:8,flexShrink:0,
-              background:"#3b82f620",border:"1px solid #3b82f644",
+              background:"#dbeafe",border:"1px solid #2563eb44",
               display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,
             }}>⏰</div>
             <div>
-              <div style={{color:"#3b82f6",fontSize:12,fontWeight:700,marginBottom:3,letterSpacing:0.3}}>
+              <div style={{color:"#1e3a8a",fontSize:12,fontWeight:700,marginBottom:3,letterSpacing:0.3}}>
                 Mínimo {MIN_ADVANCE_HOURS} horas de antelación
               </div>
               <div style={{color:"#334155",fontSize:11,lineHeight:1.5,fontWeight:600}}>
