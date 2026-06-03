@@ -4377,11 +4377,38 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
           </div>
           <DistancePriceCalc origin={form.origin} destination={form.destination} pricePerKm={priceRecepFromStatus||3.15} onPriceCalculated={(price,km,durMin)=>setForm(f=>({...f,fare:String(price),tripKm:km,durationMin:durMin}))}/>
           {form.fare&&Number(form.fare)>0&&(
-            <div style={{background:"#ffffff",border:"1px solid #2563eb18",borderRadius:10,padding:"12px 14px",marginBottom:14}}>
-              <div style={{color:"#64748b",fontSize:9,letterSpacing:2,marginBottom:10}}>DESGLOSE DE LA TARIFA</div>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:7}}><span style={{color:"#64748b",fontSize:12}}>💶 Precio cobrado al huésped</span><span style={{color:"#0f172a",fontSize:16,fontWeight:700}}>{fmt(Number(form.fare))} €</span></div>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:7}}><span style={{color:"#64748b",fontSize:12}}>Tu comisión (20%)</span><span style={{color:"#2563eb",fontSize:14,fontWeight:600}}>+ {fmt(Number(form.fare)*COMMISSION_RATE)} €</span></div>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:7,borderTop:"1px solid #1e3a5f"}}><span style={{color:"#64748b",fontSize:12}}>Lo que recibe el conductor</span><span style={{color:"#2563eb",fontSize:14,fontWeight:600}}>{fmt(Number(form.fare)*(1-COMMISSION_RATE))} €</span></div>
+            <div style={{background:"#ffffff",border:"2px solid #e2e8f0",borderRadius:14,padding:"16px",marginBottom:14,boxShadow:"0 2px 10px rgba(0,0,0,0.06)"}}>
+              <div style={{color:"#1e3a8a",fontSize:11,letterSpacing:2,fontWeight:800,marginBottom:14}}>DESGLOSE DE LA TARIFA</div>
+              {/* Precio al huésped */}
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"#f8fafc",borderRadius:10,padding:"10px 12px",marginBottom:8}}>
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  <span style={{fontSize:16}}>💶</span>
+                  <span style={{color:"#0f172a",fontSize:12,fontWeight:700}}>Precio al huésped</span>
+                </div>
+                <span style={{color:"#0f172a",fontSize:18,fontWeight:800}}>{fmt(Number(form.fare))} €</span>
+              </div>
+              {/* Tu comisión */}
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"#eff6ff",borderRadius:10,padding:"10px 12px",marginBottom:8,border:"1px solid #2563eb22"}}>
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  <span style={{fontSize:16}}>🏷️</span>
+                  <div>
+                    <div style={{color:"#1e3a8a",fontSize:12,fontWeight:700}}>Tu comisión</div>
+                    <div style={{color:"#64748b",fontSize:10}}>20% del total</div>
+                  </div>
+                </div>
+                <span style={{color:"#2563eb",fontSize:16,fontWeight:800}}>+ {fmt(Number(form.fare)*COMMISSION_RATE)} €</span>
+              </div>
+              {/* Conductor recibe */}
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"#f0fdf4",borderRadius:10,padding:"10px 12px",border:"1px solid #22c55e22"}}>
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  <span style={{fontSize:16}}>🚗</span>
+                  <div>
+                    <div style={{color:"#15803d",fontSize:12,fontWeight:700}}>Conductor recibe</div>
+                    <div style={{color:"#64748b",fontSize:10}}>Neto después de comisión</div>
+                  </div>
+                </div>
+                <span style={{color:"#15803d",fontSize:16,fontWeight:800}}>{fmt(Number(form.fare)*(1-COMMISSION_RATE))} €</span>
+              </div>
             </div>
           )}
           <div style={{marginBottom:14}}>
@@ -4738,7 +4765,27 @@ function DistancePriceCalc({ origin, destination, onPriceCalculated, pricePerKm=
   return (
     <div style={{marginBottom:14}}>
       {state.status==="loading"&&<div style={{background:"#f1f5f9",borderRadius:10,padding:"10px 14px",display:"flex",alignItems:"center",gap:8}}><div style={{width:10,height:10,borderRadius:"50%",border:"2px solid #2563eb",borderTopColor:"transparent",animation:"spin 0.8s linear infinite"}}/><span style={{color:"#64748b",fontSize:11}}>🗺️ Calculando ruta...</span></div>}
-      {state.status==="ok"&&<div style={{background:"linear-gradient(135deg,#0f1a00,#1e293b)",border:"1.5px solid #2563eb44",borderRadius:12,padding:"12px 14px"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}><div><span style={{color:"#0f172a",fontSize:13,fontWeight:700}}>🗺️ {state.km} km</span>{state.duration&&<span style={{color:"#64748b",fontSize:11,marginLeft:8}}>· {state.duration}</span>}</div><span style={{color:"#22c55e",fontSize:20,fontFamily:"'Inter',sans-serif",fontWeight:700}}>{state.price} €</span></div><div style={{color:"#475569",fontSize:9,textAlign:"right"}}>{PRICE_PER_KM} €/km · mín. 30 €</div></div>}
+      {state.status==="ok"&&(
+      <div style={{background:"#ffffff",border:"3px solid #1e3a8a",borderRadius:14,padding:"14px 16px",marginBottom:14,boxShadow:"0 6px 20px rgba(30,58,138,0.18)"}}>
+        {/* Fila km + duración */}
+        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,paddingBottom:10,borderBottom:"1px solid #e2e8f0"}}>
+          <span style={{fontSize:18}}>🗺️</span>
+          <span style={{color:"#0f172a",fontSize:13,fontWeight:700}}>{state.km} km</span>
+          {state.duration&&<><span style={{color:"#cbd5e1"}}>·</span><span style={{color:"#64748b",fontSize:12}}>~{state.duration}</span></>}
+          <span style={{marginLeft:"auto",color:"#64748b",fontSize:10}}>{PRICE_PER_KM} €/km · mín. 30€</span>
+        </div>
+        {/* Precio grande */}
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <div>
+            <div style={{color:"#1e3a8a",fontSize:11,letterSpacing:2,fontWeight:700,marginBottom:2}}>PRECIO ESTIMADO</div>
+            <div style={{color:"#64748b",fontSize:10}}>Se confirma con el conductor</div>
+          </div>
+          <div style={{textAlign:"right"}}>
+            <div style={{color:"#1e3a8a",fontSize:32,fontFamily:"'Inter',sans-serif",fontWeight:900,lineHeight:1}}>{state.price} €</div>
+          </div>
+        </div>
+      </div>
+    )}
       {state.status==="error"&&<div style={{background:"#fff5f5",border:"1px solid #ef444433",borderRadius:10,padding:"8px 12px",color:"#ef4444",fontSize:11}}>⚠️ No se pudo calcular — introduce el precio manualmente</div>}
     </div>
   );
