@@ -1761,8 +1761,11 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
   // Earnings by hotel (all non-rejected with fare)
   const byHotel={};
   withFare.forEach(b=>{
-    if(!byHotel[b.hotel])byHotel[b.hotel]={trips:0,gross:0};
-    byHotel[b.hotel].trips+=1; byHotel[b.hotel].gross+=b.fare;
+    if(!byHotel[b.hotel])byHotel[b.hotel]={trips:0,gross:0,commissions:0};
+    byHotel[b.hotel].trips+=1;
+    byHotel[b.hotel].gross+=b.fare;
+    // Only count commission for hotel bookings, NOT client VIP app bookings
+    if(!b.isClientBooking) byHotel[b.hotel].commissions+=Math.round(b.fare*COMMISSION_RATE*100)/100;
   });
   const totalGross=completedWithFare.reduce((s,b)=>s+b.fare,0);
   const totalNet=totalGross*(1-COMMISSION_RATE);
@@ -2115,70 +2118,6 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
               <span style={{color:"#ffffff",fontSize:13,fontWeight:700}}>Salir</span>
             </button>
           </div>
-        </div>
-      )}
-
-      {/* ── TOP BUTTONS: PENDIENTES + CONFIRMADOS ── */}
-      <div style={{display:"flex",gap:8,marginBottom:14}}>
-        <button onClick={()=>setPendingOpen(v=>!v)} style={{
-          flex:1,display:"flex",alignItems:"center",justifyContent:"space-between",
-          background:pendingOpen?"linear-gradient(135deg,#3a2200,#2a1800)":"linear-gradient(135deg,#2a1800,#1a1200)",
-          border:`2px solid ${fPend.length>0?"#f59e0b":"#4a3a1a"}`,
-          borderRadius:14,padding:"12px 14px",cursor:"pointer",transition:"all 0.2s",
-        }}>
-          <div style={{display:"flex",alignItems:"center",gap:8}}>
-            {fPend.length>0&&<div style={{width:8,height:8,borderRadius:"50%",background:"#f59e0b",animation:"pulse 1.5s infinite"}}/>}
-            <span style={{color:fPend.length>0?"#f59e0b":"#64748b",fontSize:11,fontWeight:700,letterSpacing:1}}>PENDIENTES</span>
-          </div>
-          <span style={{
-            background:fPend.length>0?"#f59e0b":"#e2e8f0",
-            color:fPend.length>0?"#f8fafc":"#64748b",
-            borderRadius:20,padding:"2px 10px",fontSize:12,fontWeight:700,minWidth:24,textAlign:"center",
-          }}>{fPend.length}</span>
-        </button>
-        <button onClick={()=>setConfirmedOpen(v=>!v)} style={{
-          flex:1,display:"flex",alignItems:"center",justifyContent:"space-between",
-          background:confirmedOpen?"linear-gradient(135deg,#1a1300,#1e293b)":"#fefce8",
-          border:`2px solid ${fConf.length>0?"#2563eb44":"#2a2a2a"}`,
-          borderRadius:14,padding:"12px 14px",cursor:"pointer",transition:"all 0.2s",
-        }}>
-          <div style={{display:"flex",alignItems:"center",gap:8}}>
-            {fConf.length>0&&<div style={{width:8,height:8,borderRadius:"50%",background:"#2563eb"}}/>}
-            <span style={{color:fConf.length>0?"#2563eb":"#475569",fontSize:11,fontWeight:700,letterSpacing:1}}>CONFIRMADOS</span>
-          </div>
-          <span style={{
-            background:fConf.length>0?"#2563eb":"#f1f5f9",
-            color:fConf.length>0?"#f8fafc":"#475569",
-            borderRadius:20,padding:"2px 10px",fontSize:12,fontWeight:700,minWidth:24,textAlign:"center",
-          }}>{fConf.length}</span>
-        </button>
-      </div>
-
-      {/* Pending drawer */}
-      {pendingOpen&&fPend.length>0&&(
-        <div style={{marginBottom:14,background:"#fffbeb",border:"1px solid #f59e0b33",borderRadius:14,padding:"12px"}}>
-          {fPend.map(b=><Card key={b.id} b={b} showActions/>)}
-        </div>
-      )}
-      {pendingOpen&&fPend.length===0&&(
-        <div style={{marginBottom:14,background:"linear-gradient(135deg,#2a1800,#1e293b)",border:"1.5px solid #f59e0b44",borderRadius:14,padding:"16px",textAlign:"center",color:"#f59e0b",fontSize:12}}>
-          No hay viajes pendientes
-        </div>
-      )}
-
-      {/* Confirmed drawer */}
-      {confirmedOpen&&fConf.length>0&&(
-        <div style={{marginBottom:14,background:"#fefce8",border:"1px solid #2563eb33",borderRadius:14,padding:"12px"}}>
-          {fInProgress.map(b=><Card key={b.id} b={b} showActions={false}/>)}
-          {[...fConf].sort((a,b)=>{
-            const dA=new Date(`${a.date}T${a.time}`),dB=new Date(`${b.date}T${b.time}`);
-            return dA-dB;
-          }).map(b=><Card key={b.id} b={b} showActions/>)}
-        </div>
-      )}
-      {confirmedOpen&&fConf.length===0&&(
-        <div style={{marginBottom:14,background:"#fefce8",border:"1px solid #2563eb18",borderRadius:14,padding:"16px",textAlign:"center",color:"#475569",fontSize:12}}>
-          No hay viajes confirmados
         </div>
       )}
 
@@ -2554,47 +2493,67 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
         );
       })()}
 
-      {/* ── 2. DISPONIBLE / EN SERVICIO ── */}
-      <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:14}}>
-        {!isOffline&&<button
-          onClick={()=>setDriverStatus(isOnRoute?"free":"onroute")}
-          style={{
-            width:"100%",padding:"14px 18px",borderRadius:14,
-            border:`2px solid ${isOnRoute?"#ef4444":"#2563eb"}`,
-            background:isOnRoute?"linear-gradient(135deg,#2a0808,#1a0505)":"linear-gradient(135deg,#1a130a,#1e293b)",
-            cursor:"pointer",transition:"all 0.25s",
-            display:"flex",alignItems:"center",justifyContent:"space-between",
-            boxShadow:isOnRoute?"0 0 20px rgba(239,68,68,0.2)":"0 0 20px rgba(201,169,110,0.1)",
-          }}>
-          <div style={{display:"flex",alignItems:"center",gap:12}}>
-            <div style={{width:14,height:14,borderRadius:"50%",background:isOnRoute?"#ef4444":"#2563eb",boxShadow:isOnRoute?"0 0 10px #ef4444":"0 0 10px #2563eb",animation:"pulse 1.5s infinite",flexShrink:0}}/>
-            <div style={{textAlign:"left"}}>
-              <div style={{color:isOnRoute?"#ef4444":"#2563eb",fontSize:14,fontWeight:700,letterSpacing:1}}>{isOnRoute?"🚗 EN RUTA":"✅ DISPONIBLE"}</div>
-              <div style={{color:"#64748b",fontSize:11,marginTop:1}}>{isOnRoute?"Los hoteles ven que estás en servicio":"Los hoteles pueden reservar viajes"}</div>
-            </div>
-          </div>
-          <div style={{width:50,height:26,borderRadius:13,background:isOnRoute?"#ef444430":"#2563eb30",border:`1.5px solid ${isOnRoute?"#ef4444":"#2563eb"}`,position:"relative",flexShrink:0,transition:"all 0.25s"}}>
-            <div style={{position:"absolute",top:3,left:isOnRoute?24:3,width:18,height:18,borderRadius:"50%",background:isOnRoute?"#ef4444":"#2563eb",transition:"left 0.25s",boxShadow:`0 0 8px ${isOnRoute?"#ef4444":"#2563eb"}`}}/>
-          </div>
-        </button>}
-        <button onClick={()=>{setReturnDateDraft(serviceStatus?.returnDate||"");setLastActiveDraft(serviceStatus?.lastActiveDate||"");setShowServiceModal(true);}} style={{
-          width:"100%",padding:"13px 18px",borderRadius:14,
-          border:`2px solid ${isOffline?"#ef4444":"#475569"}`,
-          background:isOffline?"linear-gradient(135deg,#2a0808,#1a0505)":"#f1f5f9",
-          cursor:"pointer",transition:"all 0.25s",
-          display:"flex",alignItems:"center",justifyContent:"space-between",
-          boxShadow:isOffline?"0 0 18px rgba(239,68,68,0.2)":"none",
+      {/* ── PENDIENTES + CONFIRMADOS (debajo de Próximo Viaje) ── */}
+      <div style={{display:"flex",gap:10,marginBottom:14}}>
+        <button onClick={()=>setPendingOpen(v=>!v)} style={{
+          flex:1,display:"flex",alignItems:"center",justifyContent:"space-between",
+          background:fPend.length>0?(pendingOpen?"#fffbeb":"#fffff0"):"#f8fafc",
+          border:`2px solid ${fPend.length>0?"#f59e0b":"#e2e8f0"}`,
+          borderRadius:14,padding:"13px 16px",cursor:"pointer",transition:"all 0.2s",
+          boxShadow:fPend.length>0?"0 3px 10px rgba(245,158,11,0.2)":"none",
         }}>
-          <div style={{display:"flex",alignItems:"center",gap:12}}>
-            <span style={{fontSize:20}}>{isOffline?"🔴":"🟢"}</span>
-            <div style={{textAlign:"left"}}>
-              <div style={{color:isOffline?"#ef4444":"#64748b",fontSize:14,fontWeight:700}}>{isOffline?"FUERA DE SERVICIO":"EN SERVICIO"}</div>
-              <div style={{color:"#64748b",fontSize:11,marginTop:1}}>{isOffline?"Toca para gestionar fechas":"Toca para gestionar disponibilidad"}</div>
-            </div>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            {fPend.length>0&&<div style={{width:8,height:8,borderRadius:"50%",background:"#f59e0b",animation:"pulse 1.5s infinite"}}/>}
+            <span style={{color:fPend.length>0?"#d97706":"#94a3b8",fontSize:12,fontWeight:800,letterSpacing:1}}>PENDIENTES</span>
           </div>
-          <span style={{color:"#64748b",fontSize:11,border:"1px solid #2a3a4a",borderRadius:6,padding:"3px 8px"}}>{isOffline?"Volver online":"Gestionar"}</span>
+          <span style={{
+            background:fPend.length>0?"#f59e0b":"#e2e8f0",
+            color:fPend.length>0?"#ffffff":"#94a3b8",
+            borderRadius:20,padding:"3px 12px",fontSize:13,fontWeight:800,minWidth:28,textAlign:"center",
+          }}>{fPend.length}</span>
+        </button>
+        <button onClick={()=>setConfirmedOpen(v=>!v)} style={{
+          flex:1,display:"flex",alignItems:"center",justifyContent:"space-between",
+          background:fConf.length>0?(confirmedOpen?"#eff6ff":"#f0f7ff"):"#f8fafc",
+          border:`2px solid ${fConf.length>0?"#2563eb":"#e2e8f0"}`,
+          borderRadius:14,padding:"13px 16px",cursor:"pointer",transition:"all 0.2s",
+          boxShadow:fConf.length>0?"0 3px 10px rgba(37,99,235,0.2)":"none",
+        }}>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            {fConf.length>0&&<div style={{width:8,height:8,borderRadius:"50%",background:"#2563eb",animation:"pulse 1.5s infinite"}}/>}
+            <span style={{color:fConf.length>0?"#1e3a8a":"#94a3b8",fontSize:12,fontWeight:800,letterSpacing:1}}>CONFIRMADOS</span>
+          </div>
+          <span style={{
+            background:fConf.length>0?"#2563eb":"#e2e8f0",
+            color:fConf.length>0?"#ffffff":"#94a3b8",
+            borderRadius:20,padding:"3px 12px",fontSize:13,fontWeight:800,minWidth:28,textAlign:"center",
+          }}>{fConf.length}</span>
         </button>
       </div>
+
+      {pendingOpen&&fPend.length>0&&(
+        <div style={{marginBottom:14,background:"#fffbeb",border:"1.5px solid #f59e0b44",borderRadius:14,padding:"12px"}}>
+          {fPend.map(b=><Card key={b.id} b={b} showActions/>)}
+        </div>
+      )}
+      {pendingOpen&&fPend.length===0&&(
+        <div style={{marginBottom:14,background:"#fffbeb",border:"1.5px solid #f59e0b33",borderRadius:14,padding:"16px",textAlign:"center",color:"#d97706",fontSize:12,fontWeight:600}}>
+          No hay viajes pendientes
+        </div>
+      )}
+      {confirmedOpen&&fConf.length>0&&(
+        <div style={{marginBottom:14,background:"#eff6ff",border:"1.5px solid #2563eb33",borderRadius:14,padding:"12px"}}>
+          {fInProgress.map(b=><Card key={b.id} b={b} showActions={false}/>)}
+          {[...fConf].sort((a,b)=>{const dA=new Date(`${a.date}T${a.time}`),dB=new Date(`${b.date}T${b.time}`);return dA-dB;}).map(b=><Card key={b.id} b={b} showActions/>)}
+        </div>
+      )}
+      {confirmedOpen&&fConf.length===0&&(
+        <div style={{marginBottom:14,background:"#eff6ff",border:"1.5px solid #2563eb18",borderRadius:14,padding:"16px",textAlign:"center",color:"#475569",fontSize:12}}>
+          No hay viajes confirmados
+        </div>
+      )}
+
+
 
       {/* ── 3. RESUMEN DE HOY ── */}
       {(()=>{
