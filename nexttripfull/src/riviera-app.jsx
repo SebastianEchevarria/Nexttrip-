@@ -2027,7 +2027,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
           const arr=new Date(0,0,0,h,m+dur);
           const arrStr=`${String(arr.getHours()).padStart(2,"0")}:${String(arr.getMinutes()).padStart(2,"0")}`;
           return(
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"#ffffff",border:"1px solid #1e3a5f",borderRadius:10,padding:"7px 10px",marginTop:8,marginBottom:4}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"#f8fafc",border:"1.5px solid #e2e8f0",borderRadius:10,padding:"7px 10px",marginTop:8,marginBottom:4}}>
               <div style={{display:"flex",alignItems:"center",gap:4}}><span>🗺️</span><span style={{color:"#64748b",fontSize:11}}>{km} km</span></div>
               <div style={{display:"flex",alignItems:"center",gap:4}}><span>⏱️</span><span style={{color:"#64748b",fontSize:11}}>~{dur} min</span></div>
               <div style={{display:"flex",alignItems:"center",gap:4}}><span>🏁</span><span style={{color:"#2563eb",fontSize:11,fontWeight:700}}>~{arrStr}</span></div>
@@ -2183,7 +2183,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
                 const arr=new Date(0,0,0,h,m+durationMin);
                 const arrStr=`${String(arr.getHours()).padStart(2,"0")}:${String(arr.getMinutes()).padStart(2,"0")}`;
                 return(
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"#ffffff",border:"1px solid #1e3a5f",borderRadius:10,padding:"7px 12px",margin:"0 12px 8px"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"#f8fafc",border:"1.5px solid #e2e8f0",borderRadius:10,padding:"7px 12px",margin:"0 12px 8px"}}>
                     <div style={{display:"flex",alignItems:"center",gap:4}}><span>🗺️</span><span style={{color:"#64748b",fontSize:11}}>{km} km</span></div>
                     <div style={{display:"flex",alignItems:"center",gap:4}}><span>⏱️</span><span style={{color:"#64748b",fontSize:11}}>~{durationMin} min</span></div>
                     <div style={{display:"flex",alignItems:"center",gap:4}}><span>🏁</span><span style={{color:"#2563eb",fontSize:11,fontWeight:700}}>~{arrStr}</span></div>
@@ -2193,12 +2193,12 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
               })()}
             <div style={{margin:"0 12px",display:"flex",gap:8,marginBottom:12}}>
               {/* Countdown */}
-              <div style={{flex:1,background:isOngoing?"#dcfce7":urgency?"#fef3c7":"#eff6ff",borderRadius:12,padding:"10px 14px"}}>
-                <div style={{color:"#64748b",fontSize:9,letterSpacing:2,marginBottom:3}}>{isOngoing?"EN CURSO":"TIEMPO RESTANTE"}</div>
-                <div style={{color:isOngoing?"#22c55e":urgency?"#f59e0b":"#f8fafc",fontSize:26,fontFamily:"'Inter',sans-serif",fontWeight:700,letterSpacing:2}}>{countdownStr}</div>
+              <div style={{flex:1,background:isOngoing?"#dcfce7":isWaiting?"#fee2e2":urgency?"#fef3c7":"#eff6ff",borderRadius:12,padding:"10px 14px"}}>
+                <div style={{color:isOngoing?"#16a34a":urgency?"#d97706":"#1e3a8a",fontSize:10,fontWeight:700,letterSpacing:2,marginBottom:3}}>{isOngoing?"EN CURSO":isWaiting?"⏳ EN ESPERA":"TIEMPO RESTANTE"}</div>
+                <div style={{color:isOngoing?"#16a34a":isWaiting?"#ef4444":urgency?"#d97706":"#0f172a",fontSize:28,fontFamily:"'Inter',sans-serif",fontWeight:900,letterSpacing:2}}>{countdownStr}</div>
               </div>
               {upcoming.fare>0&&(
-                <div style={{background:"#2563eb10",borderRadius:12,padding:"10px 14px",textAlign:"right"}}>
+                <div style={{background:"#f0f7ff",border:"1.5px solid #2563eb22",borderRadius:12,padding:"10px 14px",textAlign:"right"}}>
                   <div style={{color:"#64748b",fontSize:9,letterSpacing:2,marginBottom:3}}>TARIFA</div>
                   {upcoming.isClientBooking?(
                     <>
@@ -2223,22 +2223,22 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
                     {mapsUrl&&(
                       <a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{
                         flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:7,
-                        background:"linear-gradient(135deg,#1a3a1a,#1e293b)",
-                        border:"1px solid #22c55e55",borderRadius:10,padding:"10px 0",
-                        color:"#22c55e",fontSize:12,fontWeight:700,textDecoration:"none",
+                        background:"#f0fdf4",
+                        border:"2px solid #22c55e55",borderRadius:10,padding:"10px 0",
+                        color:"#15803d",fontSize:12,fontWeight:700,textDecoration:"none",
                       }}>🗺️ Punto recogida</a>
                     )}
                     <button onClick={()=>setChatBooking(upcoming)} style={{
                       flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:7,
-                      background:"linear-gradient(135deg,#1e0a3e,#1e293b)",
-                      border:"1px solid #a78bfa55",borderRadius:10,padding:"10px 0",
-                      color:"#a78bfa",fontSize:12,fontWeight:700,cursor:"pointer",
+                      background:"#f5f3ff",
+                      border:"2px solid #7c3aed44",borderRadius:10,padding:"10px 0",
+                      color:"#7c3aed",fontSize:12,fontWeight:700,cursor:"pointer",
                     }}>💬 Chat</button>
                     <button onClick={()=>setShowQuickMsgs(v=>!v)} style={{
                       flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,
-                      background:showQuickMsgs?"#1e3a1e":"linear-gradient(135deg,#1a1a2a,#1e293b)",
-                      border:`1px solid ${showQuickMsgs?"#22c55e55":"#47556955"}`,borderRadius:10,padding:"10px 0",
-                      color:showQuickMsgs?"#22c55e":"#64748b",fontSize:12,fontWeight:700,cursor:"pointer",
+                      background:showQuickMsgs?"#f0fdf4":"#fffbeb",
+                      border:`2px solid ${showQuickMsgs?"#22c55e55":"#f59e0b44"}`,borderRadius:10,padding:"10px 0",
+                      color:showQuickMsgs?"#15803d":"#d97706",fontSize:12,fontWeight:700,cursor:"pointer",
                     }}>⚡ Rápidos</button>
                   </div>
                   {/* ── INICIAR VIAJE button — appears after "Estoy en camino" ── */}
@@ -2253,9 +2253,9 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
                       }}
                       style={{
                         display:"flex",alignItems:"center",justifyContent:"center",gap:8,
-                        background:"linear-gradient(135deg,#0a1a3a,#1e293b)",
-                        border:"2px solid #3b82f6",borderRadius:12,padding:"13px 0",
-                        color:"#3b82f6",fontSize:13,fontWeight:700,textDecoration:"none",
+                        background:"linear-gradient(135deg,#1e3a8a,#2563eb)",
+                        border:"none",borderRadius:12,padding:"13px 0",
+                        color:"#ffffff",fontSize:13,fontWeight:700,textDecoration:"none",
                         boxShadow:"0 0 16px #3b82f633",
                       }}>
                       🗺️ Iniciar viaje → {upcoming.destination.split(",")[0]}
@@ -2263,7 +2263,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
                   )}
                   {/* Quick messages */}
                   {showQuickMsgs&&(
-                    <div style={{background:"#f1f5f9",borderRadius:12,padding:"10px",display:"flex",flexDirection:"column",gap:6}}>
+                    <div style={{background:"#ffffff",border:"1.5px solid #e2e8f0",borderRadius:12,padding:"12px",display:"flex",flexDirection:"column",gap:6}}>
                       <div style={{color:"#64748b",fontSize:9,letterSpacing:2,marginBottom:4}}>MENSAJES RÁPIDOS</div>
                       {[
                         {es:"🚗 Estoy en camino.", en:"🚗 I'm on my way."},
@@ -2278,7 +2278,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
                           setToast("✅ Mensaje enviado");
                         }} style={{
                           background:"#ffffff",border:"1px solid #2a3a4a",borderRadius:8,
-                          padding:"8px 10px",color:"#e2e8f0",fontSize:11,textAlign:"left",cursor:"pointer",
+                          padding:"8px 10px",color:"#0f172a",fontSize:11,textAlign:"left",cursor:"pointer",
                         }}>{msg.es}</button>
                       ))}
                     </div>
@@ -2301,9 +2301,9 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
                     setToast("✅ Cliente notificado — esperando desde las "+upcoming.time);
                   }} style={{
                     width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:10,
-                    background:"linear-gradient(135deg,#0a2a00,#1e293b)",
-                    border:"2px solid #22c55e",borderRadius:12,padding:"13px 0",
-                    color:"#22c55e",fontSize:14,fontWeight:700,cursor:"pointer",
+                    background:"linear-gradient(135deg,#16a34a,#22c55e)",
+                    border:"none",borderRadius:12,padding:"13px 0",
+                    color:"#ffffff",fontSize:14,fontWeight:700,cursor:"pointer",
                     boxShadow:"0 0 16px #22c55e33",
                   }}>🚗 He llegado</button>
                 </>
@@ -3699,7 +3699,7 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
                 const arr2=new Date(0,0,0,h2,m2+dur2);
                 const arrStr2=`${String(arr2.getHours()).padStart(2,"0")}:${String(arr2.getMinutes()).padStart(2,"0")}`;
                 return(
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"#ffffff",border:"1px solid #1e3a5f",borderRadius:10,padding:"7px 12px",marginBottom:8}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"#f8fafc",border:"1.5px solid #e2e8f0",borderRadius:10,padding:"7px 12px",marginBottom:8}}>
                     <div style={{display:"flex",alignItems:"center",gap:4}}><span>🗺️</span><span style={{color:"#64748b",fontSize:11}}>{km2} km</span></div>
                     <div style={{display:"flex",alignItems:"center",gap:4}}><span>⏱️</span><span style={{color:"#64748b",fontSize:11}}>~{dur2} min</span></div>
                     <div style={{display:"flex",alignItems:"center",gap:4}}><span>🏁</span><span style={{color:"#2563eb",fontSize:11,fontWeight:700}}>~{arrStr2}</span></div>
@@ -4793,7 +4793,7 @@ function ProposePriceModal({ booking, onPropose, onClose }) {
         <label style={{color:"#64748b",fontSize:11,letterSpacing:2,display:"block",marginBottom:6}}>NOTA PARA EL CLIENTE (opcional)</label>
         <input value={note} onChange={e=>setNote(e.target.value)}
           placeholder="Incluye equipaje, peajes, etc."
-          style={{width:"100%",background:"#ffffff",border:"1px solid #1e3a5f",borderRadius:10,
+          style={{width:"100%",background:"#f8fafc",border:"1.5px solid #e2e8f0",borderRadius:10,
             color:"#0f172a",fontSize:13,padding:"10px 14px",outline:"none",boxSizing:"border-box",marginBottom:18}}/>
         <button onClick={handleSubmit} disabled={!price||Number(price)<1} style={{
           width:"100%",background:(!price||Number(price)<1)?"#f1f5f9":"linear-gradient(135deg,#a78bfa,#7c3aed)",
