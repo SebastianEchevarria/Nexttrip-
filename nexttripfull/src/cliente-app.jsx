@@ -1133,7 +1133,7 @@ function ClientAuth({ onLogin, onBack, lang, setLang }) {
               <div style={{color:"#22c55e",fontSize:11,marginBottom:10}}>✓ PINs coinciden</div>
             )}
 
-      {/* Discount banner */}}
+      {/* Discount banner */}
             <div style={{background:"#e2e8f0",border:"1px solid #2563eb33",borderRadius:10,
               padding:"10px 14px",marginBottom:16,display:"flex",alignItems:"center",gap:8}}>
               <span style={{fontSize:18}}>🏷️</span>
@@ -1429,8 +1429,6 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
                 <div style={{color:"#0f172a",fontSize:13,fontWeight:800}}>Sebastián Echevarría</div>
                 <div style={{color:"#2563eb",fontSize:10,fontWeight:700}}>{lang==="en"?"Your driver":"Tu conductor"}</div>
               </div>
-            </div>
-          </div>
             </div>
           </div>
         </div>
