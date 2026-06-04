@@ -3923,17 +3923,17 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
             </div>
           </div>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
-            <div style={{color:"#64748b",fontSize:10,letterSpacing:3}}>DISPONIBILIDAD DEL CONDUCTOR</div>
+            <div style={{color:"#1e3a8a",fontSize:11,letterSpacing:3,fontWeight:700}}>DISPONIBILIDAD DEL CONDUCTOR</div>
             <button onClick={()=>setForm(f=>({...f,date:new Date().toISOString().slice(0,10),time:""}))} style={{
-              background:form.date===new Date().toISOString().slice(0,10)?"linear-gradient(135deg,#2563eb,#a07840)":"#f1f5f9",
-              border:"none",borderRadius:8,padding:"4px 10px",
-              color:form.date===new Date().toISOString().slice(0,10)?"#f8fafc":"#64748b",
+              background:"#1e3a8a",
+              border:"none",borderRadius:8,padding:"5px 12px",
+              color:"#ffffff",
               fontSize:10,fontWeight:700,cursor:"pointer",
             }}>HOY</button>
           </div>
           <div style={{marginBottom:16}}>
             <input type="date" value={form.date} onChange={e=>setForm({...form,date:e.target.value,time:""})}
-              style={{background:"#f1f5f9",border:"1px solid #1e3a5f",borderRadius:10,color:"#0f172a",fontSize:13,padding:"9px 14px",outline:"none",colorScheme:"dark",width:"100%",boxSizing:"border-box"}}/>
+              style={{background:"#eff6ff",border:"2px solid #2563eb",borderRadius:10,color:"#0f172a",fontSize:15,fontWeight:700,padding:"11px 14px",outline:"none",colorScheme:"light",width:"100%",boxSizing:"border-box",boxShadow:"0 2px 8px rgba(37,99,235,0.1)"}}/>
           </div>
           {driverStatus==="onroute"&&(
             <div style={{background:"linear-gradient(135deg,#0a1a2a,#1e293b)",border:"1.5px solid #3b82f666",borderRadius:12,padding:"10px 14px",marginBottom:12,display:"flex",alignItems:"center",gap:10}}>
@@ -4312,14 +4312,14 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
           ].map(f=>(
             <div key={f.key} style={{marginBottom:14}}>
               <label style={{color:"#1e3a8a",fontSize:11,letterSpacing:2,display:"block",marginBottom:5,fontWeight:700}}>{f.label}</label>
-              <input type={f.type} value={form[f.key]} placeholder={f.ph} onChange={e=>setForm({...form,[f.key]:e.target.value})} style={inputStyle}/>
+              <input type={f.type} value={form[f.key]} placeholder={f.ph} onChange={e=>setForm({...form,[f.key]:e.target.value})} style={{...inputStyle,border:form[f.key]?"2px solid #2563eb":"2px solid #f59e0b",background:form[f.key]?"#f0f7ff":"#fffbeb"}}/>
             </div>
           ))}
           <div style={{marginBottom:14}}>
             <label style={{color:"#1e3a8a",fontSize:11,letterSpacing:2,display:"block",marginBottom:5,fontWeight:700}}>TELÉFONO DEL PASAJERO</label>
             <div style={{position:"relative"}}>
               <span style={{position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",fontSize:16,pointerEvents:"none"}}>📞</span>
-              <input type="tel" value={form.guestPhone} placeholder="+34 600 000 000" onChange={e=>setForm({...form,guestPhone:e.target.value})} style={{...inputStyle,paddingLeft:42}}/>
+              <input type="tel" value={form.guestPhone} placeholder="+34 600 000 000" onChange={e=>setForm({...form,guestPhone:e.target.value})} style={{...inputStyle,paddingLeft:42,border:form.guestPhone?"2px solid #2563eb":"2px solid #f59e0b",background:form.guestPhone?"#f0f7ff":"#fffbeb"}}/>
             </div>
           </div>
 
