@@ -2564,34 +2564,34 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
         const todayActive=todayB.filter(b=>["confirmed","pending","inprogress"].includes(b.status));
         if(todayB.length===0&&todayDone.length===0) return null;
         return(
-          <div style={{background:"linear-gradient(135deg,#0f172a,#1e293b)",border:"1px solid #2563eb33",borderRadius:14,padding:"14px 16px",marginBottom:14}}>
+          <div style={{background:"#ffffff",border:"2px solid #e2e8f0",borderRadius:14,padding:"16px",marginBottom:14,boxShadow:"0 3px 12px rgba(37,99,235,0.08)"}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
               <div style={{display:"flex",alignItems:"center",gap:7}}>
                 <span>📅</span>
-                <span style={{color:"#2563eb",fontSize:11,fontWeight:700,letterSpacing:2}}>RESUMEN DE HOY</span>
+                <span style={{color:"#1e3a8a",fontSize:12,fontWeight:800,letterSpacing:2}}>RESUMEN DE HOY</span>
               </div>
               <span style={{color:"#475569",fontSize:10}}>{new Date().toLocaleDateString("es-ES",{weekday:"short",day:"numeric",month:"short"})}</span>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:todayActive.length>0?10:0}}>
-              <div style={{background:"#ffffff",borderRadius:10,padding:"10px 8px",textAlign:"center"}}>
-                <div style={{color:"#0f172a",fontSize:22,fontFamily:"'Inter',sans-serif",fontWeight:700}}>{todayB.length}</div>
-                <div style={{color:"#64748b",fontSize:9,letterSpacing:1}}>VIAJES HOY</div>
+              <div style={{background:"linear-gradient(135deg,#eff6ff,#dbeafe)",borderRadius:12,padding:"12px 8px",textAlign:"center",border:"2px solid #2563eb44",boxShadow:"0 2px 8px rgba(37,99,235,0.12)"}}>
+                <div style={{color:"#1e3a8a",fontSize:26,fontFamily:"'Inter',sans-serif",fontWeight:900,lineHeight:1}}>{todayB.length}</div>
+                <div style={{color:"#2563eb",fontSize:9,letterSpacing:1,marginTop:3,fontWeight:700}}>VIAJES HOY</div>
               </div>
-              <div style={{background:"#ffffff",borderRadius:10,padding:"10px 8px",textAlign:"center"}}>
-                <div style={{color:"#22c55e",fontSize:22,fontFamily:"'Inter',sans-serif",fontWeight:700}}>{todayDone.length}</div>
-                <div style={{color:"#64748b",fontSize:9,letterSpacing:1}}>COMPLETADOS</div>
+              <div style={{background:"#f0fdf4",borderRadius:12,padding:"12px 8px",textAlign:"center",border:"1.5px solid #22c55e44"}}>
+                <div style={{color:"#16a34a",fontSize:26,fontFamily:"'Inter',sans-serif",fontWeight:900,lineHeight:1}}>{todayDone.length}</div>
+                <div style={{color:"#16a34a",fontSize:9,letterSpacing:1,marginTop:3,fontWeight:700}}>COMPLETADOS</div>
               </div>
-              <div style={{background:"#ffffff",borderRadius:10,padding:"10px 8px",textAlign:"center"}}>
-                <div style={{color:"#2563eb",fontSize:22,fontFamily:"'Inter',sans-serif",fontWeight:700}}>{fmt(todayEarnings)}</div>
-                <div style={{color:"#64748b",fontSize:9,letterSpacing:1}}>€ GANADOS</div>
+              <div style={{background:"#f8fafc",borderRadius:12,padding:"12px 8px",textAlign:"center",border:"1.5px solid #e2e8f0"}}>
+                <div style={{color:"#2563eb",fontSize:22,fontFamily:"'Inter',sans-serif",fontWeight:900,lineHeight:1}}>{fmt(todayEarnings)}</div>
+                <div style={{color:"#64748b",fontSize:9,letterSpacing:1,marginTop:3,fontWeight:700}}>€ GANADOS</div>
               </div>
             </div>
             {todayActive.length>0&&(
               <button onClick={()=>setTodayTripsOpen(v=>!v)} style={{
                 width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8,
-                background:todayTripsOpen?"#f1f5f9":"linear-gradient(135deg,#1a1300,#1e293b)",
-                border:"1px solid #2563eb33",borderRadius:10,padding:"9px 0",
-                color:"#2563eb",fontSize:11,fontWeight:700,cursor:"pointer",marginTop:6,
+                background:todayTripsOpen?"#eff6ff":"#ffffff",
+                border:"2px solid #2563eb33",borderRadius:10,padding:"9px 0",
+                color:"#1e3a8a",fontSize:11,fontWeight:700,cursor:"pointer",marginTop:6,
               }}>
                 {todayTripsOpen?"▲ Ocultar viajes de hoy":`▼ Ver ${todayActive.length} viaje${todayActive.length!==1?"s":""} de hoy`}
               </button>
@@ -2714,7 +2714,11 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
             <span style={{color:"#64748b",fontSize:12,marginLeft:"auto"}}>{hotelIncomeOpen?"▲":"▼"}</span>
           </button>
           {!hotelIncomeOpen&&<div style={{height:0}}/>}
-          {hotelIncomeOpen&&Object.entries(byHotel).map(([hotel,data])=>{
+          {hotelIncomeOpen&&Object.entries(byHotel).sort(([hA,dA],[hB,dB])=>{
+            const pA=bookings.filter(b=>b.hotel===hA&&b.status==="completed"&&b.fare&&b.commissionStatus!=="paid").reduce((s,b)=>s+b.fare*COMMISSION_RATE,0);
+            const pB=bookings.filter(b=>b.hotel===hB&&b.status==="completed"&&b.fare&&b.commissionStatus!=="paid").reduce((s,b)=>s+b.fare*COMMISSION_RATE,0);
+            return pB-pA; // pending first
+          }).map(([hotel,data])=>{
             // Calc pending commissions for this hotel
             const hotelPending = bookings.filter(b=>
               b.hotel===hotel && b.status==="completed" && b.fare && b.commissionStatus!=="paid"
@@ -2725,16 +2729,17 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
             return (
               <div key={hotel} onClick={()=>setHotelModal(hotel)}
                 style={{
-                  background:"linear-gradient(135deg,#1a130a,#1e293b)",
-                  border:`1px solid ${pendingAmt>0?"#f59e0b44":"#2563eb18"}`,
-                  borderRadius:12,padding:"10px 14px",marginBottom:8,
+                  background:pendingAmt>0?"#fffbeb":"#ffffff",
+                  border:`2px solid ${pendingAmt>0?"#f59e0b":"#e2e8f0"}`,
+                  borderRadius:12,padding:"12px 14px",marginBottom:8,
                   display:"flex",justifyContent:"space-between",alignItems:"center",
                   cursor:"pointer",transition:"all 0.2s",
+                  boxShadow:pendingAmt>0?"0 2px 8px rgba(245,158,11,0.12)":"0 1px 4px rgba(0,0,0,0.04)",
                 }}
                 onMouseEnter={e=>{e.currentTarget.style.borderColor=pendingAmt>0?"#f59e0baa":"#2563eb88";e.currentTarget.style.transform="translateX(3px)"}}
                 onMouseLeave={e=>{e.currentTarget.style.borderColor=pendingAmt>0?"#f59e0b44":"#2563eb18";e.currentTarget.style.transform="none"}}>
                 <div style={{flex:1,minWidth:0}}>
-                  <div style={{color:"#2563eb",fontSize:11,marginBottom:2}}>{hotel}</div>
+                  <div style={{color:"#0f172a",fontSize:12,fontWeight:700,marginBottom:2}}>{hotel}</div>
                   <div style={{color:"#64748b",fontSize:11}}>{data.trips} viaje{data.trips>1?"s":""}</div>
                   {/* Commission status indicator */}
                   {pendingAmt>0&&(
@@ -2767,18 +2772,33 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
               </div>
             );
           })}
-          <div style={{background:"#ffffff",border:"1px solid #2563eb33",borderRadius:12,padding:"12px 16px"}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-              <span style={{color:"#64748b",fontSize:12}}>💶 Total facturado</span>
-              <span style={{color:"#0f172a",fontSize:18,fontFamily:"'Inter',sans-serif",fontWeight:700}}>{fmt(totalGross)} €</span>
+          <div style={{background:"#ffffff",border:"2px solid #e2e8f0",borderRadius:16,padding:"20px",boxShadow:"0 4px 16px rgba(0,0,0,0.06)",marginTop:4}}>
+            {/* Total facturado */}
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,paddingBottom:12,borderBottom:"1px solid #e2e8f0"}}>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <span style={{fontSize:18}}>💶</span>
+                <div>
+                  <div style={{color:"#64748b",fontSize:10,fontWeight:600,letterSpacing:1}}>TOTAL FACTURADO</div>
+                  <div style={{color:"#0f172a",fontSize:11}}>Todos los viajes completados</div>
+                </div>
+              </div>
+              <span style={{color:"#0f172a",fontSize:20,fontFamily:"'Inter',sans-serif",fontWeight:800}}>{fmt(totalGross)} €</span>
             </div>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-              <span style={{color:"#64748b",fontSize:11}}>Comisiones hoteles (20%)</span>
-              <span style={{color:"#f59e0b",fontSize:13}}>−{fmt(totalGross*COMMISSION_RATE)} €</span>
+            {/* Comisión */}
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"#fffbeb",borderRadius:10,padding:"10px 12px",marginBottom:10}}>
+              <div style={{display:"flex",alignItems:"center",gap:6}}>
+                <span style={{fontSize:14}}>🏷️</span>
+                <span style={{color:"#d97706",fontSize:12,fontWeight:700}}>Comisiones hoteles (20%)</span>
+              </div>
+              <span style={{color:"#d97706",fontSize:14,fontWeight:800}}>−{fmt(totalGross*COMMISSION_RATE)} €</span>
             </div>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:8,borderTop:"1px solid #1e3a5f"}}>
-              <span style={{color:"#64748b",fontSize:11}}>Tu ganancia neta</span>
-              <span style={{color:"#2563eb",fontSize:20,fontFamily:"'Inter',sans-serif",fontWeight:700}}>{fmt(totalNet)} €</span>
+            {/* Tu ganancia — muy destacada */}
+            <div style={{background:"linear-gradient(135deg,#f0fdf4,#dcfce7)",border:"2.5px solid #22c55e",borderRadius:14,padding:"16px",display:"flex",justifyContent:"space-between",alignItems:"center",boxShadow:"0 4px 14px rgba(34,197,94,0.2)"}}>
+              <div>
+                <div style={{color:"#15803d",fontSize:11,fontWeight:800,letterSpacing:1}}>💰 TU GANANCIA NETA</div>
+                <div style={{color:"#16a34a",fontSize:10,marginTop:2}}>Después de comisiones</div>
+              </div>
+              <span style={{color:"#16a34a",fontSize:32,fontFamily:"'Inter',sans-serif",fontWeight:900,lineHeight:1}}>{fmt(totalNet)} €</span>
             </div>
           </div>
         </div>
@@ -3061,10 +3081,12 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
             <span style={{color:"#64748b",fontSize:10,letterSpacing:3}}>MI CALENDARIO</span>
           </div>
           <button onClick={()=>setCalDate(new Date().toISOString().slice(0,10))} style={{
-            background:calDate===new Date().toISOString().slice(0,10)?"linear-gradient(135deg,#2563eb,#a07840)":"#f1f5f9",
-            border:"none",borderRadius:8,padding:"5px 12px",
-            color:calDate===new Date().toISOString().slice(0,10)?"#f8fafc":"#64748b",
-            fontSize:10,fontWeight:700,cursor:"pointer",letterSpacing:1,
+            background:calDate===new Date().toISOString().slice(0,10)?"#1e3a8a":"#eff6ff",
+            border:calDate===new Date().toISOString().slice(0,10)?"none":"2px solid #2563eb",
+            borderRadius:10,padding:"6px 16px",
+            color:calDate===new Date().toISOString().slice(0,10)?"#ffffff":"#2563eb",
+            fontSize:11,fontWeight:800,cursor:"pointer",letterSpacing:1,
+            boxShadow:calDate===new Date().toISOString().slice(0,10)?"0 2px 8px rgba(30,58,138,0.3)":"none",
           }}>HOY</button>
         </div>
         <input type="date" value={calDate} onChange={e=>setCalDate(e.target.value)}
