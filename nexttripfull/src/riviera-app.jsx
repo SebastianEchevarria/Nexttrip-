@@ -1785,8 +1785,9 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
     const isPending=b.status==="pending";
     return (
       <div onClick={()=>openDetail(b)} style={{
-        background:isPending?"linear-gradient(135deg,#1a1200,#1e2010)":"linear-gradient(135deg,#1e293b,#0f172a)",
-        border:isPending?"1px solid #f59e0b44":`1px solid ${showActions?"#2563eb44":"#2563eb33"}`,
+        background:isPending?"#fffbeb":"#ffffff",
+        border:isPending?"2px solid #f59e0b":`2px solid ${showActions?"#2563eb":"#e2e8f0"}`,
+        boxShadow:isPending?"0 4px 16px rgba(245,158,11,0.15)":"0 2px 10px rgba(37,99,235,0.08)",
         borderLeft:`3px solid ${statusColor(b.status)}`,
         borderRadius:12,padding:"14px 16px",cursor:"pointer",marginBottom:10,transition:"all 0.2s",position:"relative"}}
         onMouseEnter={e=>e.currentTarget.style.transform="translateX(3px)"}
@@ -1800,27 +1801,27 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
             <span style={{background:"#2563eb",borderRadius:6,padding:"2px 8px",fontSize:9,color:"#ffffff",fontWeight:700}}>🏨 RECEPCIÓN</span>
           )}
         </div>
-        {b.status==="price_proposed"&&<div style={{background:"#a78bfa15",border:"1px solid #a78bfa44",borderRadius:8,padding:"6px 10px",marginBottom:8,display:"flex",gap:8,alignItems:"center"}}>
+        {b.status==="price_proposed"&&<div style={{background:"#faf5ff",border:"1.5px solid #7c3aed44",borderRadius:8,padding:"6px 10px",marginBottom:8,display:"flex",gap:8,alignItems:"center"}}>
           <span style={{fontSize:13}}>💜</span>
           <div>
-            <div style={{color:"#a78bfa",fontSize:11,fontWeight:700}}>Precio propuesto: {fmt(b.proposedPrice)} €</div>
+            <div style={{color:"#7c3aed",fontSize:11,fontWeight:800}}>Precio propuesto: {fmt(b.proposedPrice)} €</div>
             <div style={{color:"#64748b",fontSize:10}}>Esperando respuesta del cliente</div>
           </div>
         </div>}
         <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:5}}>
-          <div style={{color:"#2563eb",fontSize:11,letterSpacing:1,flex:1}}>{b.hotel}</div>
+          <div style={{color:isPending?"#d97706":"#2563eb",fontSize:11,fontWeight:700,letterSpacing:0.5,flex:1}}>{b.hotel}</div>
           {emp&&<div style={{display:"flex",alignItems:"center",gap:5}}>
             <div style={{width:18,height:18,borderRadius:"50%",background:emp.avatar+"25",border:`1.5px solid ${emp.avatar}55`,display:"flex",alignItems:"center",justifyContent:"center",color:emp.avatar,fontSize:9,fontWeight:700}}>{initials(emp.name)}</div>
             <span style={{color:"#64748b",fontSize:11}}>{emp.name}</span>
           </div>}
         </div>
-        <div style={{color:"#0f172a",fontSize:15,fontFamily:"'Inter',sans-serif",marginBottom:5}}>{b.guest}</div>
-        <div style={{color:"#3b82f6",fontSize:12,display:"flex",gap:10,flexWrap:"wrap"}}>
+        <div style={{color:"#0f172a",fontSize:16,fontFamily:"'Inter',sans-serif",fontWeight:800,marginBottom:5}}>{b.guest}</div>
+        <div style={{color:"#0f172a",fontSize:12,display:"flex",gap:10,flexWrap:"wrap",fontWeight:600}}>
           <span>📅 {b.date}</span><span>🕐 {b.time}</span><span>👥 {b.passengers} pax</span>
         </div>
-        <div style={{marginTop:8,borderTop:"1px solid #1e3a5f",paddingTop:7}}>
-          <div style={{color:"#3b82f6",fontSize:11,marginBottom:3}}><span style={{color:"#2563eb"}}>▶ </span>{b.origin}</div>
-          <div style={{color:"#3b82f6",fontSize:11}}><span style={{color:"#ef4444"}}>■ </span>{b.destination}</div>
+        <div style={{marginTop:8,borderTop:"1px solid #e2e8f0",paddingTop:7}}>
+          <div style={{color:"#334155",fontSize:11,marginBottom:3,fontWeight:600}}><span style={{color:"#2563eb"}}>▶ </span>{b.origin}</div>
+          <div style={{color:"#334155",fontSize:11,fontWeight:600}}><span style={{color:"#ef4444"}}>■ </span>{b.destination}</div>
         </div>
         <div style={{marginTop:8,display:"flex",gap:7,flexWrap:"wrap",alignItems:"center"}}>
           {b.fare>0?(
@@ -1836,7 +1837,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
                 </div>
               </div>
             ):(
-              <div style={{display:"inline-flex",flexDirection:"column",background:"rgba(201,169,110,0.12)",border:"1px solid #2563eb33",borderRadius:8,padding:"5px 12px"}}>
+              <div style={{display:"inline-flex",flexDirection:"column",background:"#eff6ff",border:"1.5px solid #2563eb44",borderRadius:8,padding:"5px 12px"}}>
                 <div style={{display:"flex",alignItems:"center",gap:6}}>
                   <span style={{color:"#64748b",fontSize:10}}>💶 Precio del viaje</span>
                 </div>
@@ -1847,8 +1848,8 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
               </div>
             )
           ):(
-            <div style={{display:"inline-flex",alignItems:"center",background:"rgba(100,116,139,0.1)",border:"1px solid #33415540",borderRadius:7,padding:"3px 9px"}}>
-              <span style={{color:"#3b82f6",fontSize:12}}>Sin tarifa</span>
+            <div style={{display:"inline-flex",alignItems:"center",background:"#f8fafc",border:"1.5px solid #e2e8f0",borderRadius:7,padding:"3px 9px"}}>
+              <span style={{color:"#94a3b8",fontSize:12,fontWeight:600}}>Sin tarifa</span>
             </div>
           )}
           {/* Payment badge */}
@@ -1880,11 +1881,11 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
               style={{
                 display:"flex",alignItems:"center",justifyContent:"center",gap:8,
                 width:"100%",marginBottom:6,
-                background:"#f8fafc",border:"1px solid #1e3a6e",
+                background:"#eff6ff",border:"1.5px solid #2563eb44",
                 borderRadius:8,padding:"8px 0",textDecoration:"none",
-                color:"#6ea8fe",fontSize:11,fontWeight:600,
+                color:"#1e3a8a",fontSize:11,fontWeight:700,
               }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6ea8fe" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
               📋 Completar Hoja de Ruta — Sede Fomento
             </a>
             {/* Upload / view doc */}
@@ -1915,8 +1916,8 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
             ) : (
               <label onClick={e=>e.stopPropagation()} style={{
                 display:"flex",alignItems:"center",justifyContent:"center",gap:8,
-                width:"100%",background:"#f1f5f9",
-                border:"1px dashed #2563eb33",borderRadius:8,
+                width:"100%",background:"#f8fafc",
+                border:"2px dashed #2563eb55",borderRadius:8,
                 padding:"8px 0",cursor:"pointer",color:"#64748b",fontSize:11,fontWeight:600,
               }}>
                 <input type="file" accept=".pdf,image/*" onChange={e=>{
@@ -1936,7 +1937,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
           <button onClick={e=>{e.stopPropagation();setNoteModal(b);}} style={{
             display:"flex",alignItems:"center",gap:6,
             width:"100%",marginTop:6,
-            background:b.driverNote?"#0f2a0a":"#f1f5f9",
+            background:b.driverNote?"#f0fdf4":"#f8fafc",
             border:`1px solid ${b.driverNote?"#22c55e33":"#e2e8f0"}`,
             borderRadius:8,padding:"7px 12px",cursor:"pointer",
             color:b.driverNote?"#22c55e":"#64748b",fontSize:11,textAlign:"left",
@@ -2192,7 +2193,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
               })()}
             <div style={{margin:"0 12px",display:"flex",gap:8,marginBottom:12}}>
               {/* Countdown */}
-              <div style={{flex:1,background:isOngoing?"#22c55e12":urgency?"#f59e0b12":"#2563eb10",borderRadius:12,padding:"10px 14px"}}>
+              <div style={{flex:1,background:isOngoing?"#dcfce7":urgency?"#fef3c7":"#eff6ff",borderRadius:12,padding:"10px 14px"}}>
                 <div style={{color:"#64748b",fontSize:9,letterSpacing:2,marginBottom:3}}>{isOngoing?"EN CURSO":"TIEMPO RESTANTE"}</div>
                 <div style={{color:isOngoing?"#22c55e":urgency?"#f59e0b":"#f8fafc",fontSize:26,fontFamily:"'Inter',sans-serif",fontWeight:700,letterSpacing:2}}>{countdownStr}</div>
               </div>
