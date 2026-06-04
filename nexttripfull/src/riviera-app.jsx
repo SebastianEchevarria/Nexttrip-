@@ -4125,26 +4125,63 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
                     <div style={{color:"#16a34a",fontSize:28,fontFamily:"'Inter',sans-serif",fontWeight:900,lineHeight:1}}>{fmt(paidAmt)} €</div>
                   </div>
                 </div>
-                {/* Lista viajes cobrados */}
+                {/* Lista — pendientes de comprobante primero */}
                 <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                  {paid.map(t=>(
-                    <div key={t.id} style={{background:"#f0fdf4",borderRadius:10,padding:"10px 12px"}}>
-                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
-                        <div>
-                          <span style={{color:"#0f172a",fontSize:12,fontWeight:700}}>{t.guest}</span>
-                          <span style={{color:"#64748b",fontSize:10,marginLeft:6}}>{t.date} · {t.time}</span>
+                  {[...paid].sort((a,b)=>{
+                    // Sin comprobante sube arriba
+                    const aHas=a.commissionProof&&a.commissionProof.length>5;
+                    const bHas=b.commissionProof&&b.commissionProof.length>5;
+                    if(!aHas&&bHas) return -1;
+                    if(aHas&&!bHas) return 1;
+                    return 0;
+                  }).map(t=>{
+                    const hasProof=t.commissionProof&&t.commissionProof!=="confirmed"&&t.commissionProof.length>5;
+                    const isConfirmed=t.commissionProof==="confirmed";
+                    return(
+                      <div key={t.id} style={{
+                        background:hasProof||isConfirmed?"#f0fdf4":"#fffbeb",
+                        borderRadius:10,padding:"12px",
+                        border:`1.5px solid ${hasProof||isConfirmed?"#22c55e33":"#f59e0b44"}`,
+                      }}>
+                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                          <div>
+                            <span style={{color:"#0f172a",fontSize:13,fontWeight:800}}>{t.guest}</span>
+                            <span style={{color:"#64748b",fontSize:10,marginLeft:6}}>{t.date} · {t.time}</span>
+                          </div>
+                          <div style={{display:"flex",alignItems:"center",gap:6}}>
+                            <span style={{color:"#16a34a",fontSize:14,fontWeight:800}}>{fmt(t.fare*COMMISSION_RATE)} €</span>
+                            <span style={{
+                              background:hasProof||isConfirmed?"#22c55e":"#f59e0b",
+                              borderRadius:20,padding:"2px 8px",color:"#ffffff",fontSize:9,fontWeight:700
+                            }}>{hasProof||isConfirmed?"✅ COBRADA":"⏳ SIN COMPROBANTE"}</span>
+                          </div>
                         </div>
-                        <div style={{display:"flex",alignItems:"center",gap:6}}>
-                          <span style={{color:"#16a34a",fontSize:13,fontWeight:800}}>{fmt(t.fare*COMMISSION_RATE)} €</span>
-                          <span style={{background:"#22c55e",borderRadius:20,padding:"2px 8px",color:"#ffffff",fontSize:9,fontWeight:700}}>✅ COBRADA</span>
-                        </div>
+                        {/* Comprobante */}
+                        {hasProof&&(()=>{
+                          const [open,setOpen]=React.useState(false);
+                          return(
+                            <div style={{marginTop:6}}>
+                              <button onClick={()=>setOpen(v=>!v)} style={{
+                                display:"flex",alignItems:"center",gap:6,background:"#f0fdf4",
+                                border:"1.5px solid #22c55e44",borderRadius:8,padding:"6px 12px",
+                                cursor:"pointer",color:"#15803d",fontSize:11,fontWeight:700,
+                              }}>
+                                <span>📎</span>{open?"Ocultar comprobante":"Ver comprobante de pago"}
+                              </button>
+                              {open&&<img src={t.commissionProof} alt="comprobante" style={{
+                                width:"100%",maxHeight:260,objectFit:"contain",borderRadius:10,
+                                border:"2px solid #22c55e44",marginTop:8,
+                              }}/>}
+                            </div>
+                          );
+                        })()}
+                        {isConfirmed&&<div style={{color:"#16a34a",fontSize:11,marginTop:4,fontWeight:700}}>✅ Pago confirmado por el conductor</div>}
+                        {!hasProof&&!isConfirmed&&(
+                          <div style={{color:"#d97706",fontSize:10,marginTop:4,fontWeight:600}}>⚠️ El conductor aún no ha subido el comprobante</div>
+                        )}
                       </div>
-                      {t.commissionProof&&t.commissionProof!=="confirmed"&&(
-                        <div style={{marginTop:6}}><div style={{color:"#64748b",fontSize:10,marginBottom:4}}>📎 Comprobante:</div><img src={t.commissionProof} alt="comprobante" style={{width:"100%",maxHeight:140,objectFit:"contain",borderRadius:8,border:"1px solid #22c55e33"}}/></div>
-                      )}
-                      {t.commissionProof==="confirmed"&&<div style={{color:"#16a34a",fontSize:11,marginTop:4}}>✅ Pago confirmado</div>}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
