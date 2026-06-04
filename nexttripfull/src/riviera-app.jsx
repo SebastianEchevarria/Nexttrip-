@@ -5418,9 +5418,14 @@ export default function RivieraApp() {
       });
     }
     const booking = bookings.find(b=>String(b.id)===key);
-    const title = msg.from==="driver" ? "💬 Mensaje del conductor" : `💬 ${msg.fromName}`;
-    const body = booking ? `${booking.guest} · ${msg.text}` : msg.text;
-    sendNotification(title, body, "chat-"+key);
+    // Only notify if the message is FOR the current screen (not sent BY them)
+    const isForDriver = msg.from!=="driver" && isDriverScreen;
+    const isForReception = msg.from==="driver" && !isDriverScreen && booking?.employeeId===currentEmployee?.id && !booking?.isClientBooking;
+    if(isForDriver || isForReception) {
+      const title = msg.from==="driver" ? "💬 Mensaje del conductor" : `💬 ${msg.fromName}`;
+      const body = booking ? `${booking.guest} · ${msg.text}` : msg.text;
+      sendNotification(title, body, "chat-"+key);
+    }
   };
   const handleMarkRead=(bookingId, count)=>{
     setReadCounts(prev=>({...prev,[String(bookingId)]:count}));
@@ -5432,14 +5437,27 @@ export default function RivieraApp() {
 
   // Calculate unread messages for current user
   const unreadConvos = isApp ? Object.entries(messages).map(([bookingId, msgs])=>{
-    const relevant = isDriverScreen
-      ? msgs.filter(m=>m.from!=="driver")
-      : msgs.filter(m=>m.from==="driver" && bookings.some(b=>String(b.id)===bookingId&&b.employeeId===currentEmployee?.id));
+    const booking = bookings.find(b=>String(b.id)===bookingId);
+    if(!booking) return null;
+
+    let relevant;
+    if(isDriverScreen) {
+      // Driver: only sees messages from clients (VIP app) or reception staff
+      // NOT messages from other drivers or system messages they sent themselves
+      relevant = msgs.filter(m=>m.from!=="driver");
+    } else {
+      // Reception: only sees messages from the DRIVER (from:"driver")
+      // AND only for bookings that belong to THIS employee
+      // AND NOT client VIP bookings (those go to the client app, not reception)
+      const isMyBooking = booking.employeeId===currentEmployee?.id;
+      const isClientBooking = booking.isClientBooking===true;
+      if(!isMyBooking || isClientBooking) return null;
+      relevant = msgs.filter(m=>m.from==="driver");
+    }
+
     const readSoFar = readCounts[bookingId]||0;
     const unread = relevant.length - readSoFar;
     if(unread<=0) return null;
-    const booking = bookings.find(b=>String(b.id)===bookingId);
-    if(!booking) return null;
     const lastMsg = relevant[relevant.length-1];
     return { bookingId, unread, booking, lastMsg };
   }).filter(Boolean) : [];
