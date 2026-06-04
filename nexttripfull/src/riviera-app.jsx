@@ -4249,52 +4249,73 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
         const pendingAmt=pending.reduce((s,b)=>s+b.fare*COMMISSION_RATE,0);
         return (
           <div>
-            <div style={{color:"#64748b",fontSize:10,letterSpacing:3,marginBottom:14}}>MIS COMISIONES — {employee.name.toUpperCase()}</div>
+            <div style={{color:"#1e3a8a",fontSize:12,letterSpacing:3,fontWeight:800,marginBottom:14}}>MIS COMISIONES — {employee.name.toUpperCase()}</div>
             {pendingAmt>0&&(
-              <div style={{background:"linear-gradient(135deg,#1a130a,#0f172a)",border:"2px solid #2563eb",borderRadius:16,padding:"18px 20px",marginBottom:16}}>
-                <div style={{color:"#64748b",fontSize:10,letterSpacing:3,marginBottom:8}}>TOTAL A COBRAR DEL CONDUCTOR</div>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end"}}>
+              <div style={{background:"#ffffff",border:"2px solid #f59e0b55",borderRadius:16,padding:"18px",marginBottom:14,boxShadow:"0 4px 16px rgba(245,158,11,0.12)"}}>
+                {/* Header */}
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14,paddingBottom:12,borderBottom:"1px solid #fef3c7"}}>
+                  <div style={{width:36,height:36,borderRadius:10,background:"#fffbeb",border:"1.5px solid #f59e0b44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>🏷️</div>
                   <div>
-                    <div style={{color:"#64748b",fontSize:11,marginBottom:4}}>{pending.length} viaje{pending.length!==1?"s":""} pendiente{pending.length!==1?"s":""}</div>
-                    {pending.map(t=>(
-                      <div key={t.id} style={{display:"flex",justifyContent:"space-between",gap:20,marginBottom:3}}>
-                        <span style={{color:"#3b82f6",fontSize:11}}>{t.guest} · {t.time}</span>
-                        <span style={{color:"#2563eb",fontSize:11,fontWeight:600}}>{fmt(t.fare*COMMISSION_RATE)} €</span>
-                      </div>
-                    ))}
+                    <div style={{color:"#92400e",fontSize:12,fontWeight:800,letterSpacing:1}}>PENDIENTE DE COBRO</div>
+                    <div style={{color:"#d97706",fontSize:10}}>{pending.length} viaje{pending.length!==1?"s":""} pendiente{pending.length!==1?"s":""}</div>
                   </div>
-                  <div style={{textAlign:"right",flexShrink:0,paddingLeft:16}}>
-                    <div style={{color:"#64748b",fontSize:9,letterSpacing:2,marginBottom:4}}>TOTAL</div>
-                    <div style={{color:"#2563eb",fontSize:34,fontFamily:"'Inter',sans-serif",fontWeight:700,textShadow:"0 0 20px rgba(201,169,110,0.3)",lineHeight:1}}>{fmt(pendingAmt)} €</div>
+                  <div style={{marginLeft:"auto",textAlign:"right"}}>
+                    <div style={{color:"#d97706",fontSize:28,fontFamily:"'Inter',sans-serif",fontWeight:900,lineHeight:1}}>{fmt(pendingAmt)} €</div>
                   </div>
                 </div>
-                <div style={{marginTop:12,padding:"8px 12px",background:"#2563eb12",borderRadius:8,color:"#64748b",fontSize:11,display:"flex",alignItems:"center",gap:6}}>
-                  <span style={{width:6,height:6,borderRadius:"50%",background:"#f59e0b",animation:"pulse 1.5s infinite",flexShrink:0,display:"inline-block"}}/>
-                  Pendiente de transferencia del conductor
+                {/* Lista viajes */}
+                <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:12}}>
+                  {pending.map(t=>(
+                    <div key={t.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"#fffbeb",borderRadius:8,padding:"8px 12px"}}>
+                      <div>
+                        <span style={{color:"#0f172a",fontSize:12,fontWeight:700}}>{t.guest}</span>
+                        <span style={{color:"#64748b",fontSize:11,marginLeft:6}}>· {t.time}</span>
+                      </div>
+                      <span style={{color:"#d97706",fontSize:13,fontWeight:800}}>{fmt(t.fare*COMMISSION_RATE)} €</span>
+                    </div>
+                  ))}
+                </div>
+                {/* Estado */}
+                <div style={{background:"#fef3c7",borderRadius:10,padding:"8px 12px",display:"flex",alignItems:"center",gap:8}}>
+                  <span style={{width:7,height:7,borderRadius:"50%",background:"#f59e0b",animation:"pulse 1.5s infinite",flexShrink:0,display:"inline-block"}}/>
+                  <span style={{color:"#92400e",fontSize:11,fontWeight:600}}>Pendiente de transferencia del conductor</span>
                 </div>
               </div>
             )}
             {paidAmt>0&&(
-              <div style={{background:"linear-gradient(135deg,#0f2a1a,#1e293b)",border:"1px solid #22c55e44",borderRadius:12,padding:"14px 16px",marginBottom:16}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-                  <div><div style={{color:"#64748b",fontSize:10,letterSpacing:2,marginBottom:4}}>YA COBRADAS</div><div style={{color:"#64748b",fontSize:11}}>{paid.length} viaje{paid.length!==1?"s":""}</div></div>
-                  <div style={{color:"#22c55e",fontSize:24,fontFamily:"'Inter',sans-serif",fontWeight:700}}>{fmt(paidAmt)} €</div>
-                </div>
-                {paid.map(t=>(
-                  <div key={t.id} style={{paddingTop:8,borderTop:"1px solid #1e3a5f",marginTop:4}}>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
-                      <div><div style={{color:"#3b82f6",fontSize:12}}>{t.guest}</div><div style={{color:"#64748b",fontSize:10}}>{t.date} · {t.time}</div></div>
-                      <div style={{display:"flex",alignItems:"center",gap:6}}>
-                        <span style={{color:"#22c55e",fontSize:13,fontWeight:600}}>{fmt(t.fare*COMMISSION_RATE)} €</span>
-                        <div style={{background:"#22c55e18",border:"1px solid #22c55e44",borderRadius:20,padding:"2px 8px"}}><span style={{color:"#22c55e",fontSize:9,fontWeight:700}}>✅ COBRADA</span></div>
-                      </div>
-                    </div>
-                    {t.commissionProof&&t.commissionProof!=="confirmed"&&(
-                      <div style={{marginTop:6}}><div style={{color:"#64748b",fontSize:10,marginBottom:4}}>📎 Comprobante:</div><img src={t.commissionProof} alt="comprobante" style={{width:"100%",maxHeight:140,objectFit:"contain",borderRadius:8,border:"1px solid #22c55e33"}}/></div>
-                    )}
-                    {t.commissionProof==="confirmed"&&<div style={{color:"#22c55e",fontSize:11,marginTop:4}}>✅ Pago confirmado</div>}
+              <div style={{background:"#ffffff",border:"2px solid #22c55e44",borderRadius:16,padding:"18px",marginBottom:14,boxShadow:"0 4px 16px rgba(34,197,94,0.10)"}}>
+                {/* Header */}
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14,paddingBottom:12,borderBottom:"1px solid #dcfce7"}}>
+                  <div style={{width:36,height:36,borderRadius:10,background:"#f0fdf4",border:"1.5px solid #22c55e44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>✅</div>
+                  <div>
+                    <div style={{color:"#15803d",fontSize:12,fontWeight:800,letterSpacing:1}}>YA COBRADAS</div>
+                    <div style={{color:"#16a34a",fontSize:10}}>{paid.length} viaje{paid.length!==1?"s":""} cobrado{paid.length!==1?"s":""}</div>
                   </div>
-                ))}
+                  <div style={{marginLeft:"auto",textAlign:"right"}}>
+                    <div style={{color:"#16a34a",fontSize:28,fontFamily:"'Inter',sans-serif",fontWeight:900,lineHeight:1}}>{fmt(paidAmt)} €</div>
+                  </div>
+                </div>
+                {/* Lista viajes cobrados */}
+                <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                  {paid.map(t=>(
+                    <div key={t.id} style={{background:"#f0fdf4",borderRadius:10,padding:"10px 12px"}}>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+                        <div>
+                          <span style={{color:"#0f172a",fontSize:12,fontWeight:700}}>{t.guest}</span>
+                          <span style={{color:"#64748b",fontSize:10,marginLeft:6}}>{t.date} · {t.time}</span>
+                        </div>
+                        <div style={{display:"flex",alignItems:"center",gap:6}}>
+                          <span style={{color:"#16a34a",fontSize:13,fontWeight:800}}>{fmt(t.fare*COMMISSION_RATE)} €</span>
+                          <span style={{background:"#22c55e",borderRadius:20,padding:"2px 8px",color:"#ffffff",fontSize:9,fontWeight:700}}>✅ COBRADA</span>
+                        </div>
+                      </div>
+                      {t.commissionProof&&t.commissionProof!=="confirmed"&&(
+                        <div style={{marginTop:6}}><div style={{color:"#64748b",fontSize:10,marginBottom:4}}>📎 Comprobante:</div><img src={t.commissionProof} alt="comprobante" style={{width:"100%",maxHeight:140,objectFit:"contain",borderRadius:8,border:"1px solid #22c55e33"}}/></div>
+                      )}
+                      {t.commissionProof==="confirmed"&&<div style={{color:"#16a34a",fontSize:11,marginTop:4}}>✅ Pago confirmado</div>}
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
             {trips.length===0&&<div style={{color:"#64748b",fontSize:13,textAlign:"center",padding:"40px 0"}}>Sin viajes completados todavía</div>}
