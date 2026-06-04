@@ -1699,6 +1699,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
   const [calModal,setCalModal]=useState(null);
   const [hotelModal,setHotelModal]=useState(null);
   const [hotelIncomeOpen,setHotelIncomeOpen]=useState(true);
+  const [incomeView,setIncomeView]=useState("mes"); // "mes" or "semana"
   const [chatBooking,setChatBooking]=useState(null);
   const [rejectModal,setRejectModal]=useState(null);
   const [commissionModal,setCommissionModal]=useState(null);
@@ -2589,9 +2590,10 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
             {todayActive.length>0&&(
               <button onClick={()=>setTodayTripsOpen(v=>!v)} style={{
                 width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8,
-                background:todayTripsOpen?"#eff6ff":"#ffffff",
-                border:"2px solid #2563eb33",borderRadius:10,padding:"9px 0",
-                color:"#1e3a8a",fontSize:11,fontWeight:700,cursor:"pointer",marginTop:6,
+                background:todayTripsOpen?"#eff6ff":"linear-gradient(135deg,#1e3a8a,#2563eb)",
+                border:"none",borderRadius:10,padding:"11px 0",
+                color:todayTripsOpen?"#1e3a8a":"#ffffff",fontSize:12,fontWeight:800,cursor:"pointer",marginTop:8,
+                boxShadow:todayTripsOpen?"none":"0 3px 10px rgba(30,58,138,0.3)",
               }}>
                 {todayTripsOpen?"▲ Ocultar viajes de hoy":`▼ Ver ${todayActive.length} viaje${todayActive.length!==1?"s":""} de hoy`}
               </button>
@@ -2619,269 +2621,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
         );
       })()}
 
-      {/* ══════════════════════════════════════════ */}
-      {/* ── SECCIÓN FACTURACIÓN ── */}
-      {(withFare.length>0||(()=>{const months=[];const now=new Date();for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;const total=bookings.filter(b=>b.status==="completed"&&b.fare&&b.date?.startsWith(key)).reduce((s,b)=>s+Number(b.fare||0),0);months.push(total);}return months.reduce((s,m)=>s+m,0)>0;})())&&(
-      <div style={{
-        background:"linear-gradient(135deg,#f8fafc,#eff6ff)",
-        border:"2px solid #2563eb33",
-        borderRadius:20,
-        padding:"20px 16px",
-        marginBottom:22,
-        boxShadow:"0 6px 24px rgba(37,99,235,0.1)",
-      }}>
-        {/* FACTURACIÓN header */}
-        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:20,paddingBottom:14,borderBottom:"2px solid #2563eb22"}}>
-          <div style={{width:40,height:40,borderRadius:12,background:"linear-gradient(135deg,#1e3a8a,#2563eb)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>💶</div>
-          <div>
-            <div style={{color:"#1e3a8a",fontSize:18,fontWeight:900,letterSpacing:1}}>FACTURACIÓN</div>
-            <div style={{color:"#64748b",fontSize:11}}>Ingresos · Comisiones · Historial</div>
-          </div>
-        </div>
 
-      {/* ── GRÁFICO DE INGRESOS POR MES ── */}
-      {(()=>{
-        // Build last 6 months of earnings from completed bookings
-        const months = [];
-        const now = new Date();
-        for(let i=5; i>=0; i--) {
-          const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
-          const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-          const label = d.toLocaleDateString("es-ES",{month:"short"}).replace('.','');
-          const total = bookings
-            .filter(b=>b.status==="completed" && b.fare && b.date?.startsWith(key))
-            .reduce((s,b)=>s+Number(b.fare||0),0);
-          months.push({key,label,total});
-        }
-        const maxVal = Math.max(...months.map(m=>m.total), 1);
-        const totalAll = months.reduce((s,m)=>s+m.total,0);
-        if(totalAll===0) return null;
-        const currentMonth = months[5];
-        const prevMonth = months[4];
-        const trend = prevMonth.total > 0
-          ? Math.round(((currentMonth.total - prevMonth.total) / prevMonth.total) * 100)
-          : null;
-
-        return (
-          <section style={{marginBottom:22}}>
-            <div style={{color:"#64748b",fontSize:11,letterSpacing:3,marginBottom:12,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-              <div style={{display:"flex",alignItems:"center",gap:8}}>
-                📊 INGRESOS POR MES
-              </div>
-              {trend!==null&&(
-                <span style={{
-                  fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:10,
-                  background:trend>=0?"#22c55e18":"#ef444418",
-                  color:trend>=0?"#22c55e":"#ef4444",
-                  border:`1px solid ${trend>=0?"#22c55e33":"#ef444433"}`,
-                }}>
-                  {trend>=0?"↑":"↓"} {Math.abs(trend)}% vs mes anterior
-                </span>
-              )}
-            </div>
-            <div style={{background:"#f8fafc",borderRadius:14,padding:"16px 16px 8px",border:"1px solid #1e293b"}}>
-              {/* Bar chart */}
-              <div style={{display:"flex",alignItems:"flex-end",gap:8,height:80,marginBottom:8}}>
-                {months.map((m,i)=>{
-                  const pct = maxVal > 0 ? (m.total/maxVal)*100 : 0;
-                  const isLast = i===5;
-                  return (
-                    <div key={m.key} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
-                      {m.total>0&&(
-                        <div style={{color:"#64748b",fontSize:8,marginBottom:2}}>
-                          {m.total>=1000?`${(m.total/1000).toFixed(1)}k`:fmt(m.total)}
-                        </div>
-                      )}
-                      <div style={{
-                        width:"100%",borderRadius:"4px 4px 0 0",
-                        height:`${Math.max(pct,2)}%`,
-                        background:isLast
-                          ?"linear-gradient(180deg,#e8d5a3,#2563eb)"
-                          :"linear-gradient(180deg,#2a3a4a,#1e293b)",
-                        border:isLast?"1px solid #2563eb33":"1px solid #2a3a4a",
-                        transition:"height 0.3s ease",
-                        minHeight:m.total>0?6:2,
-                      }}/>
-                    </div>
-                  );
-                })}
-              </div>
-              {/* Month labels */}
-              <div style={{display:"flex",gap:8}}>
-                {months.map((m,i)=>(
-                  <div key={m.key} style={{flex:1,textAlign:"center",color:i===5?"#2563eb":"#475569",fontSize:9,fontWeight:i===5?700:400,letterSpacing:0.5}}>
-                    {m.label.toUpperCase()}
-                  </div>
-                ))}
-              </div>
-              {/* Total */}
-              <div style={{borderTop:"1px solid #1e293b",marginTop:10,paddingTop:10,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <span style={{color:"#64748b",fontSize:10}}>Total 6 meses</span>
-                <span style={{color:"#2563eb",fontSize:16,fontFamily:"'Inter',sans-serif",fontWeight:700}}>{fmt(totalAll)} €</span>
-              </div>
-            </div>
-          </section>
-        );
-      })()}
-
-
-        {/* ── INGRESOS POR SEMANA ── */}
-        {(()=>{
-          const weeks = [];
-          const now = new Date();
-          for(let i=3;i>=0;i--){
-            const start = new Date(now);
-            start.setDate(now.getDate() - (i*7) - now.getDay());
-            const end = new Date(start);
-            end.setDate(start.getDate() + 6);
-            const startStr = start.toISOString().slice(0,10);
-            const endStr = end.toISOString().slice(0,10);
-            const total = bookings.filter(b=>b.status==="completed"&&b.fare&&b.date>=startStr&&b.date<=endStr)
-              .reduce((s,b)=>s+Number(b.fare||0),0);
-            const label = i===0?"Esta semana":i===1?"Sem. pasada":`Sem. -${i}`;
-            weeks.push({label,total,startStr,endStr});
-          }
-          const maxW = Math.max(...weeks.map(w=>w.total),1);
-          const totalW = weeks.reduce((s,w)=>s+w.total,0);
-          if(totalW===0) return null;
-          return(
-            <section style={{marginBottom:18}}>
-              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
-                <span style={{fontSize:14}}>📆</span>
-                <span style={{color:"#1e3a8a",fontSize:11,fontWeight:800,letterSpacing:2}}>INGRESOS POR SEMANA</span>
-              </div>
-              <div style={{background:"#ffffff",borderRadius:12,padding:"14px",border:"1px solid #e2e8f0"}}>
-                <div style={{display:"flex",alignItems:"flex-end",gap:8,height:70,marginBottom:8}}>
-                  {weeks.map((w,i)=>{
-                    const pct=maxW>0?(w.total/maxW)*100:0;
-                    const isLast=i===3;
-                    return(
-                      <div key={w.startStr} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
-                        {w.total>0&&<div style={{color:"#64748b",fontSize:8}}>{fmt(w.total)}</div>}
-                        <div style={{width:"100%",borderRadius:"4px 4px 0 0",height:`${Math.max(pct,2)}%`,background:isLast?"linear-gradient(180deg,#38bdf8,#2563eb)":"linear-gradient(180deg,#bfdbfe,#93c5fd)",transition:"height 0.5s ease"}}/>
-                      </div>
-                    );
-                  })}
-                </div>
-                <div style={{display:"flex",gap:8}}>
-                  {weeks.map((w,i)=>(
-                    <div key={w.startStr} style={{flex:1,textAlign:"center",color:i===3?"#2563eb":"#94a3b8",fontSize:9,fontWeight:i===3?700:400}}>{w.label}</div>
-                  ))}
-                </div>
-                <div style={{borderTop:"1px solid #e2e8f0",marginTop:8,paddingTop:8,display:"flex",justifyContent:"space-between"}}>
-                  <span style={{color:"#64748b",fontSize:10}}>Esta semana</span>
-                  <span style={{color:"#1e3a8a",fontSize:14,fontWeight:800}}>{fmt(weeks[3].total)} €</span>
-                </div>
-              </div>
-            </section>
-          );
-        })()}
-
-      {withFare.length>0&&(
-        <div style={{marginBottom:20}}>
-          <button onClick={()=>setHotelIncomeOpen(o=>!o)} style={{
-            background:"none",border:"none",cursor:"pointer",padding:0,
-            display:"flex",alignItems:"center",gap:8,marginBottom:10,width:"100%",
-          }}>
-            <span style={{color:"#64748b",fontSize:10,letterSpacing:3}}>INGRESOS POR HOTEL</span>
-            <span style={{color:"#64748b",fontSize:12,marginLeft:"auto"}}>{hotelIncomeOpen?"▲":"▼"}</span>
-          </button>
-          {!hotelIncomeOpen&&<div style={{height:0}}/>}
-          {hotelIncomeOpen&&Object.entries(byHotel).sort(([hA,dA],[hB,dB])=>{
-            const pA=bookings.filter(b=>b.hotel===hA&&b.status==="completed"&&b.fare&&b.commissionStatus!=="paid").reduce((s,b)=>s+b.fare*COMMISSION_RATE,0);
-            const pB=bookings.filter(b=>b.hotel===hB&&b.status==="completed"&&b.fare&&b.commissionStatus!=="paid").reduce((s,b)=>s+b.fare*COMMISSION_RATE,0);
-            return pB-pA; // pending first
-          }).map(([hotel,data])=>{
-            // Calc pending commissions for this hotel
-            const hotelPending = bookings.filter(b=>
-              b.hotel===hotel && b.status==="completed" && b.fare && b.commissionStatus!=="paid"
-            );
-            const pendingAmt = hotelPending.reduce((s,b)=>s+b.fare*COMMISSION_RATE, 0);
-            const allPaid = pendingAmt===0 && bookings.some(b=>b.hotel===hotel&&b.status==="completed"&&b.fare);
-
-            return (
-              <div key={hotel} onClick={()=>setHotelModal(hotel)}
-                style={{
-                  background:pendingAmt>0?"#fffbeb":"#ffffff",
-                  border:`2px solid ${pendingAmt>0?"#f59e0b":"#e2e8f0"}`,
-                  borderRadius:12,padding:"12px 14px",marginBottom:8,
-                  display:"flex",justifyContent:"space-between",alignItems:"center",
-                  cursor:"pointer",transition:"all 0.2s",
-                  boxShadow:pendingAmt>0?"0 2px 8px rgba(245,158,11,0.12)":"0 1px 4px rgba(0,0,0,0.04)",
-                }}
-                onMouseEnter={e=>{e.currentTarget.style.borderColor=pendingAmt>0?"#f59e0baa":"#2563eb88";e.currentTarget.style.transform="translateX(3px)"}}
-                onMouseLeave={e=>{e.currentTarget.style.borderColor=pendingAmt>0?"#f59e0b44":"#2563eb18";e.currentTarget.style.transform="none"}}>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{color:"#0f172a",fontSize:12,fontWeight:700,marginBottom:2}}>{hotel}</div>
-                  <div style={{color:"#64748b",fontSize:11}}>{data.trips} viaje{data.trips>1?"s":""}</div>
-                  {/* Commission status indicator */}
-                  {pendingAmt>0&&(
-                    <div style={{
-                      display:"inline-flex",alignItems:"center",gap:5,marginTop:5,
-                      background:"#f59e0b18",border:"1px solid #f59e0b44",
-                      borderRadius:20,padding:"3px 10px",
-                    }}>
-                      <div style={{width:6,height:6,borderRadius:"50%",background:"#f59e0b",animation:"pulse 1.5s infinite"}}/>
-                      <span style={{color:"#f59e0b",fontSize:10,fontWeight:700}}>
-                        {fmt(pendingAmt)} € pendiente{hotelPending.length>1?`s (${hotelPending.length})`:""}
-                      </span>
-                    </div>
-                  )}
-                  {allPaid&&(
-                    <div style={{
-                      display:"inline-flex",alignItems:"center",gap:5,marginTop:5,
-                      background:"#22c55e12",border:"1px solid #22c55e33",
-                      borderRadius:20,padding:"3px 10px",
-                    }}>
-                      <span style={{color:"#22c55e",fontSize:10,fontWeight:700}}>✅ Todo pagado</span>
-                    </div>
-                  )}
-                </div>
-                <div style={{textAlign:"right",flexShrink:0,paddingLeft:10}}>
-                  <div style={{color:"#64748b",fontSize:9,letterSpacing:1,marginBottom:2}}>TOTAL VIAJES</div>
-                  <div style={{color:"#2563eb",fontSize:18,fontFamily:"'Inter',sans-serif",fontWeight:700}}>{fmt(data.gross)} €</div>
-                  <div style={{color:"#64748b",fontSize:9,marginTop:2}}>Ver detalle →</div>
-                </div>
-              </div>
-            );
-          })}
-          <div style={{background:"linear-gradient(135deg,#eff6ff,#dbeafe)",border:"2.5px solid #2563eb55",borderRadius:16,padding:"20px",boxShadow:"0 4px 16px rgba(37,99,235,0.15)",marginTop:4}}>
-            {/* Total facturado */}
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,paddingBottom:12,borderBottom:"1px solid #e2e8f0"}}>
-              <div style={{display:"flex",alignItems:"center",gap:8}}>
-                <span style={{fontSize:18}}>💶</span>
-                <div>
-                  <div style={{color:"#64748b",fontSize:10,fontWeight:600,letterSpacing:1}}>TOTAL FACTURADO</div>
-                  <div style={{color:"#0f172a",fontSize:11}}>Todos los viajes completados</div>
-                </div>
-              </div>
-              <span style={{color:"#0f172a",fontSize:20,fontFamily:"'Inter',sans-serif",fontWeight:800}}>{fmt(totalGross)} €</span>
-            </div>
-            {/* Comisión */}
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"#fffbeb",borderRadius:10,padding:"10px 12px",marginBottom:10}}>
-              <div style={{display:"flex",alignItems:"center",gap:6}}>
-                <span style={{fontSize:14}}>🏷️</span>
-                <span style={{color:"#d97706",fontSize:12,fontWeight:700}}>Comisiones hoteles (20%)</span>
-              </div>
-              <span style={{color:"#d97706",fontSize:14,fontWeight:800}}>−{fmt(totalGross*COMMISSION_RATE)} €</span>
-            </div>
-            {/* Tu ganancia — muy destacada */}
-            <div style={{background:"linear-gradient(135deg,#f0fdf4,#dcfce7)",border:"2.5px solid #22c55e",borderRadius:14,padding:"16px",display:"flex",justifyContent:"space-between",alignItems:"center",boxShadow:"0 4px 14px rgba(34,197,94,0.2)"}}>
-              <div>
-                <div style={{color:"#15803d",fontSize:11,fontWeight:800,letterSpacing:1}}>💰 TU GANANCIA NETA</div>
-                <div style={{color:"#16a34a",fontSize:10,marginTop:2}}>Después de comisiones</div>
-              </div>
-              <span style={{color:"#16a34a",fontSize:32,fontFamily:"'Inter',sans-serif",fontWeight:900,lineHeight:1}}>{fmt(totalNet)} €</span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      </div>
-      )}
-      {/* ══════════════════════════════════════════ */}
-
-      {/* Hotel commission breakdown modal */}
       {hotelModal&&(()=>{
         const allUsers = [...EMPLOYEES, ...loadUsers()];
         // All trips for this hotel (all statuses except rejected)
@@ -3259,92 +2999,185 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
         </div>
       </div>
 
+      {/* ══════════════════════════════════════════ */}
+      {/* ── SECCIÓN FACTURACIÓN ── */}
+      <div style={{
+        background:"linear-gradient(135deg,#dbeafe,#eff6ff)",
+        border:"2.5px solid #2563eb",
+        borderRadius:20,
+        padding:"20px 16px",
+        marginBottom:22,
+        boxShadow:"0 8px 32px rgba(37,99,235,0.2)",
+      }}>
+        {/* Header FACTURACIÓN */}
+        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:20,paddingBottom:14,borderBottom:"2px solid #2563eb44"}}>
+          <div style={{width:40,height:40,borderRadius:12,background:"linear-gradient(135deg,#1e3a8a,#2563eb)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>💶</div>
+          <div>
+            <div style={{color:"#1e3a8a",fontSize:18,fontWeight:900,letterSpacing:1}}>FACTURACIÓN</div>
+            <div style={{color:"#64748b",fontSize:11}}>Ingresos · Comisiones · Historial</div>
+          </div>
+        </div>
 
+        {/* Toggle Mes / Semana */}
+        <div style={{display:"flex",gap:8,marginBottom:16}}>
+          {[{id:"mes",label:"📊 Por mes"},{id:"semana",label:"📆 Por semana"}].map(opt=>(
+            <button key={opt.id} onClick={()=>setIncomeView(opt.id)} style={{
+              flex:1,padding:"10px 0",border:"none",borderRadius:12,cursor:"pointer",fontWeight:700,fontSize:12,
+              background:incomeView===opt.id?"linear-gradient(135deg,#1e3a8a,#2563eb)":"#ffffff",
+              color:incomeView===opt.id?"#ffffff":"#1e3a8a",
+              boxShadow:incomeView===opt.id?"0 2px 8px rgba(30,58,138,0.3)":"0 1px 3px rgba(0,0,0,0.08)",
+              border:incomeView===opt.id?"none":"1.5px solid #2563eb33",
+              transition:"all 0.2s",
+            }}>{opt.label}</button>
+          ))}
+        </div>
 
-      {/* ── GRÁFICO DE INGRESOS POR MES ── */}
-      {(()=>{
-        // Build last 6 months of earnings from completed bookings
-        const months = [];
-        const now = new Date();
-        for(let i=5; i>=0; i--) {
-          const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
-          const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-          const label = d.toLocaleDateString("es-ES",{month:"short"}).replace('.','');
-          const total = bookings
-            .filter(b=>b.status==="completed" && b.fare && b.date?.startsWith(key))
-            .reduce((s,b)=>s+Number(b.fare||0),0);
-          months.push({key,label,total});
-        }
-        const maxVal = Math.max(...months.map(m=>m.total), 1);
-        const totalAll = months.reduce((s,m)=>s+m.total,0);
-        if(totalAll===0) return null;
-        const currentMonth = months[5];
-        const prevMonth = months[4];
-        const trend = prevMonth.total > 0
-          ? Math.round(((currentMonth.total - prevMonth.total) / prevMonth.total) * 100)
-          : null;
-
-        return (
-          <section style={{marginBottom:22}}>
-            <div style={{color:"#64748b",fontSize:11,letterSpacing:3,marginBottom:12,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-              <div style={{display:"flex",alignItems:"center",gap:8}}>
-                📊 INGRESOS POR MES
+        {/* Ingresos por mes */}
+        {incomeView==="mes"&&(()=>{
+          const months=[];
+          const now=new Date();
+          for(let i=5;i>=0;i--){
+            const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+            const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+            const label=d.toLocaleDateString("es-ES",{month:"short"}).replace('.','');
+            const total=bookings.filter(b=>b.status==="completed"&&b.fare&&b.date?.startsWith(key)).reduce((s,b)=>s+Number(b.fare||0),0);
+            months.push({key,label,total});
+          }
+          const maxVal=Math.max(...months.map(m=>m.total),1);
+          const totalAll=months.reduce((s,m)=>s+m.total,0);
+          const trend=months[4].total>0?Math.round(((months[5].total-months[4].total)/months[4].total)*100):null;
+          return(
+            <div style={{background:"#ffffff",borderRadius:14,padding:"14px",border:"1px solid #e2e8f0",marginBottom:14}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+                <span style={{color:"#1e3a8a",fontSize:11,fontWeight:800,letterSpacing:2}}>INGRESOS POR MES</span>
+                {trend!==null&&<span style={{fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:10,background:trend>=0?"#22c55e18":"#ef444418",color:trend>=0?"#22c55e":"#ef4444",border:`1px solid ${trend>=0?"#22c55e33":"#ef444433"}`}}>{trend>=0?"↑":"↓"} {Math.abs(trend)}% vs anterior</span>}
               </div>
-              {trend!==null&&(
-                <span style={{
-                  fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:10,
-                  background:trend>=0?"#22c55e18":"#ef444418",
-                  color:trend>=0?"#22c55e":"#ef4444",
-                  border:`1px solid ${trend>=0?"#22c55e33":"#ef444433"}`,
-                }}>
-                  {trend>=0?"↑":"↓"} {Math.abs(trend)}% vs mes anterior
-                </span>
-              )}
-            </div>
-            <div style={{background:"#f8fafc",borderRadius:14,padding:"16px 16px 8px",border:"1px solid #1e293b"}}>
-              {/* Bar chart */}
               <div style={{display:"flex",alignItems:"flex-end",gap:8,height:80,marginBottom:8}}>
                 {months.map((m,i)=>{
-                  const pct = maxVal > 0 ? (m.total/maxVal)*100 : 0;
-                  const isLast = i===5;
-                  return (
+                  const pct=maxVal>0?(m.total/maxVal)*100:0;
+                  const isLast=i===5;
+                  return(
                     <div key={m.key} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
-                      {m.total>0&&(
-                        <div style={{color:"#64748b",fontSize:8,marginBottom:2}}>
-                          {m.total>=1000?`${(m.total/1000).toFixed(1)}k`:fmt(m.total)}
-                        </div>
-                      )}
-                      <div style={{
-                        width:"100%",borderRadius:"4px 4px 0 0",
-                        height:`${Math.max(pct,2)}%`,
-                        background:isLast
-                          ?"linear-gradient(180deg,#e8d5a3,#2563eb)"
-                          :"linear-gradient(180deg,#2a3a4a,#1e293b)",
-                        border:isLast?"1px solid #2563eb33":"1px solid #2a3a4a",
-                        transition:"height 0.3s ease",
-                        minHeight:m.total>0?6:2,
-                      }}/>
+                      {m.total>0&&<div style={{color:"#64748b",fontSize:8}}>{m.total>=1000?`${(m.total/1000).toFixed(1)}k`:fmt(m.total)}</div>}
+                      <div style={{width:"100%",borderRadius:"4px 4px 0 0",height:`${Math.max(pct,2)}%`,background:isLast?"linear-gradient(180deg,#38bdf8,#2563eb)":"linear-gradient(180deg,#bfdbfe,#93c5fd)",transition:"height 0.3s ease",minHeight:m.total>0?6:2}}/>
                     </div>
                   );
                 })}
               </div>
-              {/* Month labels */}
               <div style={{display:"flex",gap:8}}>
-                {months.map((m,i)=>(
-                  <div key={m.key} style={{flex:1,textAlign:"center",color:i===5?"#2563eb":"#475569",fontSize:9,fontWeight:i===5?700:400,letterSpacing:0.5}}>
-                    {m.label.toUpperCase()}
-                  </div>
-                ))}
+                {months.map((m,i)=><div key={m.key} style={{flex:1,textAlign:"center",color:i===5?"#2563eb":"#94a3b8",fontSize:9,fontWeight:i===5?700:400}}>{m.label.toUpperCase()}</div>)}
               </div>
-              {/* Total */}
-              <div style={{borderTop:"1px solid #1e293b",marginTop:10,paddingTop:10,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div style={{borderTop:"1px solid #e2e8f0",marginTop:8,paddingTop:8,display:"flex",justifyContent:"space-between"}}>
                 <span style={{color:"#64748b",fontSize:10}}>Total 6 meses</span>
-                <span style={{color:"#2563eb",fontSize:16,fontFamily:"'Inter',sans-serif",fontWeight:700}}>{fmt(totalAll)} €</span>
+                <span style={{color:"#1e3a8a",fontSize:16,fontWeight:800}}>{fmt(totalAll)} €</span>
               </div>
             </div>
-          </section>
-        );
-      })()}
+          );
+        })()}
+
+        {/* Ingresos por semana */}
+        {incomeView==="semana"&&(()=>{
+          const weeks=[];
+          const now=new Date();
+          for(let i=3;i>=0;i--){
+            const start=new Date(now);
+            start.setDate(now.getDate()-(i*7)-now.getDay());
+            const end=new Date(start);
+            end.setDate(start.getDate()+6);
+            const startStr=start.toISOString().slice(0,10);
+            const endStr=end.toISOString().slice(0,10);
+            const total=bookings.filter(b=>b.status==="completed"&&b.fare&&b.date>=startStr&&b.date<=endStr).reduce((s,b)=>s+Number(b.fare||0),0);
+            const label=i===0?"Esta sem.":i===1?"Sem. -1":`Sem. -${i}`;
+            weeks.push({label,total,startStr});
+          }
+          const maxW=Math.max(...weeks.map(w=>w.total),1);
+          return(
+            <div style={{background:"#ffffff",borderRadius:14,padding:"14px",border:"1px solid #e2e8f0",marginBottom:14}}>
+              <div style={{color:"#1e3a8a",fontSize:11,fontWeight:800,letterSpacing:2,marginBottom:12}}>INGRESOS POR SEMANA</div>
+              <div style={{display:"flex",alignItems:"flex-end",gap:8,height:80,marginBottom:8}}>
+                {weeks.map((w,i)=>{
+                  const pct=maxW>0?(w.total/maxW)*100:0;
+                  const isLast=i===3;
+                  return(
+                    <div key={w.startStr} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+                      {w.total>0&&<div style={{color:"#64748b",fontSize:8}}>{fmt(w.total)}</div>}
+                      <div style={{width:"100%",borderRadius:"4px 4px 0 0",height:`${Math.max(pct,2)}%`,background:isLast?"linear-gradient(180deg,#38bdf8,#2563eb)":"linear-gradient(180deg,#bfdbfe,#93c5fd)",transition:"height 0.5s ease"}}/>
+                    </div>
+                  );
+                })}
+              </div>
+              <div style={{display:"flex",gap:8}}>
+                {weeks.map((w,i)=><div key={w.startStr} style={{flex:1,textAlign:"center",color:i===3?"#2563eb":"#94a3b8",fontSize:9,fontWeight:i===3?700:400}}>{w.label}</div>)}
+              </div>
+              <div style={{borderTop:"1px solid #e2e8f0",marginTop:8,paddingTop:8,display:"flex",justifyContent:"space-between"}}>
+                <span style={{color:"#64748b",fontSize:10}}>Esta semana</span>
+                <span style={{color:"#1e3a8a",fontSize:14,fontWeight:800}}>{fmt(weeks[3].total)} €</span>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Ingresos por hotel */}
+        {withFare.length>0&&(
+          <div style={{marginBottom:14}}>
+            <button onClick={()=>setHotelIncomeOpen(o=>!o)} style={{background:"none",border:"none",cursor:"pointer",padding:0,display:"flex",alignItems:"center",gap:8,marginBottom:10,width:"100%"}}>
+              <span style={{color:"#1e3a8a",fontSize:11,fontWeight:800,letterSpacing:2}}>🏨 INGRESOS POR HOTEL</span>
+              <span style={{color:"#64748b",fontSize:12,marginLeft:"auto"}}>{hotelIncomeOpen?"▲":"▼"}</span>
+            </button>
+            {hotelIncomeOpen&&Object.entries(byHotel).sort(([hA],[hB])=>{
+              const pA=bookings.filter(b=>b.hotel===hA&&b.status==="completed"&&b.fare&&b.commissionStatus!=="paid"&&!b.isClientBooking).reduce((s,b)=>s+b.fare*COMMISSION_RATE,0);
+              const pB=bookings.filter(b=>b.hotel===hB&&b.status==="completed"&&b.fare&&b.commissionStatus!=="paid"&&!b.isClientBooking).reduce((s,b)=>s+b.fare*COMMISSION_RATE,0);
+              return pB-pA;
+            }).map(([hotel,data])=>{
+              const pendingAmt=bookings.filter(b=>b.hotel===hotel&&b.status==="completed"&&b.fare&&b.commissionStatus!=="paid"&&!b.isClientBooking).reduce((s,b)=>s+b.fare*COMMISSION_RATE,0);
+              const pending=bookings.filter(b=>b.hotel===hotel&&b.status==="completed"&&b.fare&&b.commissionStatus!=="paid"&&!b.isClientBooking);
+              return(
+                <div key={hotel} onClick={()=>{
+                  if(pending.length>0){setCommissionModal({...pending[0],_empAllPending:pending,_empName:hotel,_totalComm:pendingAmt});}
+                }} style={{
+                  background:pendingAmt>0?"#fffbeb":"#ffffff",
+                  border:`2px solid ${pendingAmt>0?"#f59e0b":"#e2e8f0"}`,
+                  borderRadius:12,padding:"12px 14px",marginBottom:8,
+                  display:"flex",justifyContent:"space-between",alignItems:"center",
+                  cursor:pending.length>0?"pointer":"default",
+                  boxShadow:pendingAmt>0?"0 2px 8px rgba(245,158,11,0.12)":"0 1px 4px rgba(0,0,0,0.04)",
+                }}>
+                  <div>
+                    <div style={{color:"#0f172a",fontSize:12,fontWeight:700,marginBottom:2}}>{hotel}</div>
+                    <div style={{color:"#64748b",fontSize:10}}>{data.trips} viaje{data.trips!==1?"s":""} · {fmt(data.gross)} € facturado</div>
+                  </div>
+                  <div style={{textAlign:"right"}}>
+                    {pendingAmt>0&&<div style={{color:"#d97706",fontSize:12,fontWeight:800,marginBottom:2}}>+{fmt(pendingAmt)} € pend.</div>}
+                    <div style={{color:"#64748b",fontSize:10}}>{fmt(data.commissions||0)} € comisión</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Total facturado */}
+        {withFare.length>0&&(
+          <div>
+            <div style={{color:"#1e3a8a",fontSize:11,fontWeight:800,letterSpacing:2,marginBottom:10}}>💰 TOTAL FACTURADO</div>
+            <div style={{background:"linear-gradient(135deg,#eff6ff,#dbeafe)",border:"2.5px solid #2563eb55",borderRadius:16,padding:"18px",boxShadow:"0 4px 16px rgba(37,99,235,0.15)"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,paddingBottom:12,borderBottom:"1px solid #2563eb22"}}>
+                <div><div style={{color:"#1e3a8a",fontSize:10,fontWeight:700,letterSpacing:1,marginBottom:1}}>FACTURADO TOTAL</div><div style={{color:"#64748b",fontSize:10}}>Todos los viajes completados</div></div>
+                <span style={{color:"#0f172a",fontSize:20,fontFamily:"'Inter',sans-serif",fontWeight:800}}>{fmt(totalGross)} €</span>
+              </div>
+              <div style={{background:"#fffbeb",borderRadius:10,padding:"10px 12px",marginBottom:10,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <div style={{display:"flex",alignItems:"center",gap:6}}><span style={{fontSize:14}}>🏷️</span><span style={{color:"#d97706",fontSize:12,fontWeight:700}}>Comisiones hoteles (20%)</span></div>
+                <span style={{color:"#d97706",fontSize:14,fontWeight:800}}>−{fmt(totalGross*COMMISSION_RATE)} €</span>
+              </div>
+              <div style={{background:"linear-gradient(135deg,#f0fdf4,#dcfce7)",border:"2.5px solid #22c55e",borderRadius:14,padding:"16px",display:"flex",justifyContent:"space-between",alignItems:"center",boxShadow:"0 4px 14px rgba(34,197,94,0.2)"}}>
+                <div><div style={{color:"#15803d",fontSize:11,fontWeight:800,letterSpacing:1}}>💰 TU GANANCIA NETA</div><div style={{color:"#16a34a",fontSize:10,marginTop:2}}>Después de comisiones</div></div>
+                <span style={{color:"#16a34a",fontSize:32,fontFamily:"'Inter',sans-serif",fontWeight:900,lineHeight:1}}>{fmt(totalNet)} €</span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+      {/* ══════════════════════════════════════════ */}
 
       {fHistory.length>0&&(
         <section style={{marginBottom:22}}>
