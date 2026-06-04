@@ -3682,61 +3682,70 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
       {/* Driver status + Vehicle card — only when in service */}
       {!isOffline&&(
         <div style={{
-          background:"#ffffff",
-          border:`2px solid ${driverStatus==="onroute"?"#ef444433":"#2563eb33"}`,
-          borderRadius:14,padding:"12px 16px",marginBottom:16,
-          position:"relative",overflow:"hidden",
-          boxShadow:"0 2px 12px rgba(37,99,235,0.08)",
+          background:"linear-gradient(135deg,#eff6ff,#dbeafe)",
+          border:"2px solid #2563eb55",borderRadius:16,
+          padding:"16px",marginBottom:14,
+          boxShadow:"0 4px 16px rgba(37,99,235,0.12)",
         }}>
-          <div style={{position:"absolute",top:-15,right:-15,width:60,height:60,borderRadius:"50%",background:"#2563eb08",pointerEvents:"none"}}/>
-          {/* Status row */}
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+          {/* ── Fila 1: Estado + Badge ── */}
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
             <div style={{display:"flex",alignItems:"center",gap:8}}>
-              <div style={{width:8,height:8,borderRadius:"50%",
-                background:driverStatus==="onroute"?"#ef4444":"#2563eb",
-                boxShadow:driverStatus==="onroute"?"0 0 8px #ef4444":"0 0 8px #2563eb",
-                animation:"pulse 1.5s infinite",flexShrink:0}}/>
-              <div>
-                <div style={{color:driverStatus==="onroute"?"#ef4444":"#2563eb",fontSize:13,fontWeight:700}}>
-                  {driverStatus==="onroute"?"🚗 Conductor EN RUTA":"✅ Conductor DISPONIBLE"}
-                </div>
-                <div style={{color:"#64748b",fontSize:10}}>
-                  {driverStatus==="onroute"?"En servicio actualmente":"Puedes realizar nuevas reservas"}
-                </div>
-              </div>
+              <div style={{width:9,height:9,borderRadius:"50%",background:driverStatus==="onroute"?"#ef4444":"#16a34a",animation:"pulse 1.5s infinite",flexShrink:0}}/>
+              <span style={{color:driverStatus==="onroute"?"#ef4444":"#15803d",fontSize:13,fontWeight:800}}>
+                {driverStatus==="onroute"?"🚗 Conductor EN RUTA":"✅ Conductor DISPONIBLE"}
+              </span>
             </div>
-            <div style={{background:"#1e3a8a",border:"none",borderRadius:20,padding:"3px 10px",flexShrink:0}}>
+            <div style={{background:"#1e3a8a",borderRadius:20,padding:"4px 14px"}}>
               <span style={{color:"#ffffff",fontSize:9,fontWeight:700,letterSpacing:2}}>PRIVATE TRANSFERS</span>
             </div>
           </div>
-          {/* Divider */}
-          <div style={{height:1,background:"linear-gradient(90deg,transparent,#2563eb33,transparent)",marginBottom:10}}/>
-          {/* Vehicle */}
-          <div style={{display:"flex",alignItems:"center",gap:10}}>
-            <div style={{width:36,height:36,borderRadius:9,background:"linear-gradient(135deg,#dbeafe,#bfdbfe)",border:"1px solid #2563eb44",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-              <svg width="18" height="18" viewBox="0 0 100 100" fill="none">
-                <path d="M50 12 C30 12 15 18 10 26 C18 24 34 22 50 22 C66 22 82 24 90 26 C85 18 70 12 50 12Z" fill="#2563eb"/>
-                <path d="M10 26 C18 24 34 22 50 22 L50 88 C40 60 25 42 10 26Z" fill="#2563eb"/>
-                <path d="M90 26 C82 24 66 22 50 22 L50 88 C60 60 75 42 90 26Z" fill="#2563eb"/>
+
+          {/* ── Fila 2: Nombre coche + estrellas + rayo ── */}
+          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+            <div style={{width:46,height:46,borderRadius:12,background:"#ffffff",border:"1.5px solid #2563eb33",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:"0 1px 6px rgba(37,99,235,0.12)"}}>
+              <svg width="26" height="26" viewBox="0 0 100 100" fill="none">
+                <path d="M50 12 C30 12 15 18 10 26 C18 24 34 22 50 22 C66 22 82 24 90 26 C85 18 70 12 50 12Z" fill="#1e3a8a"/>
+                <path d="M10 26 C18 24 34 22 50 22 L50 88 C40 60 25 42 10 26Z" fill="#1e3a8a"/>
+                <path d="M90 26 C82 24 66 22 50 22 L50 88 C60 60 75 42 90 26Z" fill="#1e3a8a"/>
               </svg>
             </div>
             <div style={{flex:1}}>
-              <div style={{display:"flex",alignItems:"baseline",gap:5,marginBottom:2}}>
-                <span style={{color:"#0f172a",fontSize:13,fontFamily:"'Inter',sans-serif",fontWeight:700}}>Tesla Model 3</span><div style={{display:"flex",alignItems:"center",gap:2,marginTop:4,background:"#f59e0b18",borderRadius:8,padding:"3px 8px",width:"fit-content"}}>{"★★★★★".split("").map((s,i)=><span key={i} style={{color:"#f59e0b",fontSize:13}}>{s}</span>)}<span style={{color:"#f59e0b",fontSize:10,fontWeight:700,marginLeft:4}}>5.0</span></div>
-              
-              </div>
-              <div style={{display:"flex",alignItems:"center",gap:5}}>
-                <div style={{width:10,height:10,borderRadius:"50%",background:"#334155",border:"1.5px solid #64748b"}}/>
-                <span style={{color:"#64748b",fontSize:10}}>Negro Medianoche · Eléctrico</span>
-                <div style={{display:"flex",alignItems:"center",gap:8,marginTop:6,flexWrap:"wrap"}}>
-                  <span style={{color:"#2563eb",fontSize:11,fontWeight:700,letterSpacing:2,background:"#2563eb15",border:"1px solid #2563eb33",borderRadius:6,padding:"2px 8px"}}>🔲 5361MZC</span>
-                  <span style={{color:"#64748b",fontSize:11}}>· Sebastián Echevarría</span>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:3}}>
+                <span style={{color:"#0f172a",fontSize:16,fontWeight:900}}>Tesla Model 3</span>
+                <div style={{display:"flex",gap:1,alignItems:"center"}}>
+                  {[1,2,3,4,5].map(s=>(
+                    <svg key={s} width="12" height="12" viewBox="0 0 24 24" fill="#f59e0b">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                  ))}
+                  <span style={{color:"#f59e0b",fontSize:11,fontWeight:700,marginLeft:3}}>5.0</span>
                 </div>
               </div>
+              <div style={{color:"#475569",fontSize:11}}>Negro Medianoche · Eléctrico</div>
             </div>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="#2563eb" opacity="0.6">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#2563eb" style={{flexShrink:0}}>
               <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
             </svg>
+          </div>
+
+          {/* ── Separador ── */}
+          <div style={{height:"1px",background:"linear-gradient(90deg,transparent,#2563eb55,transparent)",marginBottom:10}}/>
+
+          {/* ── Fila 3: Matrícula + Conductor ── */}
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            <div style={{background:"#1e3a8a",borderRadius:8,padding:"6px 16px",display:"inline-flex",alignItems:"center",gap:8}}>
+              <div style={{width:10,height:14,background:"#ffffff",borderRadius:2,opacity:0.8}}/>
+              <span style={{color:"#ffffff",fontSize:16,fontWeight:900,letterSpacing:3}}>5361MZC</span>
+            </div>
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <div style={{width:32,height:32,borderRadius:"50%",background:"linear-gradient(135deg,#1e3a8a,#2563eb)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                <span style={{color:"#ffffff",fontSize:11,fontWeight:800}}>SE</span>
+              </div>
+              <div>
+                <div style={{color:"#0f172a",fontSize:13,fontWeight:800}}>Sebastián Echevarría</div>
+                <div style={{color:"#2563eb",fontSize:10,fontWeight:700}}>Tu conductor</div>
+              </div>
+            </div>
           </div>
         </div>
       )}
