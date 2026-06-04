@@ -3880,6 +3880,18 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
                 <div style={{color:isWaiting?"#ef4444":isOngoing?"#16a34a":"#1e3a8a",fontSize:10,letterSpacing:2,fontWeight:700,marginBottom:2}}>{isOngoing?"EN CURSO":isWaiting?"⏳ EN ESPERA":"TIEMPO RESTANTE"}</div>
                 <div style={{color:isOngoing?"#16a34a":isWaiting?"#ef4444":urgency?"#d97706":"#0f172a",fontSize:24,fontFamily:"'Inter',sans-serif",fontWeight:900,letterSpacing:2}}>{countdownStr}</div>
               </div>
+              {/* Chat con el conductor */}
+              <button onClick={()=>{const rel=(messages[String(upcoming.id)]||[]).filter(m=>m.from==="driver");onMarkRead&&onMarkRead(String(upcoming.id),rel.length);setChatBooking(upcoming);}} style={{
+                display:"flex",alignItems:"center",justifyContent:"center",gap:7,
+                width:"100%",marginTop:12,
+                background:"linear-gradient(135deg,#7c3aed,#6d28d9)",
+                border:"none",borderRadius:10,padding:"10px 0",
+                cursor:"pointer",color:"#ffffff",fontSize:12,fontWeight:700,
+                boxShadow:"0 2px 8px rgba(124,58,237,0.3)",position:"relative",
+              }}>
+                💬 Chat con el conductor
+                {(()=>{const unread=(messages[String(upcoming.id)]||[]).filter(m=>m.from==="driver").length;return unread>0?<span style={{position:"absolute",top:-5,right:10,background:"#ef4444",borderRadius:10,padding:"1px 6px",fontSize:9,color:"#fff",fontWeight:700}}>{unread}</span>:null;})()}
+              </button>
             </div>
           </div>
         );
@@ -4100,20 +4112,29 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
           })()}
 
           {/* ── ACTIVE BOOKINGS ── */}
-          <div style={{color:"#64748b",fontSize:10,letterSpacing:3,marginBottom:10}}>RESERVAS ACTIVAS</div>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12,paddingBottom:10,borderBottom:"2px solid #2563eb22"}}>
+            <div style={{width:4,height:20,background:"#2563eb",borderRadius:2}}/>
+            <span style={{color:"#1e3a8a",fontSize:14,letterSpacing:2,fontWeight:900}}>RESERVAS ACTIVAS</span>
+            <span style={{background:"#2563eb",color:"#fff",borderRadius:10,padding:"2px 8px",fontSize:10,fontWeight:700}}>{myBookings.filter(b=>!["completed","cancelled","rejected"].includes(b.status)).length}</span>
+          </div>
           {myBookings.filter(b=>!["completed","cancelled","rejected"].includes(b.status)).length===0&&(
             <div style={{color:"#475569",fontSize:12,textAlign:"center",padding:"16px 0",background:"#f1f5f9",borderRadius:10,marginBottom:16}}>No hay reservas activas</div>
           )}
           {myBookings.filter(b=>!["completed","cancelled","rejected"].includes(b.status))
             .sort((a,b)=>new Date(`${a.date}T${a.time}`)-new Date(`${b.date}T${b.time}`))
             .map(b=>(
-            <div key={b.id} onClick={()=>setCalModal(b)} style={{background:"#f1f5f9",borderRadius:12,padding:"14px 16px",marginBottom:8,
-              borderLeft:`3px solid ${statusColor(b.status)}`,cursor:"pointer",transition:"all 0.2s"}}
-              onMouseEnter={e=>e.currentTarget.style.transform="translateX(3px)"}
-              onMouseLeave={e=>e.currentTarget.style.transform="none"}>
+            <div key={b.id} onClick={()=>setCalModal(b)} style={{
+              background:"#ffffff",borderRadius:14,padding:"14px 16px",marginBottom:10,
+              border:`2px solid ${statusColor(b.status)}44`,
+              boxShadow:`0 3px 12px ${statusColor(b.status)}18`,
+              cursor:"pointer",transition:"all 0.2s"}}
+              onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow=`0 6px 20px ${statusColor(b.status)}28`;}}
+              onMouseLeave={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow=`0 3px 12px ${statusColor(b.status)}18`;}}>
+              {/* Color strip top */}
+              <div style={{height:3,background:statusColor(b.status),borderRadius:"2px 2px 0 0",margin:"-14px -16px 10px"}}/>
               <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
-                <span style={{color:"#0f172a",fontSize:14,fontFamily:"'Inter',sans-serif"}}>{b.guest}</span>
-                <span style={{fontSize:10,padding:"2px 8px",borderRadius:4,background:`${statusColor(b.status)}22`,color:statusColor(b.status)}}>{statusLabel(b.status).toUpperCase()}</span>
+                <span style={{color:"#0f172a",fontSize:15,fontFamily:"'Inter',sans-serif",fontWeight:800}}>{b.guest}</span>
+                <span style={{fontSize:10,padding:"3px 10px",borderRadius:20,background:statusColor(b.status),color:"#ffffff",fontWeight:700}}>{statusLabel(b.status).toUpperCase()}</span>
               </div>
               <div style={{color:"#64748b",fontSize:12,display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>
                 <span>{b.date}</span><span>{b.time}</span>
@@ -4123,9 +4144,7 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
               {b.status==="inprogress"&&<div style={{marginTop:7,fontSize:11,color:"#3b82f6",display:"flex",alignItems:"center",gap:4}}><span style={{width:5,height:5,borderRadius:"50%",background:"#3b82f6",display:"inline-block",animation:"pulse 1.5s infinite"}}/>🚗 Conductor en camino al destino</div>}
               {b.status==="completed"&&<div style={{marginTop:7,fontSize:11,color:"#22c55e"}}>✅ Viaje Completado — comisión acumulada</div>}
               {b.status==="cancelled"&&<div style={{marginTop:7,fontSize:11,color:"#f97316"}}>✕ Cancelado: {b.cancelReason||"Sin motivo"} — sin comisión</div>}
-              <button onClick={e=>{e.stopPropagation();const rel=(messages[String(b.id)]||[]).filter(m=>m.from==="driver");onMarkRead&&onMarkRead(String(b.id),rel.length);setChatBooking(b);}} style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,width:"100%",marginTop:10,background:"#ffffff",border:"1px solid #2a3a4a",borderRadius:8,padding:"7px 0",cursor:"pointer",color:"#64748b",fontSize:12,fontWeight:600,transition:"all 0.15s",position:"relative"}}
-                onMouseEnter={e=>{e.currentTarget.style.borderColor="#2563eb44";e.currentTarget.style.color="#f8fafc"}}
-                onMouseLeave={e=>{e.currentTarget.style.borderColor="#e2e8f0";e.currentTarget.style.color="#64748b"}}>
+              <button onClick={e=>{e.stopPropagation();const rel=(messages[String(b.id)]||[]).filter(m=>m.from==="driver");onMarkRead&&onMarkRead(String(b.id),rel.length);setChatBooking(b);}} style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,width:"100%",marginTop:10,background:"linear-gradient(135deg,#7c3aed,#6d28d9)",border:"none",borderRadius:10,padding:"9px 0",cursor:"pointer",color:"#ffffff",fontSize:12,fontWeight:700,transition:"all 0.15s",position:"relative",boxShadow:"0 2px 8px rgba(124,58,237,0.25)"}}>
                 💬 Chat con el conductor
                 {(messages[b.id]||[]).length>0&&<span style={{position:"absolute",top:-4,right:8,background:"#ef4444",borderRadius:10,padding:"1px 6px",fontSize:9,color:"#fff",fontWeight:700}}>{(messages[String(b.id)]||[]).length}</span>}
               </button>
@@ -4155,7 +4174,7 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
                 <div key={b.id+"hist"} style={{background:"#ffffff",borderRadius:10,padding:"12px 14px",marginBottom:8,borderLeft:`3px solid ${statusColor(b.status)}`}}>
                   <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
                     <span style={{color:"#0f172a",fontSize:13,fontFamily:"'Inter',sans-serif"}}>{b.guest}</span>
-                    <span style={{fontSize:10,padding:"2px 8px",borderRadius:4,background:`${statusColor(b.status)}22`,color:statusColor(b.status)}}>{statusLabel(b.status).toUpperCase()}</span>
+                    <span style={{fontSize:10,padding:"3px 10px",borderRadius:20,background:statusColor(b.status),color:"#ffffff",fontWeight:700}}>{statusLabel(b.status).toUpperCase()}</span>
                   </div>
                   <div style={{color:"#64748b",fontSize:11,display:"flex",gap:8,flexWrap:"wrap"}}>
                     <span>{b.date}</span><span>{b.time}</span>
