@@ -3679,79 +3679,6 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
           </div>
         </div>
       )}
-      <div style={{
-        display:"flex",alignItems:"center",justifyContent:"space-between",
-        background:"#ffffff",border:"1px solid #2563eb33",
-        borderRadius:12,padding:"10px 14px",marginBottom:14,
-      }}>
-        <div style={{flex:1,minWidth:0}}>
-          <div style={{color:"#64748b",fontSize:9,letterSpacing:2,marginBottom:3}}>📍 PUNTO DE PARTIDA FIJO</div>
-          {fixedOrigin.name&&<div style={{color:"#0f172a",fontSize:13,fontWeight:600,marginBottom:1}}>{fixedOrigin.name}</div>}
-          <div style={{color:"#2563eb",fontSize:11,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-            {fixedOrigin.address||fixedOrigin.name||"No configurado — toca ⚙ para establecer"}
-          </div>
-        </div>
-        <button onClick={()=>{setOriginDraft({...fixedOrigin});setShowOriginSettings(true);}} style={{
-          background:"#f1f5f9",border:"1px solid #2563eb33",borderRadius:8,
-          color:"#2563eb",fontSize:12,padding:"6px 10px",cursor:"pointer",
-          display:"flex",alignItems:"center",gap:4,flexShrink:0,marginLeft:10,
-        }}>
-          ⚙ Cambiar
-        </button>
-      </div>
-
-      {/* Origin Settings Modal */}
-      {showOriginSettings&&(
-        <div onClick={()=>setShowOriginSettings(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:400,display:"flex",alignItems:"flex-end"}}>
-          <div onClick={e=>e.stopPropagation()} style={{
-            background:"linear-gradient(180deg,#1e293b,#0f172a)",
-            borderRadius:"22px 22px 0 0",padding:"20px 20px 36px",width:"100%",
-            border:"1px solid #2563eb33",borderBottom:"none",
-            animation:"slideUp 0.3s ease",
-          }}>
-            <div style={{width:40,height:4,background:"#e2e8f0",borderRadius:2,margin:"0 auto 14px"}}/>
-            <button onClick={()=>setShowOriginSettings(false)} style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",color:"#64748b",fontSize:13,cursor:"pointer",padding:"0 0 14px",fontFamily:"inherit"}}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-              Volver
-            </button>
-            <div style={{color:"#2563eb",fontSize:11,letterSpacing:3,marginBottom:6}}>PUNTO DE PARTIDA FIJO</div>
-            <div style={{color:"#64748b",fontSize:12,marginBottom:14,lineHeight:1.5}}>
-              Todas las reservas nuevas usarán esta dirección como punto de inicio. Cámbiala aquí cuando sea necesario.
-            </div>
-            <button onClick={()=>getLocation(addr=>{setOriginDraft({name:"Mi ubicación actual",address:addr});} )} disabled={geoLoading} style={{
-              width:"100%",marginBottom:14,display:"flex",alignItems:"center",justifyContent:"center",gap:8,
-              background:geoLoading?"#f1f5f9":"linear-gradient(135deg,#0f2a1a,#1e293b)",
-              border:`1.5px solid ${geoLoading?"#334155":"#22c55e55"}`,
-              borderRadius:10,padding:"11px 0",cursor:geoLoading?"default":"pointer",
-              color:geoLoading?"#475569":"#22c55e",fontSize:12,fontWeight:700,transition:"all 0.2s",
-            }}>
-              <span style={{fontSize:16}}>📍</span>
-              {geoLoading?"Obteniendo ubicación...":"Usar mi ubicación actual"}
-            </button>
-            {geoError==="denied"&&<GeoErrorMsg onClose={()=>setGeoState({loading:false,error:null,denied:false})}/>}
-            <label style={{color:"#64748b",fontSize:11,letterSpacing:2,display:"block",marginBottom:6}}>NOMBRE DEL LUGAR</label>
-            <input value={originDraft.name} onChange={e=>setOriginDraft(d=>({...d,name:e.target.value}))}
-              placeholder="Ej: Hotel Ritz, Restaurante La Mar..."
-              style={inputStyle}/>
-            <label style={{color:"#64748b",fontSize:11,letterSpacing:2,display:"block",marginBottom:6,marginTop:8}}>DIRECCIÓN COMPLETA</label>
-            <input value={originDraft.address} onChange={e=>setOriginDraft(d=>({...d,address:e.target.value}))}
-              placeholder="Ej: Plaza de la Lealtad 5, Madrid"
-              style={inputStyle}/>
-            <button onClick={()=>{
-              saveOrigin(originDraft);
-              setForm(f=>({...f,origin:originDraft.address||originDraft.name||f.origin}));
-              setShowOriginSettings(false);
-            }} style={{
-              width:"100%",marginTop:18,
-              background:"linear-gradient(135deg,#1e3a8a,#2563eb)",
-              border:"none",borderRadius:12,padding:"14px 0",
-              color:"#ffffff",fontSize:14,fontWeight:700,letterSpacing:1,cursor:"pointer",
-            }}>
-              ✓ Guardar punto de partida
-            </button>
-          </div>
-        </div>
-      )}
       {/* Driver status + Vehicle card — only when in service */}
       {!isOffline&&(
         <div style={{
@@ -5153,6 +5080,14 @@ export default function RivieraApp() {
   const [installPrompt,setInstallPrompt]=useState(null);
   const [showInstall,setShowInstall]=useState(false);
   const [showDriverMenu,setShowDriverMenu]=useState(false);
+  const [showEmpProfile,setShowEmpProfile]=useState(false);
+  const [empOriginDraft,setEmpOriginDraft]=useState({name:"",address:""});
+  const [empPinView,setEmpPinView]=useState(false);
+  const [empPinCurrent,setEmpPinCurrent]=useState("");
+  const [empPinNew,setEmpPinNew]=useState("");
+  const [empPinConfirm,setEmpPinConfirm]=useState("");
+  const [empPinError,setEmpPinError]=useState("");
+  const [empPinSuccess,setEmpPinSuccess]=useState(false);
   useEffect(()=>{
     const handler=e=>{e.preventDefault();setInstallPrompt(e);setShowInstall(true);};
     window.addEventListener('beforeinstallprompt',handler);
@@ -5594,14 +5529,123 @@ export default function RivieraApp() {
                   {pendingCount>0&&<div style={{background:"#ef4444",borderRadius:"50%",width:18,height:18,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:"#fff",marginLeft:2}}>{pendingCount}</div>}
                 </button>
               ):currentEmployee?(
-                <div style={{display:"flex",alignItems:"center",gap:6,background:"#eff6ff",border:"1.5px solid #1e3a8a33",borderRadius:20,padding:"4px 12px"}}>
-                  <div style={{width:22,height:22,borderRadius:"50%",background:currentEmployee.avatar+"25",border:`1.5px solid ${currentEmployee.avatar}55`,display:"flex",alignItems:"center",justifyContent:"center",color:currentEmployee.avatar,fontSize:9,fontWeight:700}}>{initials(currentEmployee.name)}</div>
+                <button onClick={()=>{setEmpOriginDraft({name:currentEmployee.hotel||"",address:""});setEmpPinView(false);setEmpPinError("");setEmpPinCurrent("");setEmpPinNew("");setEmpPinConfirm("");setShowEmpProfile(true);}} style={{
+                  display:"flex",alignItems:"center",gap:6,background:"#eff6ff",
+                  border:"1.5px solid #1e3a8a44",borderRadius:20,padding:"4px 12px 4px 4px",cursor:"pointer",
+                }}>
+                  <div style={{width:26,height:26,borderRadius:"50%",background:currentEmployee.avatar+"25",border:`1.5px solid ${currentEmployee.avatar}55`,display:"flex",alignItems:"center",justifyContent:"center",color:currentEmployee.avatar,fontSize:9,fontWeight:700}}>{initials(currentEmployee.name)}</div>
                   <span style={{color:"#0f172a",fontSize:12,fontWeight:700}}>{currentEmployee.name}</span>
                   <span style={{color:"#64748b",fontSize:10}}>· {currentEmployee.hotel.split(" ").slice(-1)[0]}</span>
-                </div>
+                  <span style={{color:"#1e3a8a",fontSize:11}}>▾</span>
+                </button>
               ):null}
             </div>
           </div>
+
+          {/* ── EMPLOYEE PROFILE DRAWER ── */}
+          {showEmpProfile&&currentEmployee&&(
+            <div onClick={()=>setShowEmpProfile(false)} style={{position:"fixed",inset:0,background:"rgba(15,23,42,0.5)",zIndex:1000,display:"flex",alignItems:"flex-end"}}>
+              <div onClick={e=>e.stopPropagation()} style={{background:"#ffffff",borderRadius:"22px 22px 0 0",width:"100%",border:"1px solid #e2e8f0",padding:"0 0 36px",position:"relative",zIndex:1001}}>
+                <div style={{width:40,height:4,background:"#cbd5e1",borderRadius:4,margin:"14px auto 18px"}}/>
+                <div style={{padding:"0 20px"}}>
+                  {/* Avatar + nombre */}
+                  <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20,paddingBottom:16,borderBottom:"1px solid #e2e8f0"}}>
+                    <div style={{width:52,height:52,borderRadius:"50%",background:currentEmployee.avatar+"25",border:`2px solid ${currentEmployee.avatar}55`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,fontWeight:800,color:currentEmployee.avatar,flexShrink:0}}>{initials(currentEmployee.name)}</div>
+                    <div>
+                      <div style={{color:"#0f172a",fontSize:17,fontWeight:800}}>{currentEmployee.name}</div>
+                      <div style={{color:currentEmployee.avatar,fontSize:11,fontWeight:700,marginTop:2}}>{currentEmployee.hotel}</div>
+                    </div>
+                  </div>
+
+                  {!empPinView?(
+                    <>
+                      {/* Lugar de trabajo */}
+                      <div style={{marginBottom:14}}>
+                        <label style={{color:"#1e3a8a",fontSize:10,letterSpacing:2,fontWeight:800,display:"block",marginBottom:5}}>HOTEL / LUGAR DE TRABAJO</label>
+                        <input value={empOriginDraft.name} onChange={e=>setEmpOriginDraft({...empOriginDraft,name:e.target.value})}
+                          placeholder="Nombre del hotel o lugar de trabajo"
+                          style={{width:"100%",background:"#f8fafc",border:`2px solid ${empOriginDraft.name?"#2563eb":"#f59e0b"}`,borderRadius:10,padding:"11px 14px",color:"#0f172a",fontSize:13,fontWeight:700,outline:"none",boxSizing:"border-box"}}/>
+                      </div>
+
+                      {/* Punto de partida */}
+                      <div style={{marginBottom:6}}>
+                        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:5}}>
+                          <label style={{color:"#1e3a8a",fontSize:10,letterSpacing:2,fontWeight:800}}>PUNTO DE PARTIDA</label>
+                          <button onClick={()=>{
+                            const ORIGIN_KEY=`nexttrip_origin_${currentEmployee.id}`;
+                            try{const saved=JSON.parse(localStorage.getItem(ORIGIN_KEY)||"{}");setEmpOriginDraft({name:saved.name||"",address:saved.address||""});}catch{}
+                            navigator.geolocation&&navigator.geolocation.getCurrentPosition(pos=>{
+                              const addr=`${pos.coords.latitude.toFixed(5)},${pos.coords.longitude.toFixed(5)}`;
+                              setEmpOriginDraft(d=>({...d,address:addr}));
+                            });
+                          }} style={{background:"linear-gradient(135deg,#2563eb,#1d4ed8)",border:"none",borderRadius:20,padding:"5px 12px",color:"#ffffff",fontSize:11,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:5}}>
+                            <span style={{fontSize:13}}>📍</span> Usar mi ubicación
+                          </button>
+                        </div>
+                        <input value={empOriginDraft.address} onChange={e=>setEmpOriginDraft({...empOriginDraft,address:e.target.value})}
+                          placeholder="Dirección de partida habitual"
+                          style={{width:"100%",background:"#f8fafc",border:`2px solid ${empOriginDraft.address?"#2563eb":"#f59e0b"}`,borderRadius:10,padding:"11px 14px",color:"#0f172a",fontSize:13,fontWeight:700,outline:"none",boxSizing:"border-box",marginBottom:8}}/>
+                        <button onClick={()=>{
+                          const ORIGIN_KEY=`nexttrip_origin_${currentEmployee.id}`;
+                          try{localStorage.setItem(ORIGIN_KEY,JSON.stringify(empOriginDraft));}catch{}
+                          setShowEmpProfile(false);
+                        }} style={{width:"100%",background:"linear-gradient(135deg,#1e3a8a,#2563eb)",border:"none",borderRadius:10,padding:"11px 0",color:"#ffffff",fontSize:13,fontWeight:700,cursor:"pointer",marginBottom:10}}>
+                          💾 Guardar datos
+                        </button>
+                      </div>
+
+                      {/* Cambiar PIN */}
+                      <button onClick={()=>setEmpPinView(true)} style={{width:"100%",background:"#f8fafc",border:"1.5px solid #e2e8f0",borderRadius:10,padding:"12px 0",color:"#0f172a",fontSize:13,fontWeight:700,cursor:"pointer",marginBottom:10,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                        🔑 Cambiar PIN de acceso
+                      </button>
+
+                      {/* Salir */}
+                      <button onClick={()=>{setShowEmpProfile(false);setCurrentEmployee(null);setScreen("roles");}} style={{width:"100%",background:"linear-gradient(135deg,#ef4444,#b91c1c)",border:"none",borderRadius:10,padding:"13px 0",color:"#ffffff",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                        🚪 Cerrar sesión
+                      </button>
+                    </>
+                  ):(
+                    /* Cambiar PIN view */
+                    <div style={{background:"#f8fafc",border:"1.5px solid #2563eb33",borderRadius:12,padding:"16px"}}>
+                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+                        <div style={{color:"#1e3a8a",fontSize:13,fontWeight:800}}>🔑 Cambiar PIN</div>
+                        <button onClick={()=>setEmpPinView(false)} style={{background:"none",border:"none",color:"#94a3b8",fontSize:18,cursor:"pointer",padding:0}}>✕</button>
+                      </div>
+                      {["PIN ACTUAL","PIN NUEVO","CONFIRMAR PIN NUEVO"].map((label,idx)=>{
+                        const val=[empPinCurrent,empPinNew,empPinConfirm][idx];
+                        const setter=[setEmpPinCurrent,setEmpPinNew,setEmpPinConfirm][idx];
+                        const borderColor=val.length===4?(idx===2?(empPinNew===empPinConfirm?"#22c55e":"#ef4444"):"#2563eb"):"#e2e8f0";
+                        return(
+                          <div key={label} style={{marginBottom:12}}>
+                            <label style={{color:"#475569",fontSize:10,letterSpacing:1,fontWeight:700,display:"block",marginBottom:4}}>{label}</label>
+                            <input type="password" inputMode="numeric" maxLength={4} value={val} onChange={e=>setter(e.target.value.replace(/\D/g,"").slice(0,4))}
+                              placeholder="••••"
+                              style={{width:"100%",background:"#ffffff",border:`2px solid ${borderColor}`,borderRadius:8,padding:"10px 12px",color:"#0f172a",fontSize:20,fontWeight:700,outline:"none",letterSpacing:6,boxSizing:"border-box",textAlign:"center"}}/>
+                          </div>
+                        );
+                      })}
+                      {empPinError&&<div style={{background:"#fff0f0",border:"1px solid #ef444455",borderRadius:8,padding:"8px 10px",color:"#ef4444",fontSize:11,fontWeight:700,marginBottom:10}}>{empPinError}</div>}
+                      {empPinSuccess&&<div style={{background:"#f0fdf4",border:"1px solid #22c55e55",borderRadius:8,padding:"8px 10px",color:"#16a34a",fontSize:11,fontWeight:700,marginBottom:10}}>✅ PIN actualizado correctamente</div>}
+                      <button onClick={()=>{
+                        setEmpPinError("");
+                        if(currentEmployee.pin&&empPinCurrent!==currentEmployee.pin){setEmpPinError("PIN actual incorrecto");return;}
+                        if(!/^\d{4}$/.test(empPinNew)){setEmpPinError("El PIN debe tener 4 dígitos");return;}
+                        if(empPinNew!==empPinConfirm){setEmpPinError("Los PINs no coinciden");return;}
+                        const users=loadUsers();
+                        const updated=users.map(u=>u.id===currentEmployee.id?{...u,pin:empPinNew}:u);
+                        try{localStorage.setItem(USERS_KEY,JSON.stringify(updated));}catch{}
+                        setEmpPinSuccess(true);
+                        setEmpPinCurrent("");setEmpPinNew("");setEmpPinConfirm("");
+                        setTimeout(()=>{setEmpPinSuccess(false);setEmpPinView(false);},1800);
+                      }} style={{width:"100%",background:"linear-gradient(135deg,#1e3a8a,#2563eb)",border:"none",borderRadius:8,padding:"11px 0",color:"#ffffff",fontSize:13,fontWeight:700,cursor:"pointer"}}>
+                        Guardar nuevo PIN
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
 
 
