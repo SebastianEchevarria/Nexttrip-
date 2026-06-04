@@ -4074,36 +4074,40 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
             if(done.length===0) return null;
             return (
               <div style={{
-                background:"linear-gradient(135deg,#0a0f1e,#1e293b)",
-                border:"1px solid #2563eb33",borderRadius:14,
-                padding:"14px 16px",marginBottom:14,
+                background:"#ffffff",
+                border:"2px solid #e2e8f0",borderRadius:14,
+                padding:"16px",marginBottom:14,
+                boxShadow:"0 2px 10px rgba(37,99,235,0.08)",
               }}>
-                <div style={{color:"#2563eb",fontSize:10,letterSpacing:3,marginBottom:10}}>
+                <div style={{color:"#1e3a8a",fontSize:11,letterSpacing:3,fontWeight:800,marginBottom:14}}>
                   MI HISTORIAL — {employee.name.toUpperCase()}
                 </div>
-                <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:10}}>
-                  <div style={{background:"#ffffff",borderRadius:10,padding:"10px 8px",textAlign:"center"}}>
-                    <div style={{color:"#0f172a",fontSize:20,fontFamily:"'Inter',sans-serif",fontWeight:700}}>{done.length}</div>
-                    <div style={{color:"#64748b",fontSize:9,letterSpacing:1}}>VIAJES</div>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:12}}>
+                  {/* Viajes completados */}
+                  <div style={{background:"#f8fafc",borderRadius:12,padding:"14px 8px",textAlign:"center",border:"1px solid #e2e8f0"}}>
+                    <div style={{color:"#0f172a",fontSize:28,fontFamily:"'Inter',sans-serif",fontWeight:900,lineHeight:1}}>{done.length}</div>
+                    <div style={{color:"#64748b",fontSize:9,letterSpacing:1,marginTop:4,fontWeight:700}}>VIAJES</div>
                   </div>
-                  <div style={{background:"#ffffff",borderRadius:10,padding:"10px 8px",textAlign:"center"}}>
-                    <div style={{color:"#2563eb",fontSize:20,fontFamily:"'Inter',sans-serif",fontWeight:700}}>{fmt(total)}</div>
-                    <div style={{color:"#64748b",fontSize:9,letterSpacing:1}}>€ GESTIONADO</div>
+                  {/* Comisiones pendientes */}
+                  <div style={{background:"#fffbeb",borderRadius:12,padding:"14px 8px",textAlign:"center",border:"1.5px solid #f59e0b44"}}>
+                    <div style={{color:"#d97706",fontSize:24,fontFamily:"'Inter',sans-serif",fontWeight:900,lineHeight:1}}>{fmt(comm-paidComm)}</div>
+                    <div style={{color:"#d97706",fontSize:8,letterSpacing:1,marginTop:4,fontWeight:700}}>€ PENDIENTE</div>
                   </div>
-                  <div style={{background:"#ffffff",borderRadius:10,padding:"10px 8px",textAlign:"center"}}>
-                    <div style={{color:"#22c55e",fontSize:20,fontFamily:"'Inter',sans-serif",fontWeight:700}}>{fmt(paidComm)}</div>
-                    <div style={{color:"#64748b",fontSize:9,letterSpacing:1}}>€ COBRADO</div>
+                  {/* Comisiones cobradas */}
+                  <div style={{background:"#f0fdf4",borderRadius:12,padding:"14px 8px",textAlign:"center",border:"1.5px solid #22c55e44"}}>
+                    <div style={{color:"#16a34a",fontSize:24,fontFamily:"'Inter',sans-serif",fontWeight:900,lineHeight:1}}>{fmt(paidComm)}</div>
+                    <div style={{color:"#16a34a",fontSize:8,letterSpacing:1,marginTop:4,fontWeight:700}}>€ COBRADO</div>
                   </div>
                 </div>
-                {/* Progress bar: paid vs total commissions */}
+                {/* Barra de progreso */}
                 {comm>0&&(
                   <div>
-                    <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-                      <span style={{color:"#64748b",fontSize:10}}>Comisiones cobradas</span>
-                      <span style={{color:"#2563eb",fontSize:10,fontWeight:600}}>{fmt(paidComm)} / {fmt(comm)} €</span>
+                    <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
+                      <span style={{color:"#64748b",fontSize:10,fontWeight:600}}>Progreso comisiones</span>
+                      <span style={{color:"#1e3a8a",fontSize:10,fontWeight:700}}>{fmt(paidComm)} / {fmt(comm)} €</span>
                     </div>
-                    <div style={{height:4,background:"#f1f5f9",borderRadius:2,overflow:"hidden"}}>
-                      <div style={{height:"100%",width:`${comm>0?Math.min((paidComm/comm)*100,100):0}%`,background:"linear-gradient(90deg,#2563eb,#22c55e)",borderRadius:2,transition:"width 0.5s ease"}}/>
+                    <div style={{height:6,background:"#e2e8f0",borderRadius:3,overflow:"hidden"}}>
+                      <div style={{height:"100%",width:`${comm>0?Math.min((paidComm/comm)*100,100):0}%`,background:"linear-gradient(90deg,#f59e0b,#22c55e)",borderRadius:3,transition:"width 0.5s ease"}}/>
                     </div>
                   </div>
                 )}
