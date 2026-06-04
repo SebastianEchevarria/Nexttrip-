@@ -3109,8 +3109,8 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
           }}>HOY</button>
         </div>
         <input type="date" value={calDate} onChange={e=>setCalDate(e.target.value)}
-          style={{background:"#f1f5f9",border:"1px solid #1e3a5f",borderRadius:10,color:"#0f172a",fontSize:13,padding:"9px 14px",outline:"none",colorScheme:"dark",width:"100%",boxSizing:"border-box",marginBottom:12}}/>
-        <div style={{background:"#f8fafc",borderRadius:14,overflow:"hidden",border:"1px solid #1e3a5f"}}>
+          style={{background:"#eff6ff",border:"2px solid #2563eb",borderRadius:10,color:"#0f172a",fontSize:14,fontWeight:700,padding:"10px 14px",outline:"none",colorScheme:"light",width:"100%",boxSizing:"border-box",marginBottom:12,boxShadow:"0 2px 8px rgba(37,99,235,0.1)"}}/>
+        <div style={{background:"#ffffff",borderRadius:14,overflow:"hidden",border:"2px solid #e2e8f0",boxShadow:"0 2px 12px rgba(37,99,235,0.06)"}}>
           {Array.from({length:65},(_,i)=>i).map(i=>{
             const totalMins = 6*60 + i*15;
             if(totalMins > 22*60) return null;
@@ -3143,21 +3143,21 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
             return (
               <div key={slotTime} onClick={()=>{ if(bookingHere) setCalModal(bookingHere); }} style={{
                 display:"flex", alignItems:"center",
-                borderBottom:`1px solid ${isHour?"#2a2a2a":"#181818"}`,
-                minHeight:isHour?44:28,
-                background:hasBooking?"linear-gradient(90deg,#2a1000,#1a0800)":isInBlockedRange?"linear-gradient(90deg,#2a0505,#1a0000)":"transparent",
-                borderLeft:isInBlockedRange?"3px solid #ef444466":"3px solid transparent",
+                borderBottom:`1px solid ${isHour?"#e2e8f0":"#f1f5f9"}`,
+                minHeight:isHour?48:30,
+                background:hasBooking?"#eff6ff":isInBlockedRange?"#fff5f5":"transparent",
+                borderLeft:isInBlockedRange?"3px solid #ef4444":"3px solid transparent",
                 cursor:bookingHere?"pointer":"default",
               }}>
-                <div style={{width:52,padding:"0 10px",borderRight:`1px solid ${isHour?"#2a2a2a":"#181818"}`,flexShrink:0,display:"flex",alignItems:"center",minHeight:"inherit"}}>
-                  <span style={{color:isInBlockedRange?"#ef444488":"#ffffff",fontSize:isHour?13:10,fontWeight:isHour?700:400}}>{slotTime}</span>
+                <div style={{width:52,padding:"0 10px",borderRight:`1px solid ${isHour?"#e2e8f0":"#f1f5f9"}`,flexShrink:0,display:"flex",alignItems:"center",minHeight:"inherit",background:isHour?"#f8fafc":"transparent"}}>
+                  <span style={{color:isInBlockedRange?"#ef4444":isHour?"#0f172a":isHalfHour?"#334155":"#94a3b8",fontSize:isHour?13:10,fontWeight:isHour?700:400}}>{slotTime}</span>
                 </div>
                 <div style={{flex:1,padding:"0 10px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                   {bookingHere&&(
                     <div style={{display:"flex",alignItems:"center",gap:7}}>
                       <div style={{width:6,height:6,borderRadius:"50%",background:"#2563eb",animation:"pulse 1.5s infinite",flexShrink:0}}/>
                       <div>
-                        <div style={{color:"#e8d5a3",fontSize:11,fontWeight:700}}>{bookingHere.guest}</div>
+                        <div style={{color:"#0f172a",fontSize:12,fontWeight:800}}>{bookingHere.guest}</div>
                         <div style={{color:"#2563eb",fontSize:10}}>{bookingHere.time} — {m2t(t2m(bookingHere.time)+TRIP_DURATION)} · {bookingHere.hotel}</div>
                       </div>
                     </div>
@@ -3182,10 +3182,10 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
                   {!bookingHere&&!hasBooking&&isInBlockedRange&&!isBlockRangeStart&&!isBlockStart&&(isHour||isHalfHour)&&(
                     <span style={{color:"#ef444455",fontSize:9}}>▓ bloqueado</span>
                   )}
-                  {!hasBooking&&!isInBlockedRange&&(isHour||isHalfHour)&&(
+                  {!hasBooking&&!isInBlockedRange&&(
                     <button onClick={e=>{e.stopPropagation();onToggleBlock(calDate,slotTime);}} style={{
-                      background:"#fff0f0",border:"1px solid #ef444466",borderRadius:6,
-                      color:"#ef4444",fontSize:9,fontWeight:700,padding:"3px 8px",cursor:"pointer",letterSpacing:0.3,
+                      background:"#fff0f0",border:"1.5px solid #ef4444",borderRadius:6,
+                      color:"#ef4444",fontSize:10,fontWeight:700,padding:"4px 10px",cursor:"pointer",
                     }}>⊘ Bloquear</button>
                   )}
                 </div>
@@ -3892,7 +3892,7 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
               </div>
             </div>
           )}
-          <div style={{background:"#f8fafc",borderRadius:14,overflow:"hidden",border:"1px solid #1e3a5f"}}>
+          <div style={{background:"#ffffff",borderRadius:14,overflow:"hidden",border:"2px solid #e2e8f0",boxShadow:"0 2px 12px rgba(37,99,235,0.06)"}}>
             {Array.from({length:65},(_,i)=>i).map(i=>{
               const totalMins=6*60+i*15;
               if(totalMins>22*60) return null;
@@ -3913,7 +3913,7 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
               }));
               const isAdvanceBlocked = !isAdvanceOk(form.date, slotTime);
               const isFree=occupied.length===0 && !isDriverBlocked && !isAdvanceBlocked;
-              const driverFree=driverStatus==="free";
+              const driverFree=driverStatus==="free"||driverStatus==="onroute";
               const isBlockStart=occupied.length>0&&totalMins===t2m(occupied[0].time);
               const isPrepZone=occupied.length>0&&totalMins>=t2m(occupied[0].time)-TRAVEL_PREP&&totalMins<t2m(occupied[0].time);
               return (
