@@ -2331,7 +2331,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
                         {es:"📞 Por favor llámame si tienes algún problema para encontrarme.", en:"📞 Please call me if you have any trouble finding me."},
                       ].map((msg,i)=>(
                         <button key={i} onClick={()=>{
-                          onSendMessage&&onSendMessage(upcoming.id,{from:"driver",fromName:"Conductor",text:msg.es,ts:Date.now()});
+                          onSendMessage&&onSendMessage(upcoming.id,{from:"driver",fromName:"DRIVER",text:msg.es,ts:Date.now()});
                           if(i===0){ setDriverStatus("onroute"); setTripStarted(false); try{localStorage.setItem("nexttrip_trip_started","0");}catch{} } // First msg = "Estoy en camino" → activates EN RUTA + shows Iniciar viaje
                           setShowQuickMsgs(false);
                           setToast("✅ Mensaje enviado");
@@ -2353,7 +2353,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
                     });
                     // Always send in Spanish — client app translates if needed
                     onSendMessage&&onSendMessage(upcoming.id,{
-                      from:"driver",fromName:"Conductor",
+                      from:"driver",fromName:"DRIVER",
                       text:`🚗 He llegado al punto de recogida y estoy esperándote. El tiempo de espera de 10 minutos comienza a las ${upcoming.time} (hora de tu reserva) y finaliza a las ${wH}:${wM}.`,
                       ts:Date.now(),
                     });
@@ -4562,7 +4562,7 @@ function ChatModal({ booking, messages, onSend, currentUser, isDriver, onClose, 
     onSend(bookingKey, {
       id: Date.now(),
       from: isDriver ? "driver" : currentUser.id,
-      fromName: isDriver ? "Conductor 🚗" : currentUser.name,
+      fromName: isDriver ? "DRIVER 🚗" : currentUser.name,
       fromAvatar: isDriver ? "#2563eb" : currentUser.avatar,
       text: text.trim(),
       ts: new Date().toLocaleTimeString("es-ES", { hour:"2-digit", minute:"2-digit" }),
@@ -4624,7 +4624,7 @@ function ChatModal({ booking, messages, onSend, currentUser, isDriver, onClose, 
             ) : !isDriver ? (
               <div style={{display:"flex",alignItems:"center",gap:6,background:`${COLOR}15`,border:`1px solid ${COLOR}33`,borderRadius:8,padding:"5px 10px"}}>
                 <LuxuryCarIcon size={28} color={COLOR}/>
-                <span style={{color:COLOR,fontSize:11,fontWeight:600}}>Conductor</span>
+                <span style={{color:COLOR,fontSize:11,fontWeight:700}}>DRIVER</span>
               </div>
             ) : null}
           </div>
@@ -4633,7 +4633,7 @@ function ChatModal({ booking, messages, onSend, currentUser, isDriver, onClose, 
         {/* Messages */}
         <div style={{flex:1,overflowY:"auto",padding:"14px 16px",display:"flex",flexDirection:"column",gap:10}}>
           {thread.length === 0 && (
-            <div style={{textAlign:"center",color:"#e2e8f0",fontSize:12,marginTop:20}}>
+            <div style={{textAlign:"center",color:"#94a3b8",fontSize:12,marginTop:20}}>
               No hay mensajes aún. ¡Empieza la conversación!
             </div>
           )}
@@ -4652,12 +4652,12 @@ function ChatModal({ booking, messages, onSend, currentUser, isDriver, onClose, 
                   background:mine
                     ?`linear-gradient(135deg,${COLOR},${COLOR_DARK})`
                     :"#f1f5f9",
-                  border:mine?"none":"1px solid #2a3a4a",
+                  border:mine?"none":"1px solid #e2e8f0",
                   borderRadius:mine?"14px 14px 4px 14px":"14px 14px 14px 4px",
                   padding:"9px 13px",
                 }}>
-                  <div style={{color:mine?"#f8fafc":"#f8fafc",fontSize:13,lineHeight:1.4}}>{msg.text}</div>
-                  <div style={{color:mine?"rgba(0,0,0,0.45)":"#475569",fontSize:10,marginTop:3,textAlign:"right"}}>{msg.ts}</div>
+                  <div style={{color:mine?"#ffffff":"#0f172a",fontSize:13,lineHeight:1.4,fontWeight:600}}>{msg.text}</div>
+                  <div style={{color:mine?"rgba(255,255,255,0.65)":"#94a3b8",fontSize:10,marginTop:3,textAlign:"right"}}>{msg.ts}</div>
                 </div>
               </div>
             );
@@ -4666,12 +4666,12 @@ function ChatModal({ booking, messages, onSend, currentUser, isDriver, onClose, 
         </div>
 
         {/* Input */}
-        <div style={{padding:"10px 14px 24px",borderTop:`1px solid ${COLOR}22`,display:"flex",gap:8,flexShrink:0,background:COLOR_BG+"88"}}>
+        <div style={{padding:"10px 14px 24px",borderTop:`1px solid ${COLOR}22`,display:"flex",gap:8,flexShrink:0,background:"#f8fafc",flexWrap:"wrap"}}>
           {isDriver&&<button onClick={()=>setShowTemplates(s=>!s)} style={{background:"none",border:"1px solid #2563eb33",borderRadius:20,color:"#64748b",fontSize:11,padding:"4px 12px",cursor:"pointer",marginBottom:8}}>Respuestas rapidas</button>}
           {isDriver&&showTemplates&&(
             <div style={{marginBottom:8}}>
               {DRIVER_TEMPLATES.map((tpl,i)=>(
-                <button key={i} onClick={()=>{onSend(String(b.id),{id:Date.now(),from:"driver",fromName:"Conductor",fromAvatar:"#2563eb",text:clientLang==="en"?tpl.en:tpl.es,ts:new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"})});setShowTemplates(false);}} style={{display:"block",width:"100%",background:"#f1f5f9",border:"1px solid #2563eb33",borderRadius:8,color:"#0f172a",fontSize:12,padding:"8px 12px",cursor:"pointer",textAlign:"left",marginBottom:4}}>
+                <button key={i} onClick={()=>{onSend(String(b.id),{id:Date.now(),from:"driver",fromName:"DRIVER",fromAvatar:"#2563eb",text:clientLang==="en"?tpl.en:tpl.es,ts:new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"})});setShowTemplates(false);}} style={{display:"block",width:"100%",background:"#f1f5f9",border:"1px solid #2563eb33",borderRadius:8,color:"#0f172a",fontSize:12,padding:"8px 12px",cursor:"pointer",textAlign:"left",marginBottom:4}}>
                   {tpl.es}{clientLang==="en"&&<span style={{color:"#2563eb",fontSize:10,marginLeft:8}}>{tpl.en}</span>}
                 </button>
               ))}
@@ -5471,9 +5471,9 @@ export default function RivieraApp() {
         <div style={{
           position:"fixed",top:0,left:0,right:0,
           width:"100%",zIndex:500,
-          background:"linear-gradient(135deg,#1a0f00,#1e293b)",
-          borderBottom:"2px solid #2563eb",
-          boxShadow:"0 4px 24px rgba(0,0,0,0.7)",
+          background:"linear-gradient(135deg,#eff6ff,#dbeafe)",
+          borderBottom:"3px solid #2563eb",
+          boxShadow:"0 4px 24px rgba(37,99,235,0.25)",
           animation:"slideDown 0.3s ease",
         }}>
           <div style={{maxWidth:480,margin:"0 auto"}}>
@@ -5481,7 +5481,7 @@ export default function RivieraApp() {
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 16px 4px"}}>
             <div style={{display:"flex",alignItems:"center",gap:8}}>
               <div style={{background:"#ef4444",borderRadius:"50%",width:8,height:8,animation:"pulse 1s infinite"}}/>
-              <span style={{color:"#2563eb",fontSize:11,fontWeight:700,letterSpacing:1}}>
+              <span style={{color:"#1e3a8a",fontSize:12,fontWeight:800,letterSpacing:1}}>
                 💬 {unreadConvos.reduce((s,c)=>s+c.unread,0)} MENSAJE{unreadConvos.reduce((s,c)=>s+c.unread,0)>1?"S":""} SIN LEER
               </span>
             </div>
@@ -5497,10 +5497,10 @@ export default function RivieraApp() {
               handleMarkRead(String(c.bookingId), relevant.length);
             }} style={{
               display:"flex",alignItems:"center",gap:10,
-              padding:"8px 16px",borderTop:`1px solid ${isVipMsg?"#2a1a3e":"#2a1a00"}`,
+              padding:"8px 16px",borderTop:`1px solid ${isVipMsg?"#e0e7ff":"#dbeafe"}`,
               cursor:"pointer",transition:"background 0.15s",
             }}
-              onMouseEnter={e=>e.currentTarget.style.background=isVipMsg?"#eff6ff":"#2a1a00"}
+              onMouseEnter={e=>e.currentTarget.style.background=isVipMsg?"#e0e7ff":"#dbeafe"}
               onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
               <div style={{width:36,height:36,borderRadius:"50%",flexShrink:0,background:msgColor+"20",border:`1.5px solid ${msgColor}55`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>
                 {isVipMsg?"💜":"💬"}
