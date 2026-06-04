@@ -2619,6 +2619,26 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
         );
       })()}
 
+      {/* ══════════════════════════════════════════ */}
+      {/* ── SECCIÓN FACTURACIÓN ── */}
+      {(withFare.length>0||(()=>{const months=[];const now=new Date();for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;const total=bookings.filter(b=>b.status==="completed"&&b.fare&&b.date?.startsWith(key)).reduce((s,b)=>s+Number(b.fare||0),0);months.push(total);}return months.reduce((s,m)=>s+m,0)>0;})())&&(
+      <div style={{
+        background:"linear-gradient(135deg,#f8fafc,#eff6ff)",
+        border:"2px solid #2563eb33",
+        borderRadius:20,
+        padding:"20px 16px",
+        marginBottom:22,
+        boxShadow:"0 6px 24px rgba(37,99,235,0.1)",
+      }}>
+        {/* FACTURACIÓN header */}
+        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:20,paddingBottom:14,borderBottom:"2px solid #2563eb22"}}>
+          <div style={{width:40,height:40,borderRadius:12,background:"linear-gradient(135deg,#1e3a8a,#2563eb)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>💶</div>
+          <div>
+            <div style={{color:"#1e3a8a",fontSize:18,fontWeight:900,letterSpacing:1}}>FACTURACIÓN</div>
+            <div style={{color:"#64748b",fontSize:11}}>Ingresos · Comisiones · Historial</div>
+          </div>
+        </div>
+
       {/* ── GRÁFICO DE INGRESOS POR MES ── */}
       {(()=>{
         // Build last 6 months of earnings from completed bookings
@@ -2704,6 +2724,59 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
         );
       })()}
 
+
+        {/* ── INGRESOS POR SEMANA ── */}
+        {(()=>{
+          const weeks = [];
+          const now = new Date();
+          for(let i=3;i>=0;i--){
+            const start = new Date(now);
+            start.setDate(now.getDate() - (i*7) - now.getDay());
+            const end = new Date(start);
+            end.setDate(start.getDate() + 6);
+            const startStr = start.toISOString().slice(0,10);
+            const endStr = end.toISOString().slice(0,10);
+            const total = bookings.filter(b=>b.status==="completed"&&b.fare&&b.date>=startStr&&b.date<=endStr)
+              .reduce((s,b)=>s+Number(b.fare||0),0);
+            const label = i===0?"Esta semana":i===1?"Sem. pasada":`Sem. -${i}`;
+            weeks.push({label,total,startStr,endStr});
+          }
+          const maxW = Math.max(...weeks.map(w=>w.total),1);
+          const totalW = weeks.reduce((s,w)=>s+w.total,0);
+          if(totalW===0) return null;
+          return(
+            <section style={{marginBottom:18}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
+                <span style={{fontSize:14}}>📆</span>
+                <span style={{color:"#1e3a8a",fontSize:11,fontWeight:800,letterSpacing:2}}>INGRESOS POR SEMANA</span>
+              </div>
+              <div style={{background:"#ffffff",borderRadius:12,padding:"14px",border:"1px solid #e2e8f0"}}>
+                <div style={{display:"flex",alignItems:"flex-end",gap:8,height:70,marginBottom:8}}>
+                  {weeks.map((w,i)=>{
+                    const pct=maxW>0?(w.total/maxW)*100:0;
+                    const isLast=i===3;
+                    return(
+                      <div key={w.startStr} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+                        {w.total>0&&<div style={{color:"#64748b",fontSize:8}}>{fmt(w.total)}</div>}
+                        <div style={{width:"100%",borderRadius:"4px 4px 0 0",height:`${Math.max(pct,2)}%`,background:isLast?"linear-gradient(180deg,#38bdf8,#2563eb)":"linear-gradient(180deg,#bfdbfe,#93c5fd)",transition:"height 0.5s ease"}}/>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div style={{display:"flex",gap:8}}>
+                  {weeks.map((w,i)=>(
+                    <div key={w.startStr} style={{flex:1,textAlign:"center",color:i===3?"#2563eb":"#94a3b8",fontSize:9,fontWeight:i===3?700:400}}>{w.label}</div>
+                  ))}
+                </div>
+                <div style={{borderTop:"1px solid #e2e8f0",marginTop:8,paddingTop:8,display:"flex",justifyContent:"space-between"}}>
+                  <span style={{color:"#64748b",fontSize:10}}>Esta semana</span>
+                  <span style={{color:"#1e3a8a",fontSize:14,fontWeight:800}}>{fmt(weeks[3].total)} €</span>
+                </div>
+              </div>
+            </section>
+          );
+        })()}
+
       {withFare.length>0&&(
         <div style={{marginBottom:20}}>
           <button onClick={()=>setHotelIncomeOpen(o=>!o)} style={{
@@ -2772,7 +2845,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
               </div>
             );
           })}
-          <div style={{background:"#ffffff",border:"2px solid #e2e8f0",borderRadius:16,padding:"20px",boxShadow:"0 4px 16px rgba(0,0,0,0.06)",marginTop:4}}>
+          <div style={{background:"linear-gradient(135deg,#eff6ff,#dbeafe)",border:"2.5px solid #2563eb55",borderRadius:16,padding:"20px",boxShadow:"0 4px 16px rgba(37,99,235,0.15)",marginTop:4}}>
             {/* Total facturado */}
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,paddingBottom:12,borderBottom:"1px solid #e2e8f0"}}>
               <div style={{display:"flex",alignItems:"center",gap:8}}>
@@ -2803,6 +2876,10 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
           </div>
         </div>
       )}
+
+      </div>
+      )}
+      {/* ══════════════════════════════════════════ */}
 
       {/* Hotel commission breakdown modal */}
       {hotelModal&&(()=>{
@@ -3075,10 +3152,13 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
 
       {/* ── MI CALENDARIO ── */}
       <div style={{marginBottom:22}}>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
-          <div style={{display:"flex",alignItems:"center",gap:8}}>
-            <span style={{fontSize:15}}>📅</span>
-            <span style={{color:"#64748b",fontSize:10,letterSpacing:3}}>MI CALENDARIO</span>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,padding:"12px 14px",background:"linear-gradient(135deg,#eff6ff,#dbeafe)",borderRadius:14,border:"2px solid #2563eb44",boxShadow:"0 3px 10px rgba(37,99,235,0.1)"}}>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <div style={{width:36,height:36,borderRadius:10,background:"#1e3a8a",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>📅</div>
+            <div>
+              <span style={{color:"#1e3a8a",fontSize:14,fontWeight:900,letterSpacing:2,display:"block"}}>MI CALENDARIO</span>
+              <span style={{color:"#64748b",fontSize:10}}>Gestión de disponibilidad</span>
+            </div>
           </div>
           <button onClick={()=>setCalDate(new Date().toISOString().slice(0,10))} style={{
             background:calDate===new Date().toISOString().slice(0,10)?"#1e3a8a":"#eff6ff",
@@ -3272,7 +3352,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
             <button onClick={()=>setHistoryOpen(v=>!v)} style={{
               display:"flex",alignItems:"center",gap:8,background:"none",border:"none",cursor:"pointer",padding:0,
             }}>
-              <span style={{color:"#64748b",fontSize:11,letterSpacing:3}}>🗂 HISTORIAL DE VIAJES</span>
+              <span style={{color:"#1e3a8a",fontSize:13,fontWeight:900,letterSpacing:2}}>🗂 HISTORIAL DE VIAJES</span>
               <span style={{background:"#f1f5f9",borderRadius:10,padding:"2px 8px",fontSize:10,color:"#64748b"}}>{fHistory.length}</span>
               <span style={{color:"#475569",fontSize:14,transition:"transform 0.2s",display:"inline-block",transform:historyOpen?"rotate(180deg)":"none"}}>▾</span>
             </button>
@@ -3354,7 +3434,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
                 width:"100%",display:"flex",alignItems:"center",gap:8,
                 background:"none",border:"none",cursor:"pointer",padding:"0 0 10px",
               }}>
-                <span style={{color:"#64748b",fontSize:11,letterSpacing:3}}>✕ RECHAZADOS</span>
+                <span style={{color:"#ef4444",fontSize:13,fontWeight:900,letterSpacing:2}}>✕ RECHAZADOS</span>
                 <span style={{background:"#f1f5f9",borderRadius:10,padding:"2px 8px",fontSize:10,color:"#64748b"}}>{fRej.length}</span>
                 <span style={{color:"#475569",fontSize:14,display:"inline-block",transform:rejOpen?"rotate(180deg)":"none",transition:"transform 0.2s"}}>▾</span>
               </button>
