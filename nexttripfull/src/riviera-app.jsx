@@ -2313,48 +2313,113 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
               {arrivedBookingId===upcoming.id&&!isOngoing&&!tripStarted&&upcoming.status!=="inprogress"&&(
                 <>
                   {(()=>{
-                    const waitEnd=new Date(`${upcoming.date}T${upcoming.time}:00`).getTime()+10*60*1000;
-                    const overMs=nowTick.getTime()-waitEnd;
-                    const isExpired=overMs>0;
-                    const autoDeleteMs=15*60*1000; // 5 min after 10 min = 15 min total
-                    const willAutoDelete=overMs>10*60*1000;
-                    const secsToDelete=willAutoDelete?0:Math.max(0,Math.floor((autoDeleteMs-overMs)/1000));
-                    // Auto-cancel after 5 min of no response
-                    if(overMs>5*60*1000&&!cancelConfirm){
-                      onCancelTrip&&onCancelTrip(upcoming.id,"No-show: tiempo de espera agotado sin respuesta");
+                    const bookingTime=new Date(`${upcoming.date}T${upcoming.time}:00`).getTime();
+                    const now=nowTick.getTime();
+                    // Wait starts FROM the booking time (not from when driver arrived)
+                    // So if driver arrived early, countdown shows "waiting for booking time"
+                    const waitStartMs=Math.max(bookingTime, now); // wait starts at booking time
+                    const waitEndMs=bookingTime+15*60*1000; // 15 min from booking time
+                    const beforeBooking=now<bookingTime;
+                    const waitingMs=now-bookingTime; // how long since booking time
+                    const isExpired=waitingMs>0&&now>waitEndMs;
+                    const remainingWaitMs=Math.max(0,waitEndMs-now);
+                    const remainingSecs=Math.floor(remainingWaitMs/1000);
+                    const padW=n=>String(n).padStart(2,"0");
+                    const waitCountStr=`${padW(Math.floor(remainingSecs/60))}:${padW(remainingSecs%60)}`;
+
+                    // Auto-cancel after 15 min past booking time
+                    if(waitingMs>15*60*1000&&!cancelConfirm){
+                      // Notify client
+                      onSendMessage&&onSendMessage(upcoming.id,{
+                        from:"driver",fromName:"DRIVER",
+                        text:`❌ Reserva cancelada automáticamente: el cliente no se presentó en 15 minutos.\n📅 ${upcoming.date} · ${upcoming.time}\n📍 ${upcoming.origin}`,
+                        ts:Date.now(),isSystem:true
+                      });
+                      onCancelTrip&&onCancelTrip(upcoming.id,"No-show: 15 min de espera agotados");
                       setArrivedBookingId(null);
                       setDriverStatus("free");
-                      setToast("❌ Reserva cancelada automáticamente por no presentación");
+                      setToast("❌ Cancelado automáticamente — cliente no se presentó");
                     }
-                    return isExpired?(
-                      <div style={{background:"#fff0f0",border:"2px solid #ef4444",borderRadius:12,padding:"14px"}}>
-                        <div style={{color:"#ef4444",fontSize:13,fontWeight:700,marginBottom:8}}>⏰ Tiempo de espera agotado</div>
-                        <div style={{color:"#64748b",fontSize:11,marginBottom:12}}>
-                          {overMs<5*60*1000?`Cancelación automática en ${Math.floor((5*60*1000-overMs)/1000)}s si no responde`:"Cancelando automáticamente..."}
+
+                    return beforeBooking?(
+                      // Driver arrived early — show waiting for booking time
+                      <div style={{background:"#eff6ff",border:"2px solid #2563eb44",borderRadius:12,padding:"14px",display:"flex",alignItems:"center",gap:10}}>
+                        <span style={{fontSize:20}}>✅</span>
+                        <div>
+                          <div style={{color:"#1e3a8a",fontSize:13,fontWeight:700}}>Has llegado al punto de recogida</div>
+                          <div style={{color:"#64748b",fontSize:11,marginTop:2}}>La espera de 15 min empieza a las <strong>{upcoming.time}</strong></div>
                         </div>
+                      </div>
+                    ):isExpired?(
+                      // 15 min elapsed — show expired panel
+                      <div style={{background:"#fff0f0",border:"2px solid #ef4444",borderRadius:12,padding:"14px"}}>
+                        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+                          <span style={{fontSize:18}}>⏰</span>
+                          <div style={{color:"#ef4444",fontSize:13,fontWeight:700}}>Tiempo de espera agotado</div>
+                        </div>
+                        <div style={{color:"#64748b",fontSize:11,marginBottom:12}}>Han pasado 15 minutos desde la hora de la reserva</div>
                         <div style={{display:"flex",gap:8}}>
                           <button onClick={()=>{
+                            onSendMessage&&onSendMessage(upcoming.id,{
+                              from:"driver",fromName:"DRIVER",
+                              text:`❌ El conductor ha cancelado la reserva por no presentación del cliente.\n📅 ${upcoming.date} · ${upcoming.time}\n📍 ${upcoming.origin}`,
+                              ts:Date.now(),isSystem:true
+                            });
                             onCancelTrip&&onCancelTrip(upcoming.id,"No-show: cliente no se presentó");
                             setArrivedBookingId(null);setDriverStatus("free");
                             fbGet("nexttrip/status").then(cur=>{const u={...(cur||{})};delete u.driverArrived;fbSet("nexttrip/status",{...u,updatedAt:Date.now()});});
                             setToast("❌ Reserva cancelada por no presentación");
-                          }} style={{flex:1,background:"linear-gradient(135deg,#ef4444,#b91c1c)",border:"none",borderRadius:8,padding:"10px 0",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                          }} style={{flex:1,background:"linear-gradient(135deg,#ef4444,#b91c1c)",border:"none",borderRadius:10,padding:"11px 0",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>
                             ❌ Cancelar reserva
                           </button>
                           <button onClick={()=>{
-                            setArrivedBookingId(null); // Reset — keep waiting
-                            setToast("⏳ Continuando espera...");
-                          }} style={{flex:1,background:"#f1f5f9",border:"1px solid #22c55e44",borderRadius:8,padding:"10px 0",color:"#22c55e",fontSize:12,fontWeight:600,cursor:"pointer"}}>
+                            // Reset arrived time to extend wait
+                            fbGet("nexttrip/status").then(cur=>{fbSet("nexttrip/status",{...(cur||{}),driverArrived:{bookingId:upcoming.id,arrivedAt:Date.now()},updatedAt:Date.now()});});
+                            setToast("⏳ Esperando más tiempo...");
+                          }} style={{flex:1,background:"#f0fdf4",border:"2px solid #22c55e44",borderRadius:10,padding:"11px 0",color:"#16a34a",fontSize:12,fontWeight:700,cursor:"pointer"}}>
                             ⏳ Seguir esperando
                           </button>
                         </div>
                       </div>
                     ):(
-                      <div style={{background:"#22c55e12",border:"1.5px solid #22c55e44",borderRadius:10,padding:"10px 14px",display:"flex",alignItems:"center",gap:8}}>
-                        <span style={{fontSize:16}}>✅</span>
-                        <div>
-                          <div style={{color:"#22c55e",fontSize:12,fontWeight:700}}>Esperando desde las {upcoming.time}</div>
-                          <div style={{color:"#64748b",fontSize:10}}>10 min de espera · el cliente está avisado</div>
+                      // Counting down 15 min from booking time
+                      <div style={{background:"#fffbeb",border:"2px solid #f59e0b44",borderRadius:12,padding:"14px"}}>
+                        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+                          <div style={{display:"flex",alignItems:"center",gap:8}}>
+                            <span style={{fontSize:18}}>⏰</span>
+                            <div>
+                              <div style={{color:"#d97706",fontSize:12,fontWeight:700}}>Esperando al cliente</div>
+                              <div style={{color:"#64748b",fontSize:10}}>Desde las {upcoming.time} · 15 min máx.</div>
+                            </div>
+                          </div>
+                          <div style={{textAlign:"right"}}>
+                            <div style={{color:"#d97706",fontSize:22,fontWeight:900,fontFamily:"'Inter',sans-serif",lineHeight:1}}>{waitCountStr}</div>
+                            <div style={{color:"#64748b",fontSize:9}}>restantes</div>
+                          </div>
+                        </div>
+                        <div style={{height:6,background:"#fef3c7",borderRadius:3,overflow:"hidden",marginBottom:12}}>
+                          <div style={{height:"100%",background:"linear-gradient(90deg,#f59e0b,#ef4444)",borderRadius:3,width:`${Math.min(100,(waitingMs/(15*60*1000))*100)}%`,transition:"width 1s linear"}}/>
+                        </div>
+                        <div style={{display:"flex",gap:8}}>
+                          <button onClick={()=>{
+                            onSendMessage&&onSendMessage(upcoming.id,{
+                              from:"driver",fromName:"DRIVER",
+                              text:`❌ El conductor ha cancelado la reserva por no presentación del cliente.\n📅 ${upcoming.date} · ${upcoming.time}\n📍 ${upcoming.origin}`,
+                              ts:Date.now(),isSystem:true
+                            });
+                            onCancelTrip&&onCancelTrip(upcoming.id,"No-show: cliente no se presentó");
+                            setArrivedBookingId(null);setDriverStatus("free");
+                            fbGet("nexttrip/status").then(cur=>{const u={...(cur||{})};delete u.driverArrived;fbSet("nexttrip/status",{...u,updatedAt:Date.now()});});
+                            setToast("❌ Reserva cancelada por no presentación");
+                          }} style={{flex:1,background:"linear-gradient(135deg,#ef4444,#b91c1c)",border:"none",borderRadius:10,padding:"10px 0",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                            ❌ Cancelar
+                          </button>
+                          <button onClick={()=>{
+                            fbGet("nexttrip/status").then(cur=>{fbSet("nexttrip/status",{...(cur||{}),driverArrived:{bookingId:upcoming.id,arrivedAt:Date.now()},updatedAt:Date.now()});});
+                            setToast("⏳ Esperando más tiempo...");
+                          }} style={{flex:1,background:"#f0fdf4",border:"2px solid #22c55e44",borderRadius:10,padding:"10px 0",color:"#16a34a",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                            ⏳ Seguir esperando
+                          </button>
                         </div>
                       </div>
                     );
