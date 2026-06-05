@@ -1453,26 +1453,32 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
         const countdownStr=days>0?`${days}d ${pad(hrs)}h ${pad(mins)}m`:`${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
         const urgency=!isOngoing&&diffMs>0&&diffMs<30*60*1000;
         const isArrived=arrivedBooking&&arrivedBooking.id===upcoming.id;
-        const waitEndMs=tripDt.getTime()+10*60*1000;
-        const waitRemMs=isArrived?Math.max(0,waitEndMs-Date.now()):0;
+        // Wait: 15 min FROM booking time (matches driver logic)
+        const waitStartMs=tripDt.getTime(); // booking time
+        const waitEndMs=tripDt.getTime()+15*60*1000; // 15 min from booking time
+        const nowMs=Date.now();
+        const waitingMs=nowMs-waitStartMs; // ms since booking time
+        const waitRemMs=isArrived?Math.max(0,waitEndMs-nowMs):0;
         const wSecs=Math.floor(waitRemMs/1000);
         const wMins=Math.floor(wSecs/60);
         const wSecsR=wSecs%60;
+        const waitExpired=isArrived&&waitRemMs===0;
+        const waitProgress=isArrived&&waitingMs>0?Math.min(100,(waitingMs/(15*60*1000))*100):0;
         const basePrice=upcoming.proposedPrice||upcoming.fare||0;
         const discountedPrice=basePrice>0?(basePrice*(1-DISCOUNT_RATE)).toFixed(2):0;
         return(
           <div style={{
             marginBottom:16,
-            background:isArrived?"linear-gradient(135deg,#dcfce7,#f0fdf4)":isOngoing?"linear-gradient(135deg,#dbeafe,#eff6ff)":urgency?"linear-gradient(135deg,#fef3c7,#fffbeb)":"linear-gradient(135deg,#dbeafe,#eff6ff)",
-            border:`3px solid ${isArrived?"#16a34a":isOngoing?"#16a34a":urgency?"#f59e0b":"#2563eb"}`,
+            background:isArrived?"linear-gradient(135deg,#fffbeb,#fef3c7)":isOngoing?"linear-gradient(135deg,#dbeafe,#eff6ff)":urgency?"linear-gradient(135deg,#fef3c7,#fffbeb)":"linear-gradient(135deg,#dbeafe,#eff6ff)",
+            border:`3px solid ${isArrived?"#f59e0b":isOngoing?"#16a34a":urgency?"#f59e0b":"#2563eb"}`,
             borderRadius:18,overflow:"hidden",
-            boxShadow:isArrived?"0 4px 24px rgba(22,163,74,0.25)":isOngoing?"0 4px 20px rgba(22,163,74,0.2)":urgency?"0 4px 20px rgba(245,158,11,0.25)":"0 4px 20px rgba(37,99,235,0.2)",
+            boxShadow:isArrived?"0 4px 24px rgba(245,158,11,0.25)":isOngoing?"0 4px 20px rgba(22,163,74,0.2)":urgency?"0 4px 20px rgba(245,158,11,0.25)":"0 4px 20px rgba(37,99,235,0.2)",
           }}>
             <div style={{padding:"10px 16px 0",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
               <div style={{display:"flex",alignItems:"center",gap:7}}>
                 <div style={{width:8,height:8,borderRadius:"50%",background:isArrived?"#22c55e":urgency?"#f59e0b":"#2563eb",animation:"pulse 1s infinite",flexShrink:0}}/>
-                <span style={{color:"#1e3a8a",fontSize:13,letterSpacing:2,fontWeight:900}}>
-                  {isArrived?(lang==="en"?"🚗 DRIVER ARRIVED":"🚗 CONDUCTOR LLEGÓ"):(lang==="en"?"⚡ NEXT TRIP":"⚡ PRÓXIMO VIAJE")}
+                <span style={{color:isArrived?"#d97706":isOngoing?"#1e3a8a":urgency?"#d97706":"#1e3a8a",fontSize:13,letterSpacing:2,fontWeight:900}}>
+                  {isArrived?(lang==="en"?"⏳ WAITING FOR YOU":"⏳ ESPERANDO AL CLIENTE"):isOngoing?(lang==="en"?"🚗 IN PROGRESS":"🚗 EN CURSO"):(lang==="en"?"⚡ NEXT TRIP":"⚡ PRÓXIMO VIAJE")}
                 </span>
               </div>
               <span style={{background:isOngoing?"#22c55e22":urgency?"#f59e0b22":"#2563eb22",border:`1px solid ${isOngoing?"#22c55e44":urgency?"#f59e0b44":"#2563eb44"}`,borderRadius:8,padding:"3px 10px",color:isOngoing?"#22c55e":urgency?"#f59e0b":"#2563eb",fontSize:10,fontWeight:700}}>
@@ -1504,17 +1510,31 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
             })()}
             <div style={{margin:"0 12px 12px",display:"flex",gap:8}}>
               {!isArrived&&(
-                <div style={{flex:1,background:isOngoing?"#22c55e12":urgency?"#f59e0b12":"#2563eb10",borderRadius:12,padding:"10px 14px"}}>
+                <div style={{flex:1,background:isOngoing?"#dcfce7":urgency?"#fef3c7":"#eff6ff",borderRadius:12,padding:"10px 14px"}}>
                   <div style={{color:"#1e3a8a",fontSize:11,letterSpacing:2,fontWeight:800,marginBottom:3}}>{isOngoing?(lang==="en"?"IN PROGRESS":"EN CURSO"):(lang==="en"?"TIME REMAINING":"TIEMPO RESTANTE")}</div>
-                  <div style={{color:isOngoing?"#22c55e":urgency?"#f59e0b":"#0f172a",fontSize:30,fontFamily:"'DM Sans',sans-serif",fontWeight:900,letterSpacing:2}}>{countdownStr}</div>
+                  <div style={{color:isOngoing?"#16a34a":urgency?"#d97706":"#0f172a",fontSize:30,fontFamily:"'DM Sans',sans-serif",fontWeight:900,letterSpacing:2}}>{countdownStr}</div>
                 </div>
               )}
               {isArrived&&(
-                <div style={{flex:1,background:"#22c55e12",borderRadius:12,padding:"10px 14px",border:"1.5px solid #22c55e44"}}>
-                  <div style={{color:"#22c55e",fontSize:11,fontWeight:700,marginBottom:2}}>🚗 Conductor esperando</div>
-                  <div style={{color:"#334155",fontSize:9,marginBottom:3}}>ESPERA HASTA LAS {String(new Date(waitEndMs).getHours()).padStart(2,"0")}:{String(new Date(waitEndMs).getMinutes()).padStart(2,"0")}</div>
-                  <div style={{color:wSecs<120?"#ef4444":"#22c55e",fontSize:24,fontFamily:"'DM Sans',sans-serif",fontWeight:700,letterSpacing:2}}>{pad(wMins)}:{pad(wSecsR)}</div>
-                  {wSecs===0&&<div style={{color:"#ef4444",fontSize:10,fontWeight:700,marginTop:4}}>⚠️ Tiempo de espera agotado</div>}
+                <div style={{flex:1,background:waitExpired?"#fee2e2":wSecs<120?"#fff7ed":"#fffbeb",borderRadius:12,padding:"10px 14px",border:`2px solid ${waitExpired?"#ef4444":wSecs<120?"#f97316":"#f59e0b"}`,boxShadow:waitExpired?"0 2px 8px rgba(239,68,68,0.15)":"0 2px 8px rgba(245,158,11,0.15)"}}>
+                  <div style={{color:waitExpired?"#ef4444":wSecs<120?"#ea580c":"#d97706",fontSize:11,fontWeight:800,marginBottom:2}}>
+                    {lang==="en"?"⏳ WAITING FOR YOU":"⏳ ESPERANDO AL CLIENTE"}
+                  </div>
+                  <div style={{color:"#64748b",fontSize:9,marginBottom:4}}>
+                    {lang==="en"?"Driver is waiting at the pickup point":"El conductor está en el punto de recogida"}
+                  </div>
+                  {waitExpired?(
+                    <div style={{color:"#ef4444",fontSize:13,fontWeight:800}}>
+                      {lang==="en"?"⚠️ Wait time expired":"⚠️ Tiempo de espera agotado"}
+                    </div>
+                  ):(
+                    <>
+                      <div style={{color:wSecs<120?"#ef4444":"#d97706",fontSize:26,fontFamily:"'DM Sans',sans-serif",fontWeight:900,letterSpacing:2,lineHeight:1}}>{pad(wMins)}:{pad(wSecsR)}</div>
+                      <div style={{height:4,background:"#fef3c7",borderRadius:2,overflow:"hidden",marginTop:6}}>
+                        <div style={{height:"100%",background:wSecs<120?"linear-gradient(90deg,#ef4444,#b91c1c)":"linear-gradient(90deg,#f59e0b,#ef4444)",borderRadius:2,width:`${waitProgress}%`,transition:"width 1s linear"}}/>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
               {basePrice>0&&(
