@@ -3281,37 +3281,57 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
       {/* Calendar modal */}
       {/* Service Modal */}
       {showServiceModal&&(
-        <div onClick={()=>setShowServiceModal(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.88)",zIndex:300,display:"flex",alignItems:"flex-end"}}>
-          <div onClick={e=>e.stopPropagation()} style={{background:"linear-gradient(180deg,#1e293b,#0f172a)",borderRadius:"22px 22px 0 0",padding:"20px 20px 40px",width:"100%",border:`1px solid ${isOffline?"#ef444444":"#2563eb25"}`,borderBottom:"none",animation:"slideUp 0.3s ease"}}>
-            <div style={{width:40,height:4,background:"#e2e8f0",borderRadius:2,margin:"0 auto 14px"}}/>
-            <button onClick={()=>setShowServiceModal(false)} style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",color:"#64748b",fontSize:13,cursor:"pointer",padding:"0 0 14px",fontFamily:"inherit"}}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Volver
-            </button>
+        <div onClick={()=>setShowServiceModal(false)} style={{position:"fixed",inset:0,background:"rgba(15,23,42,0.5)",zIndex:300,display:"flex",alignItems:"flex-end"}}>
+          <div onClick={e=>e.stopPropagation()} style={{background:"#ffffff",borderRadius:"22px 22px 0 0",padding:"0 0 40px",width:"100%",border:"1px solid #e2e8f0",borderBottom:"none",boxShadow:"0 -8px 32px rgba(0,0,0,0.15)"}}>
+            <div style={{width:40,height:4,background:"#cbd5e1",borderRadius:2,margin:"14px auto 18px"}}/>
+            <div style={{padding:"0 20px"}}>
+              <button onClick={()=>setShowServiceModal(false)} style={{display:"flex",alignItems:"center",gap:6,background:"#f1f5f9",border:"none",borderRadius:20,padding:"7px 14px",color:"#1e3a8a",fontSize:12,cursor:"pointer",fontWeight:700,marginBottom:18}}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" strokeWidth="2.5" strokeLinecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Volver
+              </button>
             {isOffline ? (
               <div>
-                <div style={{color:"#ef4444",fontSize:11,letterSpacing:3,marginBottom:6}}>FUERA DE SERVICIO</div>
-                <div style={{marginBottom:14}}>
-                  <label style={{color:"#64748b",fontSize:11,letterSpacing:2,display:"block",marginBottom:6}}>FECHA DE REINCORPORACIÓN</label>
-                  <input type="date" value={returnDateDraft} onChange={e=>setReturnDateDraft(e.target.value)} style={{background:"#f1f5f9",border:"1px solid #ef444444",borderRadius:10,color:"#0f172a",fontSize:14,padding:"12px 14px",outline:"none",colorScheme:"dark",width:"100%",boxSizing:"border-box"}}/>
+                {/* Header fuera de servicio */}
+                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:20,padding:"14px",background:"#fff5f5",borderRadius:14,border:"2px solid #ef444433"}}>
+                  <div style={{width:40,height:40,borderRadius:12,background:"#fee2e2",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>🔴</div>
+                  <div>
+                    <div style={{color:"#ef4444",fontSize:14,fontWeight:800}}>FUERA DE SERVICIO</div>
+                    <div style={{color:"#64748b",fontSize:11}}>Actualiza tus fechas de disponibilidad</div>
+                  </div>
                 </div>
                 <div style={{marginBottom:14}}>
-                  <label style={{color:"#64748b",fontSize:11,letterSpacing:2,display:"block",marginBottom:6}}>ÚLTIMO DÍA OPERATIVO</label>
-                  <input type="date" value={lastActiveDraft} onChange={e=>setLastActiveDraft(e.target.value)} style={{background:"#f1f5f9",border:"1px solid #ef444444",borderRadius:10,color:"#0f172a",fontSize:14,padding:"12px 14px",outline:"none",colorScheme:"dark",width:"100%",boxSizing:"border-box"}}/>
+                  <label style={{color:"#1e3a8a",fontSize:10,letterSpacing:2,fontWeight:800,display:"block",marginBottom:6}}>FECHA DE REINCORPORACIÓN</label>
+                  <input type="date" value={returnDateDraft} onChange={e=>setReturnDateDraft(e.target.value)} style={{background:"#f8fafc",border:"2px solid #ef444433",borderRadius:10,color:"#0f172a",fontSize:14,fontWeight:700,padding:"12px 14px",outline:"none",colorScheme:"light",width:"100%",boxSizing:"border-box"}}/>
                 </div>
-                <button onClick={()=>{onSetService({status:"offline",returnDate:returnDateDraft,lastActiveDate:lastActiveDraft});setShowServiceModal(false);setToast("📅 Fechas actualizadas");}} style={{width:"100%",background:"#f1f5f9",border:"1px solid #ef444433",borderRadius:12,padding:"12px 0",color:"#ef4444",fontSize:14,fontWeight:700,cursor:"pointer",marginBottom:10}}>Actualizar fechas</button>
-                <button onClick={()=>{onSetService({status:"online",returnDate:"",lastActiveDate:""});setShowServiceModal(false);setToast("✅ Conductor EN SERVICIO");}} style={{width:"100%",background:"linear-gradient(135deg,#16a34a,#15803d)",border:"none",borderRadius:12,padding:"14px 0",color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer"}}>🟢 Volver a EN SERVICIO</button>
+                <div style={{marginBottom:18}}>
+                  <label style={{color:"#1e3a8a",fontSize:10,letterSpacing:2,fontWeight:800,display:"block",marginBottom:6}}>ÚLTIMO DÍA OPERATIVO</label>
+                  <input type="date" value={lastActiveDraft} onChange={e=>setLastActiveDraft(e.target.value)} style={{background:"#f8fafc",border:"2px solid #ef444433",borderRadius:10,color:"#0f172a",fontSize:14,fontWeight:700,padding:"12px 14px",outline:"none",colorScheme:"light",width:"100%",boxSizing:"border-box"}}/>
+                </div>
+                <button onClick={()=>{onSetService({status:"offline",returnDate:returnDateDraft,lastActiveDate:lastActiveDraft});setShowServiceModal(false);setToast("📅 Fechas actualizadas");}} style={{width:"100%",background:"#f8fafc",border:"2px solid #ef444433",borderRadius:12,padding:"13px 0",color:"#ef4444",fontSize:14,fontWeight:700,cursor:"pointer",marginBottom:10}}>Actualizar fechas</button>
+                <button onClick={()=>{onSetService({status:"online",returnDate:"",lastActiveDate:""});setShowServiceModal(false);setToast("✅ Conductor EN SERVICIO");}} style={{width:"100%",background:"linear-gradient(135deg,#16a34a,#22c55e)",border:"none",borderRadius:12,padding:"14px 0",color:"#ffffff",fontSize:14,fontWeight:700,cursor:"pointer",boxShadow:"0 4px 12px rgba(34,197,94,0.3)"}}>🟢 Volver a EN SERVICIO</button>
               </div>
             ):(
               <div>
-                <div style={{color:"#2563eb",fontSize:11,letterSpacing:3,marginBottom:6}}>GESTIÓN DE SERVICIO</div>
-                <label style={{color:"#2563eb",fontSize:11,letterSpacing:2,display:"block",marginBottom:6}}>📅 ÚLTIMO DÍA OPERATIVO</label>
-                <input type="date" value={lastActiveDraft} onChange={e=>setLastActiveDraft(e.target.value)} style={{background:"#f1f5f9",border:"1px solid #2563eb66",borderRadius:10,color:"#0f172a",fontSize:14,padding:"12px 14px",outline:"none",colorScheme:"dark",width:"100%",boxSizing:"border-box",marginBottom:14}}/>
-                <label style={{color:"#64748b",fontSize:11,letterSpacing:2,display:"block",marginBottom:6}}>FECHA DE REGRESO (opcional)</label>
-                <input type="date" value={returnDateDraft} onChange={e=>setReturnDateDraft(e.target.value)} style={{background:"#f1f5f9",border:"1px solid #2563eb33",borderRadius:10,color:"#0f172a",fontSize:14,padding:"12px 14px",outline:"none",colorScheme:"dark",width:"100%",boxSizing:"border-box",marginBottom:18}}/>
-                <button onClick={()=>{onSetService({status:"online",returnDate:returnDateDraft,lastActiveDate:lastActiveDraft});setShowServiceModal(false);setToast(lastActiveDraft?`📅 Fecha límite: ${lastActiveDraft}`:"📅 Guardado");}} style={{width:"100%",background:"linear-gradient(135deg,#2563eb,#a07840)",border:"none",borderRadius:12,padding:"14px 0",color:"#0f172a",fontSize:14,fontWeight:700,cursor:"pointer",marginBottom:10}}>💾 Publicar fecha</button>
-                <button onClick={()=>{onSetService({status:"offline",returnDate:returnDateDraft,lastActiveDate:lastActiveDraft});setShowServiceModal(false);setToast("🔴 FUERA DE SERVICIO");}} style={{width:"100%",background:"#f1f5f9",border:"1px solid #ef444433",borderRadius:12,padding:"12px 0",color:"#ef4444",fontSize:13,fontWeight:700,cursor:"pointer"}}>🔴 Marcar FUERA DE SERVICIO</button>
+                {/* Header en servicio */}
+                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:20,padding:"14px",background:"#f0fdf4",borderRadius:14,border:"2px solid #22c55e33"}}>
+                  <div style={{width:40,height:40,borderRadius:12,background:"#dcfce7",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>🟢</div>
+                  <div>
+                    <div style={{color:"#15803d",fontSize:14,fontWeight:800}}>EN SERVICIO</div>
+                    <div style={{color:"#64748b",fontSize:11}}>Planifica tu disponibilidad futura</div>
+                  </div>
+                </div>
+                <div style={{marginBottom:14}}>
+                  <label style={{color:"#1e3a8a",fontSize:10,letterSpacing:2,fontWeight:800,display:"block",marginBottom:6}}>📅 ÚLTIMO DÍA OPERATIVO</label>
+                  <input type="date" value={lastActiveDraft} onChange={e=>setLastActiveDraft(e.target.value)} style={{background:"#eff6ff",border:"2px solid #2563eb",borderRadius:10,color:"#0f172a",fontSize:14,fontWeight:700,padding:"12px 14px",outline:"none",colorScheme:"light",width:"100%",boxSizing:"border-box"}}/>
+                </div>
+                <div style={{marginBottom:18}}>
+                  <label style={{color:"#64748b",fontSize:10,letterSpacing:2,fontWeight:700,display:"block",marginBottom:6}}>FECHA DE REGRESO (opcional)</label>
+                  <input type="date" value={returnDateDraft} onChange={e=>setReturnDateDraft(e.target.value)} style={{background:"#f8fafc",border:"2px solid #e2e8f0",borderRadius:10,color:"#0f172a",fontSize:14,padding:"12px 14px",outline:"none",colorScheme:"light",width:"100%",boxSizing:"border-box"}}/>
+                </div>
+                <button onClick={()=>{onSetService({status:"online",returnDate:returnDateDraft,lastActiveDate:lastActiveDraft});setShowServiceModal(false);setToast(lastActiveDraft?`📅 Fecha límite: ${lastActiveDraft}`:"📅 Guardado");}} style={{width:"100%",background:"linear-gradient(135deg,#1e3a8a,#2563eb)",border:"none",borderRadius:12,padding:"14px 0",color:"#ffffff",fontSize:14,fontWeight:700,cursor:"pointer",marginBottom:10,boxShadow:"0 4px 12px rgba(37,99,235,0.3)"}}>💾 Publicar fecha</button>
+                <button onClick={()=>{onSetService({status:"offline",returnDate:returnDateDraft,lastActiveDate:lastActiveDraft});setShowServiceModal(false);setToast("🔴 FUERA DE SERVICIO");}} style={{width:"100%",background:"#fff5f5",border:"2px solid #ef444433",borderRadius:12,padding:"12px 0",color:"#ef4444",fontSize:13,fontWeight:700,cursor:"pointer"}}>🔴 Marcar FUERA DE SERVICIO</button>
               </div>
             )}
+            </div>
           </div>
         </div>
       )}
