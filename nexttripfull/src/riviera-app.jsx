@@ -1437,6 +1437,8 @@ function BookingDetailModal({ booking, onClose, onAccept, onReject, onUpdateFare
             </div>
             <TripEstimateBox origin={b.origin} destination={b.destination}/>
           </div>
+          {/* Tarifa */}
+          <div style={{background:"#ffffff",border:"2px solid #e2e8f0",borderRadius:12,padding:"14px 16px",marginBottom:14}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:b.fare&&!editingFare?10:0}}>
             <span style={{color:"#64748b",fontSize:13}}>💶 Tarifa</span>
             {isDriver ? (
@@ -1503,6 +1505,7 @@ function BookingDetailModal({ booking, onClose, onAccept, onReject, onUpdateFare
               )}
             </div>
           )}
+          </div>
         </div>
 
         {/* Bolt Screenshot */}
@@ -1548,6 +1551,7 @@ function BookingDetailModal({ booking, onClose, onAccept, onReject, onUpdateFare
             <button onClick={()=>{onReject(b.id);onClose();}} style={{flex:1,background:"linear-gradient(135deg,#ef4444,#b91c1c)",border:"none",borderRadius:12,color:"#fff",padding:"13px 0",cursor:"pointer",fontSize:14,fontWeight:700,boxShadow:"0 3px 10px rgba(239,68,68,0.3)"}}>✕ Rechazar</button>
           </div>
         )}
+        </div>
         </div>
       </div>
     </div>
