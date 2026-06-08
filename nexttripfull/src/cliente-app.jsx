@@ -960,7 +960,7 @@ function ChatModal({ booking, messages, onSend, currentUser, isDriver, onClose, 
                   padding:"9px 13px",
                 }}>
                   <div style={{color:mine?"#ffffff":"#0f172a",fontSize:13,lineHeight:1.4}}>{(!mine&&msg.from==="driver")?translateAutoMsg(msg.text,booking?.clientLang||"es"):msg.text}</div>
-                  <div style={{color:mine?"rgba(255,255,255,0.7)":"#475569",fontSize:10,marginTop:3,textAlign:"right"}}>{msg.ts}</div>
+                  <div style={{color:mine?"rgba(255,255,255,0.7)":"#475569",fontSize:10,marginTop:3,textAlign:"right"}}>{typeof msg.ts==="number"?new Date(msg.ts).toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"}):msg.ts}</div>
                 </div>
               </div>
             );

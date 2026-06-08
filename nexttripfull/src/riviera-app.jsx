@@ -107,7 +107,7 @@ function ChatNotifBanner({ notif, bookings, onOpen, onDismiss }) {
       <div style={{flex:1, minWidth:0}}>
         <div style={{display:"flex", justifyContent:"space-between", marginBottom:2}}>
           <span style={{color:"#2563eb", fontSize:11, fontWeight:700}}>{msg.fromName}</span>
-          <span style={{color:"#475569", fontSize:10}}>{msg.ts}</span>
+          <span style={{color:"#475569",fontSize:10}}>{typeof msg.ts==="number"?new Date(msg.ts).toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"}):msg.ts}</span>
         </div>
         <div style={{color:"#64748b", fontSize:11, marginBottom:1}}>{booking.guest} · {booking.time}</div>
         <div style={{color:"#0f172a", fontSize:12, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{msg.text}</div>
@@ -1296,149 +1296,147 @@ function BookingDetailModal({ booking, onClose, onAccept, onReject, onUpdateFare
   const [editFare, setEditFare] = useState(b.fare ?? "");
 
   return (
-    <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.82)",zIndex:200,display:"flex",alignItems:"flex-end"}}>
+    <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(15,23,42,0.5)",zIndex:200,display:"flex",alignItems:"flex-end"}}>
       <div onClick={e=>e.stopPropagation()} style={{
-        background:"linear-gradient(180deg,#1e293b,#0f172a)",
-        borderRadius:"22px 22px 0 0",padding:"20px 20px 36px",width:"100%",
-        border:"1px solid #2563eb33",borderBottom:"none",
+        background:"#ffffff",
+        borderRadius:"22px 22px 0 0",padding:"0 0 40px",width:"100%",
+        border:"1px solid #e2e8f0",borderBottom:"none",
+        boxShadow:"0 -8px 32px rgba(0,0,0,0.15)",
         animation:"slideUp 0.3s ease",maxHeight:"92vh",overflowY:"auto",
       }}>
         {/* Handle */}
-        <div style={{width:40,height:4,background:"#e2e8f0",borderRadius:2,margin:"0 auto 14px"}}/>
-        <button onClick={onClose} style={{
-          display:"flex",alignItems:"center",gap:6,background:"none",border:"none",
-          color:"#64748b",fontSize:13,cursor:"pointer",padding:"0 0 12px",
-          fontFamily:"inherit",letterSpacing:0.3,
-        }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M19 12H5M12 19l-7-7 7-7"/>
-          </svg>
-          Volver
-        </button>
+        <div style={{width:40,height:4,background:"#cbd5e1",borderRadius:2,margin:"14px auto 16px"}}/>
 
-        {/* Employee badge */}
-        {emp && (
-          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14,
-            background:emp.avatar+"12",border:`1px solid ${emp.avatar}33`,borderRadius:10,padding:"8px 12px"}}>
-            <div style={{width:28,height:28,borderRadius:"50%",background:emp.avatar+"25",
-              border:`1.5px solid ${emp.avatar}55`,display:"flex",alignItems:"center",justifyContent:"center",
-              color:emp.avatar,fontSize:11,fontWeight:700,flexShrink:0}}>{initials(emp.name)}</div>
-            <div>
-              <div style={{color:"#0f172a",fontSize:13}}>{emp.name}</div>
-              <div style={{color:"#64748b",fontSize:11}}>{emp.hotel}</div>
-            </div>
-          </div>
-        )}
-
-        {/* Status pill */}
-        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
-          <div style={{width:8,height:8,borderRadius:"50%",background:statusColor(b.status)}}/>
-          <span style={{color:statusColor(b.status),fontSize:12,fontWeight:600,letterSpacing:1}}>{statusLabel(b.status).toUpperCase()}</span>
-        </div>
-
-        {/* Guest name */}
-        <div style={{color:"#0f172a",fontSize:24,fontFamily:"'Inter',sans-serif",fontWeight:700,marginBottom:4}}>{b.guest}</div>
-        <div style={{color:"#2563eb",fontSize:11,letterSpacing:2,marginBottom:18}}>{b.hotel}</div>
-
-        {/* Detail rows */}
-        {[
-          {icon:"📅", label:"Fecha",        val:b.date},
-          {icon:"🕐", label:"Hora",         val:b.time},
-          {icon:"👥", label:"Pasajeros",    val:`${b.passengers} pax`},
-          {icon:"🏨", label:"Lugar trabajo", val:b.hotel},
-          {icon:"📝", label:"Notas",        val:b.notes||"Sin notas"},
-          {icon:"👤", label:"Reservado por",val:b.receptionist},
-          {icon:"🕒", label:"Creado",       val:b.createdAt},
-        ].map(({icon,label,val})=>(
-          <div key={label} style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",
-            padding:"9px 0",borderBottom:"1px solid #1e3a5f"}}>
-            <span style={{color:"#64748b",fontSize:13}}>{icon} {label}</span>
-            <span style={{color:"#0f172a",fontSize:13,maxWidth:"58%",textAlign:"right",lineHeight:1.4}}>{val}</span>
-          </div>
-        ))}
-
-        {/* Pickup notes */}
-        {b.pickupNotes&&(
-          <div style={{padding:"9px 0",borderBottom:"1px solid #1e3a5f"}}>
-            <div style={{color:"#64748b",fontSize:13,marginBottom:6}}>📍 Indicaciones de recogida</div>
-            <div style={{background:"#f1f5f9",borderRadius:8,padding:"10px 12px",color:"#0f172a",fontSize:12,lineHeight:1.5,border:"1px solid #2563eb18"}}>
-              {b.pickupNotes}
-            </div>
-          </div>
-        )}
-
-        {/* Payment method */}
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"9px 0",borderBottom:"1px solid #1e3a5f"}}>
-          <span style={{color:"#64748b",fontSize:13}}>{b.paymentMethod==="card"?"💳":"💵"} Método de pago</span>
-          <div style={{
-            display:"flex",alignItems:"center",gap:6,
-            background:b.paymentMethod==="card"?"#3b82f618":"#2563eb18",
-            border:`1px solid ${b.paymentMethod==="card"?"#3b82f644":"#2563eb33"}`,
-            borderRadius:8,padding:"4px 12px",
+        {/* Header con estado y botón volver */}
+        <div style={{padding:"0 20px"}}>
+          <button onClick={onClose} style={{
+            display:"flex",alignItems:"center",gap:6,background:"#f1f5f9",
+            border:"none",borderRadius:20,padding:"7px 14px",
+            color:"#1e3a8a",fontSize:12,cursor:"pointer",fontWeight:700,marginBottom:16,
           }}>
-            <span style={{color:b.paymentMethod==="card"?"#3b82f6":"#2563eb",fontSize:13,fontWeight:700}}>
-              {b.paymentMethod==="card"?"💳 CARD":"💵 CASH"}
-            </span>
-            <span style={{color:"#64748b",fontSize:11}}>
-              {b.paymentMethod==="card"?"Tarjeta":"Efectivo"}
-            </span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" strokeWidth="2.5" strokeLinecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            Volver
+          </button>
+
+          {/* Status + guest name hero */}
+          <div style={{background:`linear-gradient(135deg,${statusColor(b.status)}15,${statusColor(b.status)}08)`,border:`2px solid ${statusColor(b.status)}44`,borderRadius:16,padding:"16px",marginBottom:16}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+              <div style={{width:10,height:10,borderRadius:"50%",background:statusColor(b.status),animation:"pulse 1.5s infinite",flexShrink:0}}/>
+              <span style={{color:statusColor(b.status),fontSize:12,fontWeight:800,letterSpacing:1}}>{statusLabel(b.status).toUpperCase()}</span>
+            </div>
+            <div style={{color:"#0f172a",fontSize:26,fontWeight:900,lineHeight:1,marginBottom:4}}>{b.guest}</div>
+            <div style={{color:statusColor(b.status),fontSize:12,fontWeight:700}}>{b.hotel}</div>
           </div>
-        </div>
 
-        {/* Guest phone */}
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"9px 0",borderBottom:"1px solid #1e3a5f"}}>
-          <span style={{color:"#64748b",fontSize:13}}>📞 Teléfono pasajero</span>
-          {b.guestPhone ? (
-            <a href={`tel:${b.guestPhone}`} style={{
-              display:"flex",alignItems:"center",gap:6,
-              background:"#2563eb15",border:"1px solid #2563eb33",
-              borderRadius:8,padding:"5px 12px",textDecoration:"none",
-              color:"#2563eb",fontSize:13,fontWeight:600,
-            }}>
-              📞 {b.guestPhone}
-            </a>
-          ) : (
-            <span style={{color:"#475569",fontSize:13}}>No registrado</span>
+          {/* Employee badge */}
+          {emp&&(
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14,
+              background:"#f8fafc",border:"1.5px solid #e2e8f0",borderRadius:12,padding:"10px 14px"}}>
+              <div style={{width:32,height:32,borderRadius:"50%",background:emp.avatar+"25",
+                border:`2px solid ${emp.avatar}55`,display:"flex",alignItems:"center",justifyContent:"center",
+                color:emp.avatar,fontSize:12,fontWeight:800,flexShrink:0}}>{initials(emp.name)}</div>
+              <div>
+                <div style={{color:"#0f172a",fontSize:13,fontWeight:700}}>{emp.name}</div>
+                <div style={{color:"#64748b",fontSize:11}}>{emp.hotel}</div>
+              </div>
+            </div>
           )}
-        </div>
 
-        {/* Origin & destination with maps */}
-        <div style={{padding:"12px 0",borderBottom:"1px solid #1e3a5f"}}>
-          <div style={{color:"#64748b",fontSize:11,letterSpacing:2,marginBottom:10}}>RUTA</div>
-          <div style={{display:"flex",alignItems:"flex-start",gap:8,marginBottom:8}}>
-            <span style={{color:"#2563eb",fontSize:14,marginTop:2,flexShrink:0}}>▶</span>
-            <div style={{flex:1}}>
-              <div style={{color:"#64748b",fontSize:10,letterSpacing:1,marginBottom:2}}>ORIGEN</div>
-              <div style={{color:"#0f172a",fontSize:13,marginBottom:6}}>{b.origin}</div>
+          {/* Detail rows — clean white cards */}
+          <div style={{background:"#ffffff",border:"2px solid #e2e8f0",borderRadius:14,overflow:"hidden",marginBottom:14}}>
+            {[
+              {icon:"📅",label:"Fecha",val:b.date,highlight:true},
+              {icon:"🕐",label:"Hora",val:b.time,highlight:true},
+              {icon:"👥",label:"Pasajeros",val:`${b.passengers} pax`,highlight:false},
+              {icon:"🏨",label:"Lugar trabajo",val:b.hotel,highlight:false},
+              {icon:"📝",label:"Notas",val:b.notes||"Sin notas",highlight:false},
+              {icon:"👤",label:"Reservado por",val:b.receptionist,highlight:false},
+              {icon:"🕒",label:"Creado",val:b.createdAt,highlight:false},
+            ].filter(r=>r.val).map(({icon,label,val,highlight},i,arr)=>(
+              <div key={label} style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",
+                padding:"12px 16px",
+                borderBottom:i<arr.length-1?"1px solid #f1f5f9":"none",
+                background:highlight?"#f8faff":"#ffffff"}}>
+                <span style={{color:"#64748b",fontSize:13,display:"flex",alignItems:"center",gap:6}}>
+                  <span>{icon}</span>{label}
+                </span>
+                <span style={{color:highlight?"#1e3a8a":"#0f172a",fontSize:13,fontWeight:highlight?800:600,maxWidth:"58%",textAlign:"right",lineHeight:1.4}}>{val}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Pickup notes */}
+          {b.pickupNotes&&(
+            <div style={{background:"#eff6ff",border:"1.5px solid #2563eb33",borderRadius:12,padding:"12px 14px",marginBottom:14}}>
+              <div style={{color:"#1e3a8a",fontSize:12,fontWeight:700,marginBottom:6}}>📍 Indicaciones de recogida</div>
+              <div style={{color:"#334155",fontSize:12,lineHeight:1.5}}>{b.pickupNotes}</div>
+            </div>
+          )}
+
+          {/* Payment method */}
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",
+            background:"#ffffff",border:"2px solid #e2e8f0",borderRadius:12,padding:"12px 16px",marginBottom:8}}>
+            <span style={{color:"#64748b",fontSize:13,fontWeight:600}}>💳 Método de pago</span>
+            <div style={{
+              display:"flex",alignItems:"center",gap:6,
+              background:b.paymentMethod==="card"?"#dbeafe":"#dcfce7",
+              border:`1.5px solid ${b.paymentMethod==="card"?"#2563eb44":"#22c55e44"}`,
+              borderRadius:10,padding:"5px 14px",
+            }}>
+              <span style={{color:b.paymentMethod==="card"?"#1e3a8a":"#15803d",fontSize:13,fontWeight:800}}>
+                {b.paymentMethod==="card"?"💳 CARD":"💵 CASH"}
+              </span>
+              <span style={{color:"#64748b",fontSize:11}}>{b.paymentMethod==="card"?"Tarjeta":"Efectivo"}</span>
+            </div>
+          </div>
+
+          {/* Guest phone */}
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",
+            background:"#ffffff",border:"2px solid #e2e8f0",borderRadius:12,padding:"12px 16px",marginBottom:14}}>
+            <span style={{color:"#64748b",fontSize:13,fontWeight:600}}>📞 Teléfono</span>
+            {b.guestPhone?(
+              <a href={`tel:${b.guestPhone}`} style={{
+                display:"flex",alignItems:"center",gap:6,
+                background:"#eff6ff",border:"1.5px solid #2563eb44",
+                borderRadius:10,padding:"6px 14px",textDecoration:"none",
+                color:"#1e3a8a",fontSize:13,fontWeight:800,
+              }}>
+                📞 {b.guestPhone}
+              </a>
+            ):(
+              <span style={{color:"#94a3b8",fontSize:13}}>No registrado</span>
+            )}
+          </div>
+
+          {/* Route section */}
+          <div style={{background:"linear-gradient(135deg,#eff6ff,#dbeafe)",border:"2px solid #2563eb33",borderRadius:14,padding:"16px",marginBottom:14}}>
+            <div style={{color:"#1e3a8a",fontSize:11,fontWeight:800,letterSpacing:2,marginBottom:14}}>🗺️ RUTA</div>
+            {/* Origin */}
+            <div style={{background:"#ffffff",borderRadius:10,padding:"12px",marginBottom:8,border:"1.5px solid #2563eb22"}}>
+              <div style={{color:"#2563eb",fontSize:10,fontWeight:700,letterSpacing:1,marginBottom:4}}>▶ ORIGEN</div>
+              <div style={{color:"#0f172a",fontSize:13,fontWeight:600,marginBottom:8,lineHeight:1.4}}>{b.origin}</div>
               <a href={mapsUrl(b.origin)} target="_blank" rel="noopener noreferrer"
-                style={{display:"inline-flex",alignItems:"center",gap:5,background:"#2563eb18",
-                  border:"1px solid #2563eb33",borderRadius:7,padding:"5px 11px",textDecoration:"none",
-                  color:"#2563eb",fontSize:11,fontWeight:600}}>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                style={{display:"inline-flex",alignItems:"center",gap:6,background:"#2563eb",
+                  border:"none",borderRadius:8,padding:"7px 14px",textDecoration:"none",
+                  color:"#ffffff",fontSize:12,fontWeight:700,boxShadow:"0 2px 8px rgba(37,99,235,0.3)"}}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                 Navegar al origen
               </a>
             </div>
-          </div>
-          <div style={{display:"flex",alignItems:"flex-start",gap:8}}>
-            <span style={{color:"#ef4444",fontSize:14,marginTop:2,flexShrink:0}}>■</span>
-            <div style={{flex:1}}>
-              <div style={{color:"#64748b",fontSize:10,letterSpacing:1,marginBottom:2}}>DESTINO</div>
-              <div style={{color:"#0f172a",fontSize:13,marginBottom:6}}>{b.destination}</div>
+            {/* Destination */}
+            <div style={{background:"#ffffff",borderRadius:10,padding:"12px",border:"1.5px solid #ef444422"}}>
+              <div style={{color:"#ef4444",fontSize:10,fontWeight:700,letterSpacing:1,marginBottom:4}}>■ DESTINO</div>
+              <div style={{color:"#0f172a",fontSize:13,fontWeight:600,marginBottom:8,lineHeight:1.4}}>{b.destination}</div>
               <a href={mapsUrl(b.destination)} target="_blank" rel="noopener noreferrer"
-                style={{display:"inline-flex",alignItems:"center",gap:5,background:"#3b82f618",
-                  border:"1px solid #3b82f644",borderRadius:7,padding:"5px 11px",textDecoration:"none",
-                  color:"#3b82f6",fontSize:11,fontWeight:600}}>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                style={{display:"inline-flex",alignItems:"center",gap:6,background:"#ef4444",
+                  border:"none",borderRadius:8,padding:"7px 14px",textDecoration:"none",
+                  color:"#ffffff",fontSize:12,fontWeight:700,boxShadow:"0 2px 8px rgba(239,68,68,0.3)"}}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                 Navegar al destino
               </a>
             </div>
+            <TripEstimateBox origin={b.origin} destination={b.destination}/>
           </div>
-          {/* Trip estimate */}
-          <TripEstimateBox origin={b.origin} destination={b.destination}/>
-        </div>
-
-        {/* Tarifa */}
-        <div style={{padding:"12px 0",borderBottom:"1px solid #1e3a5f"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:b.fare&&!editingFare?10:0}}>
             <span style={{color:"#64748b",fontSize:13}}>💶 Tarifa</span>
             {isDriver ? (
@@ -1480,25 +1478,25 @@ function BookingDetailModal({ booking, onClose, onAccept, onReject, onUpdateFare
             )}
           </div>
           {b.fare && !editingFare && (
-            <div style={{background:"#ffffff",borderRadius:10,padding:"12px 14px",display:"flex",flexDirection:"column",gap:6}}>
+            <div style={{background:"#f0fdf4",borderRadius:10,padding:"12px 14px",display:"flex",flexDirection:"column",gap:6,marginTop:10}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <span style={{color:"#64748b",fontSize:12}}>💶 Precio del viaje</span>
-                <span style={{color:"#2563eb",fontSize:22,fontFamily:"'Inter',sans-serif",fontWeight:700}}>{fmt(b.fare)} €</span>
+                <span style={{color:"#15803d",fontSize:12,fontWeight:700}}>💶 Precio del viaje</span>
+                <span style={{color:"#16a34a",fontSize:24,fontFamily:"'Inter',sans-serif",fontWeight:900}}>{fmt(b.fare)} €</span>
               </div>
               {isDriver && (
-                <div style={{borderTop:"1px solid #1e3a5f",paddingTop:8,display:"flex",flexDirection:"column",gap:5}}>
+                <div style={{borderTop:"1px solid #dcfce7",paddingTop:8,display:"flex",flexDirection:"column",gap:5}}>
                   <div style={{display:"flex",justifyContent:"space-between"}}>
                     <span style={{color:"#64748b",fontSize:11}}>Comisión hotel (20%)</span>
-                    <span style={{color:"#f59e0b",fontSize:12}}>−{fmt(b.fare*COMMISSION_RATE)} €</span>
+                    <span style={{color:"#f59e0b",fontSize:12,fontWeight:700}}>−{fmt(b.fare*COMMISSION_RATE)} €</span>
                   </div>
                   <div style={{display:"flex",justifyContent:"space-between"}}>
-                    <span style={{color:"#64748b",fontSize:11}}>Tu ganancia (80%)</span>
-                    <span style={{color:"#2563eb",fontSize:14,fontWeight:700,fontFamily:"'Inter',sans-serif"}}>{fmt(b.fare*(1-COMMISSION_RATE))} €</span>
+                    <span style={{color:"#15803d",fontSize:11,fontWeight:700}}>Tu ganancia (80%)</span>
+                    <span style={{color:"#16a34a",fontSize:16,fontWeight:900,fontFamily:"'Inter',sans-serif"}}>{fmt(b.fare*(1-COMMISSION_RATE))} €</span>
                   </div>
                 </div>
               )}
               {!isDriver && (
-                <div style={{borderTop:"1px solid #1e3a5f",paddingTop:8,display:"flex",justifyContent:"space-between"}}>
+                <div style={{borderTop:"1px solid #dcfce7",paddingTop:8,display:"flex",justifyContent:"space-between"}}>
                   <span style={{color:"#64748b",fontSize:11}}>Tu comisión (20%)</span>
                   <span style={{color:"#2563eb",fontSize:14,fontWeight:700,fontFamily:"'Inter',sans-serif"}}>+{fmt(b.fare*COMMISSION_RATE)} €</span>
                 </div>
@@ -1507,12 +1505,12 @@ function BookingDetailModal({ booking, onClose, onAccept, onReject, onUpdateFare
           )}
         </div>
 
-        {/* Bolt Screenshot — visible para el conductor */}
+        {/* Bolt Screenshot */}
         {b.boltScreenshot && (
-          <div style={{padding:"12px 0",borderBottom:"1px solid #1e3a5f"}}>
+          <div style={{background:"#ffffff",border:"2px solid #e2e8f0",borderRadius:12,padding:"14px",marginBottom:14}}>
             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
               <span style={{fontSize:16}}>⚡</span>
-              <div style={{color:"#64748b",fontSize:11,letterSpacing:2}}>CAPTURA BOLT (PRECIO VERIFICADO)</div>
+              <div style={{color:"#1e3a8a",fontSize:11,fontWeight:800,letterSpacing:2}}>CAPTURA BOLT (PRECIO VERIFICADO)</div>
             </div>
             <div style={{background:"#f8fafc",border:"1.5px solid #2563eb33",borderRadius:10,overflow:"hidden"}}>
               <img
@@ -1521,7 +1519,7 @@ function BookingDetailModal({ booking, onClose, onAccept, onReject, onUpdateFare
                 style={{width:"100%",objectFit:"contain",maxHeight:300,background:"#f8fafc",display:"block"}}
                 onClick={()=>window.open(b.boltScreenshot.data,"_blank")}
               />
-              <div style={{padding:"8px 12px",display:"flex",alignItems:"center",gap:7,background:"#2563eb10"}}>
+              <div style={{padding:"8px 12px",display:"flex",alignItems:"center",gap:7,background:"#eff6ff"}}>
                 <span style={{fontSize:14}}>🔒</span>
                 <span style={{color:"#2563eb",fontSize:11,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                   Precio verificado por recepción · {b.boltScreenshot.name}
@@ -1545,11 +1543,12 @@ function BookingDetailModal({ booking, onClose, onAccept, onReject, onUpdateFare
 
         {/* Driver-only action buttons (pending trips) */}
         {isDriver && b.status==="pending" && onAccept && onReject && (
-          <div style={{display:"flex",gap:8,marginTop:16}}>
-            <button onClick={()=>{onAccept(b.id);onClose();}} style={{flex:1,background:"linear-gradient(135deg,#22c55e,#16a34a)",border:"none",borderRadius:10,color:"#fff",padding:"12px 0",cursor:"pointer",fontSize:14,fontWeight:600}}>✓ Aceptar viaje</button>
-            <button onClick={()=>{onReject(b.id);onClose();}} style={{flex:1,background:"linear-gradient(135deg,#ef4444,#b91c1c)",border:"none",borderRadius:10,color:"#fff",padding:"12px 0",cursor:"pointer",fontSize:14,fontWeight:600}}>✕ Rechazar</button>
+          <div style={{display:"flex",gap:8,marginTop:16,padding:"0 20px"}}>
+            <button onClick={()=>{onAccept(b.id);onClose();}} style={{flex:1,background:"linear-gradient(135deg,#16a34a,#22c55e)",border:"none",borderRadius:12,color:"#fff",padding:"13px 0",cursor:"pointer",fontSize:14,fontWeight:700,boxShadow:"0 3px 10px rgba(34,197,94,0.3)"}}>✓ Aceptar viaje</button>
+            <button onClick={()=>{onReject(b.id);onClose();}} style={{flex:1,background:"linear-gradient(135deg,#ef4444,#b91c1c)",border:"none",borderRadius:12,color:"#fff",padding:"13px 0",cursor:"pointer",fontSize:14,fontWeight:700,boxShadow:"0 3px 10px rgba(239,68,68,0.3)"}}>✕ Rechazar</button>
           </div>
         )}
+        </div>
       </div>
     </div>
   );
@@ -2437,18 +2436,18 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
                     }}
                     style={{
                       display:"flex",alignItems:"center",justifyContent:"center",gap:8,
-                      background:"linear-gradient(135deg,#0a1a3a,#1e293b)",
-                      border:"2px solid #3b82f6",borderRadius:12,padding:"14px 0",
-                      color:"#3b82f6",fontSize:13,fontWeight:700,textDecoration:"none",
-                      boxShadow:"0 0 16px #3b82f633",
+                      background:"linear-gradient(135deg,#1e3a8a,#2563eb)",
+                      border:"none",borderRadius:12,padding:"14px 0",
+                      color:"#ffffff",fontSize:13,fontWeight:700,textDecoration:"none",
+                      boxShadow:"0 3px 12px rgba(37,99,235,0.35)",
                     }}>
                     🗺️ Iniciar viaje → {upcoming.destination||upcoming.origin}
                   </a>
                   <button onClick={()=>setChatBooking(upcoming)} style={{
                     display:"flex",alignItems:"center",justifyContent:"center",gap:7,
-                    background:"linear-gradient(135deg,#1e0a3e,#1e293b)",
-                    border:"1px solid #a78bfa55",borderRadius:10,padding:"10px 0",
-                    color:"#a78bfa",fontSize:12,fontWeight:700,cursor:"pointer",
+                    background:"#f5f3ff",
+                    border:"2px solid #7c3aed44",borderRadius:10,padding:"10px 0",
+                    color:"#7c3aed",fontSize:12,fontWeight:700,cursor:"pointer",
                   }}>💬 Chat con cliente</button>
                 </>
               )}
@@ -2464,10 +2463,10 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
                   setToast("✅ Viaje completado");
                 }} style={{
                   width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:10,
-                  background:"linear-gradient(135deg,#0a2a00,#1e293b)",
-                  border:"2px solid #22c55e",borderRadius:12,padding:"14px 0",
-                  color:"#22c55e",fontSize:15,fontWeight:700,cursor:"pointer",
-                  boxShadow:"0 0 20px #22c55e44",
+                  background:"linear-gradient(135deg,#16a34a,#22c55e)",
+                  border:"none",borderRadius:12,padding:"14px 0",
+                  color:"#ffffff",fontSize:15,fontWeight:700,cursor:"pointer",
+                  boxShadow:"0 4px 14px rgba(34,197,94,0.3)",
                 }}>🏁 Terminar viaje</button>
               )}
 
@@ -4610,7 +4609,7 @@ function ChatModal({ booking, messages, onSend, currentUser, isDriver, onClose, 
                   padding:"9px 13px",
                 }}>
                   <div style={{color:mine?"#ffffff":"#0f172a",fontSize:13,lineHeight:1.4,fontWeight:600}}>{msg.text}</div>
-                  <div style={{color:mine?"rgba(255,255,255,0.65)":"#94a3b8",fontSize:10,marginTop:3,textAlign:"right"}}>{msg.ts}</div>
+                  <div style={{color:mine?"rgba(255,255,255,0.65)":"#94a3b8",fontSize:10,marginTop:3,textAlign:"right"}}>{typeof msg.ts==="number"?new Date(msg.ts).toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"}):msg.ts}</div>
                 </div>
               </div>
             );
