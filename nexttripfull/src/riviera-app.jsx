@@ -903,7 +903,7 @@ function RoleSelector({ onSelect, installPrompt }) {
               background:"transparent",border:"1.5px solid #2563eb44",borderRadius:14,
               padding:"12px 0",color:"#2563eb",fontSize:13,fontWeight:700,cursor:"pointer",
             }}>
-              <span style={{fontSize:18}}>⬇️</span> Instalar App en el dispositivo
+              <span style={{fontSize:18}}>⬇️</span> Instalar VELO Transfers
             </button>
           ) : null}
         </div>
@@ -5620,16 +5620,27 @@ export default function RivieraApp() {
       )}
       {inAppAlert&&<ReminderBanner alert={inAppAlert} onDismiss={dismissAlert}/>}
       {driverAlert&&isApp&&<DriverAlertBanner alert={driverAlert} onDismiss={()=>setDriverAlert(null)}/>}
-      {showInstall&&<div style={{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",zIndex:9998,background:"#f8fafc",border:"1.5px solid #2563eb",borderRadius:16,padding:"14px 20px",display:"flex",alignItems:"center",gap:12,boxShadow:"0 8px 32px #000a"}}>
-        <div style={{width:40,height:40,borderRadius:10,overflow:"hidden",flexShrink:0}}>
-          <img src="/icon-driver.svg" width="40" height="40" alt="NEXTTRIP"/>
+      {showInstall&&<div style={{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",zIndex:9998,
+        background:"#ffffff",border:"2px solid #2563eb",borderRadius:20,
+        padding:"16px 20px",display:"flex",alignItems:"center",gap:14,
+        boxShadow:"0 8px 32px rgba(37,99,235,0.25)",width:"calc(100% - 40px)",maxWidth:380}}>
+        {/* Icon */}
+        <div style={{width:52,height:52,borderRadius:14,overflow:"hidden",flexShrink:0,boxShadow:"0 2px 8px rgba(0,0,0,0.2)"}}>
+          <img src="/icon-driver.svg" width="52" height="52" alt="VELO Transfers" style={{objectFit:"cover"}}/>
         </div>
+        {/* Text */}
         <div style={{flex:1}}>
-          <div style={{color:"#e8d5a3",fontSize:13,fontWeight:700,marginBottom:2}}>Instalar NEXTTRIP</div>
-          <div style={{color:"#64748b",fontSize:11}}>Añadir a pantalla de inicio</div>
+          <div style={{color:"#1e3a8a",fontSize:14,fontWeight:800,marginBottom:2}}>{"Instalar VELO Transfers"}</div>
+          <div style={{color:"#2563eb",fontSize:11,fontWeight:600}}>{"VELO Private Transfers"}</div>
+          <div style={{color:"#94a3b8",fontSize:10,marginTop:1}}>{"Añadir a pantalla de inicio"}</div>
         </div>
-        <button onClick={handleInstall} style={{background:"linear-gradient(135deg,#2563eb,#a07840)",border:"none",borderRadius:10,color:"#0f172a",fontSize:12,fontWeight:700,padding:"8px 14px",cursor:"pointer"}}>Instalar</button>
-        <button onClick={()=>setShowInstall(false)} style={{background:"none",border:"none",color:"#64748b",fontSize:18,cursor:"pointer",padding:"0 4px"}}>x</button>
+        {/* Install button */}
+        <button onClick={handleInstall} style={{
+          background:"linear-gradient(135deg,#1e3a8a,#2563eb)",border:"none",borderRadius:12,
+          color:"#ffffff",fontSize:12,fontWeight:700,padding:"10px 16px",cursor:"pointer",
+          boxShadow:"0 2px 8px rgba(37,99,235,0.35)",flexShrink:0,
+        }}>{"Instalar"}</button>
+        <button onClick={()=>setShowInstall(false)} style={{background:"#f1f5f9",border:"none",color:"#64748b",fontSize:16,cursor:"pointer",padding:"6px 8px",borderRadius:8,flexShrink:0}}>{"X"}</button>
       </div>}
       {/* ── PRICE CONFIG MODAL ── */}
       {driverPriceConfig&&(

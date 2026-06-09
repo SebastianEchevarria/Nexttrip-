@@ -1,15 +1,20 @@
 {
-  "name": "NEXTTRIP Driver",
-  "short_name": "NEXTTRIP",
-  "description": "NextTrip Private Transfers — Driver & Recepcion",
+  "name": "VELO Transfers",
+  "short_name": "VELO",
+  "description": "VELO Private Transfers \u2014 Driver & Reception",
   "start_url": "/driver.html",
   "scope": "/driver.html",
-  "id": "nexttrip-driver",
+  "id": "velo-driver",
   "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#000000",
+  "background_color": "#0a0a0a",
+  "theme_color": "#2563eb",
   "orientation": "portrait",
   "icons": [
-    { "src": "/icon-driver.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+    {
+      "src": "/icon-driver.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
   ]
 }
