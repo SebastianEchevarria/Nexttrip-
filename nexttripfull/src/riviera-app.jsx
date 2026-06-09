@@ -1154,54 +1154,68 @@ function ReceptionAuth({ onLogin, onBack }) {
           </div>
           {regError&&<div style={{color:"#ef4444",fontSize:12,marginBottom:12,textAlign:"center",background:"#ef444415",borderRadius:8,padding:"8px 12px"}}>{regError}</div>}
 
-          {/* Step 1: Name + Workplace + Origin + Phone + Bizum */}
           {regStep===1&&(
             <div>
-              <div style={{color:"#64748b",fontSize:10,letterSpacing:3,marginBottom:16}}>1. TUS DATOS</div>
-              <label style={{color:"#64748b",fontSize:11,letterSpacing:2,display:"block",marginBottom:6}}>NOMBRE COMPLETO</label>
-              <input value={regName} onChange={e=>setRegName(e.target.value)} placeholder="Tu nombre y apellido"
-                style={s} onKeyDown={e=>e.key==="Enter"&&handleRegStep1()}/>
+              <div style={{color:"#1e3a8a",fontSize:10,letterSpacing:3,marginBottom:16,fontWeight:700}}>1. TUS DATOS</div>
 
-              <label style={{color:"#64748b",fontSize:11,letterSpacing:2,display:"block",marginBottom:6}}>TU HOTEL O LUGAR DE TRABAJO</label>
+              <label style={{color:"#1e3a8a",fontSize:11,letterSpacing:2,display:"block",marginBottom:6,fontWeight:700}}>NOMBRE COMPLETO</label>
+              <input value={regName} onChange={e=>setRegName(e.target.value)} placeholder="Tu nombre y apellido"
+                style={{...s,border:regName?"2px solid #2563eb":"2px solid #f59e0b",background:regName?"#f0f7ff":"#fffbeb"}}
+                onKeyDown={e=>e.key==="Enter"&&handleRegStep1()}/>
+
+              <label style={{color:"#1e3a8a",fontSize:11,letterSpacing:2,display:"block",marginBottom:6,fontWeight:700}}>TU HOTEL O LUGAR DE TRABAJO</label>
               <input value={regWorkplace} onChange={e=>setRegWorkplace(e.target.value)}
                 placeholder="Ej: Hotel Ritz, Restaurante La Mar..."
-                style={s}/>
+                style={{...s,border:regWorkplace?"2px solid #2563eb":"2px solid #f59e0b",background:regWorkplace?"#f0f7ff":"#fffbeb"}}/>
 
-              <label style={{color:"#64748b",fontSize:11,letterSpacing:2,display:"block",marginBottom:6}}>DIRECCIÓN O PUNTO DE PARTIDA</label>
+              <label style={{color:"#1e3a8a",fontSize:11,letterSpacing:2,display:"block",marginBottom:6,fontWeight:700}}>DIRECCIÓN O PUNTO DE PARTIDA</label>
               <input value={regOrigin} onChange={e=>setRegOrigin(e.target.value)}
                 placeholder="Ej: Calle Gran Vía 28, Madrid"
-                style={s}/>
+                style={{...s,border:regOrigin?"2px solid #2563eb":"2px solid #f59e0b",background:regOrigin?"#f0f7ff":"#fffbeb"}}/>
 
-              <label style={{color:"#64748b",fontSize:11,letterSpacing:2,display:"block",marginBottom:6}}>TELÉFONO</label>
+              <label style={{color:"#1e3a8a",fontSize:11,letterSpacing:2,display:"block",marginBottom:6,fontWeight:700}}>TELÉFONO</label>
               <input type="tel" value={regPhone} onChange={e=>setRegPhone(e.target.value)} placeholder="+34 600 000 000"
-                style={s}/>
+                style={{...s,border:regPhone?"2px solid #2563eb":"2px solid #f59e0b",background:regPhone?"#f0f7ff":"#fffbeb"}}/>
+
               {/* Bizum toggle */}
               <div onClick={()=>setRegBizum(b=>!b)} style={{
                 display:"flex",alignItems:"center",justifyContent:"space-between",
-                background:regBizum?"rgba(0,157,224,0.12)":"#f1f5f9",
-                border:`1px solid ${regBizum?"#009de0":"#2563eb33"}`,
-                borderRadius:10,padding:"12px 14px",marginBottom:20,cursor:"pointer",transition:"all 0.2s",
+                background:regBizum?"#eff6ff":"#f8fafc",
+                border:`1.5px solid ${regBizum?"#2563eb":"#e2e8f0"}`,
+                borderRadius:12,padding:"12px 14px",marginBottom:20,cursor:"pointer",transition:"all 0.2s",
+                boxShadow:regBizum?"0 2px 8px rgba(37,99,235,0.15)":"none",
               }}>
                 <div style={{display:"flex",alignItems:"center",gap:10}}>
                   <span style={{fontSize:20}}>💙</span>
                   <div>
-                    <div style={{color:"#0f172a",fontSize:13,fontWeight:500}}>Tengo Bizum</div>
+                    <div style={{color:"#0f172a",fontSize:13,fontWeight:600}}>Tengo Bizum</div>
                     <div style={{color:"#64748b",fontSize:11}}>El conductor te enviará la comisión por Bizum</div>
                   </div>
                 </div>
                 <div style={{
-                  width:42,height:24,borderRadius:12,position:"relative",flexShrink:0,
-                  background:regBizum?"#009de0":"#334155",transition:"background 0.2s",
+                  width:46,height:26,borderRadius:13,position:"relative",flexShrink:0,
+                  background:regBizum?"#2563eb":"#cbd5e1",transition:"background 0.2s",
                 }}>
                   <div style={{
-                    position:"absolute",top:3,left:regBizum?20:3,width:18,height:18,
+                    position:"absolute",top:3,left:regBizum?22:3,width:20,height:20,
                     borderRadius:"50%",background:"#fff",transition:"left 0.2s",
-                    boxShadow:"0 1px 4px rgba(0,0,0,0.3)",
+                    boxShadow:"0 1px 4px rgba(0,0,0,0.2)",
                   }}/>
                 </div>
               </div>
-              <button onClick={handleRegStep1} style={{width:"100%",background:"linear-gradient(135deg,#2563eb,#a07840)",border:"none",borderRadius:12,
-                padding:"14px 0",color:"#0f172a",fontSize:14,fontWeight:700,letterSpacing:1,cursor:"pointer"}}>
+
+              <button onClick={handleRegStep1} style={{
+                width:"100%",
+                background:regName&&regWorkplace&&regOrigin&&regPhone
+                  ?"linear-gradient(135deg,#1e3a8a,#2563eb)"
+                  :"#e2e8f0",
+                border:"none",borderRadius:14,
+                padding:"15px 0",
+                color:regName&&regWorkplace&&regOrigin&&regPhone?"#ffffff":"#94a3b8",
+                fontSize:15,fontWeight:800,letterSpacing:1,cursor:"pointer",
+                boxShadow:regName&&regWorkplace&&regOrigin&&regPhone?"0 4px 14px rgba(37,99,235,0.35)":"none",
+                transition:"all 0.2s",
+              }}>
                 CONTINUAR →
               </button>
             </div>
