@@ -5016,8 +5016,8 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-export default function RivieraApp() {
-  const [screen,setScreen]=useState("roles");
+export default function RivieraApp({ initialRole=null }) {
+  const [screen,setScreen]=useState(initialRole==="driver"?"driver-login":initialRole==="reception"?"reception-auth":"roles");
   const [isOnline,setIsOnline]=useState(navigator.onLine);
 
   useEffect(()=>{

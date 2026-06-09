@@ -2,8 +2,21 @@
   "buildCommand": "npm install && npm run build",
   "outputDirectory": "dist",
   "rewrites": [
-    { "source": "/driver.html", "destination": "/driver.html" },
-    { "source": "/cliente.html", "destination": "/cliente.html" },
-    { "source": "/(.*)", "destination": "/$1" }
+    {
+      "source": "/driver.html",
+      "destination": "/driver.html"
+    },
+    {
+      "source": "/reception.html",
+      "destination": "/reception.html"
+    },
+    {
+      "source": "/cliente.html",
+      "destination": "/cliente.html"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/$1"
+    }
   ]
 }
