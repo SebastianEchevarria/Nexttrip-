@@ -1722,6 +1722,15 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
         <div style={{marginTop:8,borderTop:"1px solid #e2e8f0",paddingTop:7}}>
           <div style={{color:"#334155",fontSize:11,marginBottom:3,fontWeight:600}}><span style={{color:"#2563eb"}}>▶ </span>{b.origin}</div>
           <div style={{color:"#334155",fontSize:11,fontWeight:600}}><span style={{color:"#ef4444"}}>■ </span>{b.destination}</div>
+          {b.notes&&b.notes.trim()&&(
+            <div style={{marginTop:8,background:"#fffbeb",border:"1.5px solid #f59e0b44",borderRadius:8,padding:"8px 10px",display:"flex",alignItems:"flex-start",gap:6}}>
+              <span style={{fontSize:13,flexShrink:0}}>📝</span>
+              <div>
+                <div style={{color:"#92400e",fontSize:9,fontWeight:700,letterSpacing:1,marginBottom:2}}>NOTAS DEL CLIENTE</div>
+                <div style={{color:"#0f172a",fontSize:11,fontWeight:600,lineHeight:1.4}}>{b.notes}</div>
+              </div>
+            </div>
+          )}
         </div>
         <div style={{marginTop:8,display:"flex",gap:7,flexWrap:"wrap",alignItems:"center"}}>
           {b.fare>0?(
@@ -2071,7 +2080,16 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
               <div style={{color:"#0f172a",fontSize:16,fontWeight:700,fontFamily:"'Inter',sans-serif",marginBottom:2}}>{upcoming.guest}</div>
               <div style={{color:"#64748b",fontSize:11,marginBottom:4}}>{upcoming.date} · {upcoming.time} · {upcoming.passengers} pax</div>
               <div style={{color:"#64748b",fontSize:11,marginBottom:2}}><span style={{color:"#2563eb"}}>▶ </span>{upcoming.origin}</div>
-              <div style={{color:"#64748b",fontSize:11,marginBottom:12}}><span style={{color:"#3b82f6"}}>■ </span>{upcoming.destination}</div>
+              <div style={{color:"#64748b",fontSize:11,marginBottom:upcoming.notes&&upcoming.notes.trim()?4:12}}><span style={{color:"#3b82f6"}}>■ </span>{upcoming.destination}</div>
+              {upcoming.notes&&upcoming.notes.trim()&&(
+                <div style={{background:"#fffbeb",border:"1.5px solid #f59e0b44",borderRadius:8,padding:"8px 10px",marginBottom:10,display:"flex",alignItems:"flex-start",gap:6}}>
+                  <span style={{fontSize:13,flexShrink:0}}>📝</span>
+                  <div>
+                    <div style={{color:"#92400e",fontSize:9,fontWeight:700,letterSpacing:1,marginBottom:2}}>NOTAS DEL CLIENTE</div>
+                    <div style={{color:"#0f172a",fontSize:11,fontWeight:600,lineHeight:1.4}}>{upcoming.notes}</div>
+                  </div>
+                </div>
+              )}
             </div>
               {/* ── TRIP INFO ── */}
               {(()=>{
