@@ -1294,47 +1294,34 @@ function BookingDetailModal({ booking, onClose, onAccept, onReject, onUpdateFare
   const emp = EMPLOYEES.find(e => e.id === b.employeeId) || loadUsers().find(u => u.id === b.employeeId);
   const [editingFare, setEditingFare] = useState(false);
   const [editFare, setEditFare] = useState(b.fare ?? "");
-
   return (
     <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(15,23,42,0.5)",zIndex:200,display:"flex",alignItems:"flex-end"}}>
       <div onClick={e=>e.stopPropagation()} style={{
-        background:"#ffffff",
-        borderRadius:"22px 22px 0 0",padding:"0 0 40px",width:"100%",
-        border:"1px solid #e2e8f0",borderBottom:"none",
+        background:"#ffffff", borderRadius:"22px 22px 0 0", padding:"0 0 40px", width:"100%",
+        border:"1px solid #e2e8f0", borderBottom:"none",
         boxShadow:"0 -8px 32px rgba(0,0,0,0.15)",
-        animation:"slideUp 0.3s ease",maxHeight:"92vh",overflowY:"auto",
+        maxHeight:"92vh", overflowY:"auto",
       }}>
-        {/* Handle */}
         <div style={{width:40,height:4,background:"#cbd5e1",borderRadius:2,margin:"14px auto 16px"}}/>
-
-        {/* Header con estado y botón volver */}
         <div style={{padding:"0 20px"}}>
-          <button onClick={onClose} style={{
-            display:"flex",alignItems:"center",gap:6,background:"#f1f5f9",
-            border:"none",borderRadius:20,padding:"7px 14px",
-            color:"#1e3a8a",fontSize:12,cursor:"pointer",fontWeight:700,marginBottom:16,
-          }}>
+          <button onClick={onClose} style={{display:"flex",alignItems:"center",gap:6,background:"#f1f5f9",border:"none",borderRadius:20,padding:"7px 14px",color:"#1e3a8a",fontSize:12,cursor:"pointer",fontWeight:700,marginBottom:16}}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" strokeWidth="2.5" strokeLinecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
             Volver
           </button>
 
-          {/* Status + guest name hero */}
-          <div style={{background:`linear-gradient(135deg,${statusColor(b.status)}15,${statusColor(b.status)}08)`,border:`2px solid ${statusColor(b.status)}44`,borderRadius:16,padding:"16px",marginBottom:16}}>
+          {/* Status hero */}
+          <div style={{background:statusColor(b.status)+"18",border:"2px solid "+statusColor(b.status)+"44",borderRadius:16,padding:"16px",marginBottom:16}}>
             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
-              <div style={{width:10,height:10,borderRadius:"50%",background:statusColor(b.status),animation:"pulse 1.5s infinite",flexShrink:0}}/>
+              <div style={{width:10,height:10,borderRadius:"50%",background:statusColor(b.status),flexShrink:0}}/>
               <span style={{color:statusColor(b.status),fontSize:12,fontWeight:800,letterSpacing:1}}>{statusLabel(b.status).toUpperCase()}</span>
             </div>
-            <div style={{color:"#0f172a",fontSize:26,fontWeight:900,lineHeight:1,marginBottom:4}}>{b.guest}</div>
+            <div style={{color:"#0f172a",fontSize:24,fontWeight:900,lineHeight:1,marginBottom:4}}>{b.guest}</div>
             <div style={{color:statusColor(b.status),fontSize:12,fontWeight:700}}>{b.hotel}</div>
           </div>
 
-          {/* Employee badge */}
           {emp&&(
-            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14,
-              background:"#f8fafc",border:"1.5px solid #e2e8f0",borderRadius:12,padding:"10px 14px"}}>
-              <div style={{width:32,height:32,borderRadius:"50%",background:emp.avatar+"25",
-                border:`2px solid ${emp.avatar}55`,display:"flex",alignItems:"center",justifyContent:"center",
-                color:emp.avatar,fontSize:12,fontWeight:800,flexShrink:0}}>{initials(emp.name)}</div>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14,background:"#f8fafc",border:"1.5px solid #e2e8f0",borderRadius:12,padding:"10px 14px"}}>
+              <div style={{width:32,height:32,borderRadius:"50%",background:emp.avatar+"25",border:"1.5px solid "+emp.avatar+"55",display:"flex",alignItems:"center",justifyContent:"center",color:emp.avatar,fontSize:12,fontWeight:800,flexShrink:0}}>{initials(emp.name)}</div>
               <div>
                 <div style={{color:"#0f172a",fontSize:13,fontWeight:700}}>{emp.name}</div>
                 <div style={{color:"#64748b",fontSize:11}}>{emp.hotel}</div>
@@ -1342,216 +1329,126 @@ function BookingDetailModal({ booking, onClose, onAccept, onReject, onUpdateFare
             </div>
           )}
 
-          {/* Detail rows — clean white cards */}
+          {/* Detail rows */}
           <div style={{background:"#ffffff",border:"2px solid #e2e8f0",borderRadius:14,overflow:"hidden",marginBottom:14}}>
             {[
-              {icon:"📅",label:"Fecha",val:b.date,highlight:true},
-              {icon:"🕐",label:"Hora",val:b.time,highlight:true},
-              {icon:"👥",label:"Pasajeros",val:`${b.passengers} pax`,highlight:false},
-              {icon:"🏨",label:"Lugar trabajo",val:b.hotel,highlight:false},
-              {icon:"📝",label:"Notas",val:b.notes||"Sin notas",highlight:false},
-              {icon:"👤",label:"Reservado por",val:b.receptionist,highlight:false},
-              {icon:"🕒",label:"Creado",val:b.createdAt,highlight:false},
-            ].filter(r=>r.val).map(({icon,label,val,highlight},i,arr)=>(
-              <div key={label} style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",
-                padding:"12px 16px",
-                borderBottom:i<arr.length-1?"1px solid #f1f5f9":"none",
-                background:highlight?"#f8faff":"#ffffff"}}>
-                <span style={{color:"#64748b",fontSize:13,display:"flex",alignItems:"center",gap:6}}>
-                  <span>{icon}</span>{label}
-                </span>
-                <span style={{color:highlight?"#1e3a8a":"#0f172a",fontSize:13,fontWeight:highlight?800:600,maxWidth:"58%",textAlign:"right",lineHeight:1.4}}>{val}</span>
-              </div>
-            ))}
+              {icon:"📅",label:"Fecha",val:b.date,hi:true},
+              {icon:"🕐",label:"Hora",val:b.time,hi:true},
+              {icon:"👥",label:"Pasajeros",val:b.passengers+" pax",hi:false},
+              {icon:"🏨",label:"Hotel",val:b.hotel,hi:false},
+              {icon:"📝",label:"Notas",val:b.notes||"Sin notas",hi:false},
+              {icon:"👤",label:"Reservado por",val:b.receptionist,hi:false},
+              {icon:"🕒",label:"Creado",val:b.createdAt,hi:false},
+            ].filter(r=>r.val).map(function(r,i,arr){
+              return (
+                <div key={r.label} style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",padding:"11px 16px",borderBottom:i<arr.length-1?"1px solid #f1f5f9":"none",background:r.hi?"#f8faff":"#ffffff"}}>
+                  <span style={{color:"#64748b",fontSize:13}}>{r.icon} {r.label}</span>
+                  <span style={{color:r.hi?"#1e3a8a":"#0f172a",fontSize:13,fontWeight:r.hi?800:600,maxWidth:"55%",textAlign:"right"}}>{r.val}</span>
+                </div>
+              );
+            })}
           </div>
 
-          {/* Pickup notes */}
           {b.pickupNotes&&(
             <div style={{background:"#eff6ff",border:"1.5px solid #2563eb33",borderRadius:12,padding:"12px 14px",marginBottom:14}}>
-              <div style={{color:"#1e3a8a",fontSize:12,fontWeight:700,marginBottom:6}}>📍 Indicaciones de recogida</div>
+              <div style={{color:"#1e3a8a",fontSize:12,fontWeight:700,marginBottom:6}}>{"📍 Indicaciones de recogida"}</div>
               <div style={{color:"#334155",fontSize:12,lineHeight:1.5}}>{b.pickupNotes}</div>
             </div>
           )}
 
-          {/* Payment method */}
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",
-            background:"#ffffff",border:"2px solid #e2e8f0",borderRadius:12,padding:"12px 16px",marginBottom:8}}>
-            <span style={{color:"#64748b",fontSize:13,fontWeight:600}}>💳 Método de pago</span>
-            <div style={{
-              display:"flex",alignItems:"center",gap:6,
-              background:b.paymentMethod==="card"?"#dbeafe":"#dcfce7",
-              border:`1.5px solid ${b.paymentMethod==="card"?"#2563eb44":"#22c55e44"}`,
-              borderRadius:10,padding:"5px 14px",
-            }}>
-              <span style={{color:b.paymentMethod==="card"?"#1e3a8a":"#15803d",fontSize:13,fontWeight:800}}>
-                {b.paymentMethod==="card"?"💳 CARD":"💵 CASH"}
-              </span>
+          {/* Payment */}
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"#ffffff",border:"2px solid #e2e8f0",borderRadius:12,padding:"12px 16px",marginBottom:8}}>
+            <span style={{color:"#64748b",fontSize:13,fontWeight:600}}>{"💳 Método de pago"}</span>
+            <div style={{display:"flex",alignItems:"center",gap:6,background:b.paymentMethod==="card"?"#dbeafe":"#dcfce7",border:"1.5px solid "+(b.paymentMethod==="card"?"#2563eb44":"#22c55e44"),borderRadius:10,padding:"5px 14px"}}>
+              <span style={{color:b.paymentMethod==="card"?"#1e3a8a":"#15803d",fontSize:13,fontWeight:800}}>{b.paymentMethod==="card"?"CARD":"CASH"}</span>
               <span style={{color:"#64748b",fontSize:11}}>{b.paymentMethod==="card"?"Tarjeta":"Efectivo"}</span>
             </div>
           </div>
 
-          {/* Guest phone */}
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",
-            background:"#ffffff",border:"2px solid #e2e8f0",borderRadius:12,padding:"12px 16px",marginBottom:14}}>
-            <span style={{color:"#64748b",fontSize:13,fontWeight:600}}>📞 Teléfono</span>
+          {/* Phone */}
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"#ffffff",border:"2px solid #e2e8f0",borderRadius:12,padding:"12px 16px",marginBottom:14}}>
+            <span style={{color:"#64748b",fontSize:13,fontWeight:600}}>{"📞 Teléfono"}</span>
             {b.guestPhone?(
-              <a href={`tel:${b.guestPhone}`} style={{
-                display:"flex",alignItems:"center",gap:6,
-                background:"#eff6ff",border:"1.5px solid #2563eb44",
-                borderRadius:10,padding:"6px 14px",textDecoration:"none",
-                color:"#1e3a8a",fontSize:13,fontWeight:800,
-              }}>
-                📞 {b.guestPhone}
-              </a>
+              <a href={"tel:"+b.guestPhone} style={{display:"flex",alignItems:"center",gap:6,background:"#eff6ff",border:"1.5px solid #2563eb44",borderRadius:10,padding:"6px 14px",textDecoration:"none",color:"#1e3a8a",fontSize:13,fontWeight:800}}>{"📞 "+b.guestPhone}</a>
             ):(
               <span style={{color:"#94a3b8",fontSize:13}}>No registrado</span>
             )}
           </div>
 
-          {/* Route section */}
+          {/* Route */}
           <div style={{background:"linear-gradient(135deg,#eff6ff,#dbeafe)",border:"2px solid #2563eb33",borderRadius:14,padding:"16px",marginBottom:14}}>
-            <div style={{color:"#1e3a8a",fontSize:11,fontWeight:800,letterSpacing:2,marginBottom:14}}>🗺️ RUTA</div>
-            {/* Origin */}
+            <div style={{color:"#1e3a8a",fontSize:11,fontWeight:800,letterSpacing:2,marginBottom:14}}>{"🗺️ RUTA"}</div>
             <div style={{background:"#ffffff",borderRadius:10,padding:"12px",marginBottom:8,border:"1.5px solid #2563eb22"}}>
-              <div style={{color:"#2563eb",fontSize:10,fontWeight:700,letterSpacing:1,marginBottom:4}}>▶ ORIGEN</div>
+              <div style={{color:"#2563eb",fontSize:10,fontWeight:700,letterSpacing:1,marginBottom:4}}>{"▶ ORIGEN"}</div>
               <div style={{color:"#0f172a",fontSize:13,fontWeight:600,marginBottom:8,lineHeight:1.4}}>{b.origin}</div>
-              <a href={mapsUrl(b.origin)} target="_blank" rel="noopener noreferrer"
-                style={{display:"inline-flex",alignItems:"center",gap:6,background:"#2563eb",
-                  border:"none",borderRadius:8,padding:"7px 14px",textDecoration:"none",
-                  color:"#ffffff",fontSize:12,fontWeight:700,boxShadow:"0 2px 8px rgba(37,99,235,0.3)"}}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                Navegar al origen
-              </a>
+              <a href={mapsUrl(b.origin)} target="_blank" rel="noopener noreferrer" style={{display:"inline-flex",alignItems:"center",gap:6,background:"#2563eb",border:"none",borderRadius:8,padding:"7px 14px",textDecoration:"none",color:"#ffffff",fontSize:12,fontWeight:700}}>{"📍 Navegar al origen"}</a>
             </div>
-            {/* Destination */}
             <div style={{background:"#ffffff",borderRadius:10,padding:"12px",border:"1.5px solid #ef444422"}}>
-              <div style={{color:"#ef4444",fontSize:10,fontWeight:700,letterSpacing:1,marginBottom:4}}>■ DESTINO</div>
+              <div style={{color:"#ef4444",fontSize:10,fontWeight:700,letterSpacing:1,marginBottom:4}}>{"■ DESTINO"}</div>
               <div style={{color:"#0f172a",fontSize:13,fontWeight:600,marginBottom:8,lineHeight:1.4}}>{b.destination}</div>
-              <a href={mapsUrl(b.destination)} target="_blank" rel="noopener noreferrer"
-                style={{display:"inline-flex",alignItems:"center",gap:6,background:"#ef4444",
-                  border:"none",borderRadius:8,padding:"7px 14px",textDecoration:"none",
-                  color:"#ffffff",fontSize:12,fontWeight:700,boxShadow:"0 2px 8px rgba(239,68,68,0.3)"}}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                Navegar al destino
-              </a>
+              <a href={mapsUrl(b.destination)} target="_blank" rel="noopener noreferrer" style={{display:"inline-flex",alignItems:"center",gap:6,background:"#ef4444",border:"none",borderRadius:8,padding:"7px 14px",textDecoration:"none",color:"#ffffff",fontSize:12,fontWeight:700}}>{"📍 Navegar al destino"}</a>
             </div>
             <TripEstimateBox origin={b.origin} destination={b.destination}/>
           </div>
+
           {/* Tarifa */}
           <div style={{background:"#ffffff",border:"2px solid #e2e8f0",borderRadius:12,padding:"14px 16px",marginBottom:14}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:b.fare&&!editingFare?10:0}}>
-            <span style={{color:"#64748b",fontSize:13}}>💶 Tarifa</span>
-            {isDriver ? (
-              editingFare ? (
-                <div style={{display:"flex",alignItems:"center",gap:7}}>
-                  <div style={{display:"flex",alignItems:"center",background:"#ffffff",border:"1px solid #2563eb",borderRadius:8,padding:"4px 10px",gap:4}}>
-                    <input type="number" min="0" step="0.5" value={editFare}
-                      onChange={e=>setEditFare(e.target.value)} autoFocus
-                      style={{background:"none",border:"none",color:"#0f172a",fontSize:14,width:70,outline:"none",textAlign:"right"}}/>
-                    <span style={{color:"#2563eb",fontSize:13}}>€</span>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:b.fare&&!editingFare?10:0}}>
+              <span style={{color:"#64748b",fontSize:13}}>{"💶 Tarifa"}</span>
+              {isDriver?(
+                editingFare?(
+                  <div style={{display:"flex",alignItems:"center",gap:7}}>
+                    <div style={{display:"flex",alignItems:"center",background:"#ffffff",border:"1px solid #2563eb",borderRadius:8,padding:"4px 10px",gap:4}}>
+                      <input type="number" min="0" step="0.5" value={editFare} onChange={e=>setEditFare(e.target.value)} autoFocus style={{background:"none",border:"none",color:"#0f172a",fontSize:14,width:70,outline:"none",textAlign:"right"}}/>
+                      <span style={{color:"#2563eb",fontSize:13}}>€</span>
+                    </div>
+                    <button onClick={()=>{const v=editFare===""?"":parseFloat(editFare);onUpdateFare(b.id,v);setEditingFare(false);}} style={{background:"#2563eb",border:"none",borderRadius:7,color:"#fff",padding:"5px 10px",cursor:"pointer",fontSize:13,fontWeight:700}}>✓</button>
+                    <button onClick={()=>setEditingFare(false)} style={{background:"#e2e8f0",border:"none",borderRadius:7,color:"#3b82f6",padding:"5px 10px",cursor:"pointer",fontSize:13}}>✕</button>
                   </div>
-                  <button onClick={()=>{
-                    const v=editFare===""?""  :parseFloat(editFare);
-                    onUpdateFare(b.id,v); setEditingFare(false);
-                  }} style={{background:"#2563eb",border:"none",borderRadius:7,color:"#fff",padding:"5px 10px",cursor:"pointer",fontSize:13,fontWeight:700}}>✓</button>
-                  <button onClick={()=>setEditingFare(false)} style={{background:"#e2e8f0",border:"none",borderRadius:7,color:"#3b82f6",padding:"5px 10px",cursor:"pointer",fontSize:13}}>✕</button>
+                ):(
+                  <div style={{display:"flex",alignItems:"center",gap:9}}>
+                    <span style={{color:b.fare?"#2563eb":"#94a3b8",fontSize:14,fontWeight:600}}>{b.fare?fmt(b.fare)+" €":"Sin tarifa"}</span>
+                    <button onClick={()=>{setEditFare(b.fare??"");setEditingFare(true);}} style={{background:"#eff6ff",border:"none",borderRadius:6,color:"#2563eb",padding:"3px 8px",cursor:"pointer",fontSize:11}}>{"✏️ Editar"}</button>
+                  </div>
+                )
+              ):(
+                <span style={{color:b.fare?"#2563eb":"#94a3b8",fontSize:14,fontWeight:600}}>{b.fare?fmt(b.fare)+" €":"Sin tarifa"}</span>
+              )}
+            </div>
+            {b.fare&&!editingFare&&(
+              <div style={{background:"#f0fdf4",borderRadius:10,padding:"12px 14px",display:"flex",flexDirection:"column",gap:6}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <span style={{color:"#15803d",fontSize:12,fontWeight:700}}>{"💶 Precio del viaje"}</span>
+                  <span style={{color:"#16a34a",fontSize:22,fontFamily:"'Inter',sans-serif",fontWeight:900}}>{fmt(b.fare)+" €"}</span>
                 </div>
-              ) : (
-                <div style={{display:"flex",alignItems:"center",gap:9}}>
-                  <span style={{color:b.fare?"#2563eb":"#3b82f6",fontSize:14,fontWeight:600}}>{b.isClientBooking&&b.fare>0?(
-                        <span>
-                          <span style={{textDecoration:"line-through",color:"#475569",fontSize:11,marginRight:4}}>{fmt(b.fare)}€</span>
-                          <span style={{color:"#22c55e",fontWeight:800}}>{fmt(Math.round(b.fare*0.85*100)/100)} €</span>
-                          <span style={{color:"#22c55e",fontSize:9,marginLeft:3}}>VIP</span>
-                        </span>
-                      ):b.fare?`${fmt(b.fare)} €`:"Sin tarifa"}</span>
-                  <button onClick={()=>{setEditFare(b.fare??"");setEditingFare(true);}}
-                    style={{background:"#2563eb33",border:"none",borderRadius:6,color:"#3b82f6",padding:"3px 8px",cursor:"pointer",fontSize:11}}>✏️ Editar</button>
-                </div>
-              )
-            ) : (
-              <span style={{color:b.fare?"#2563eb":"#3b82f6",fontSize:14,fontWeight:600}}>{b.isClientBooking&&b.fare>0?(
-                        <span>
-                          <span style={{textDecoration:"line-through",color:"#475569",fontSize:11,marginRight:4}}>{fmt(b.fare)}€</span>
-                          <span style={{color:"#22c55e",fontWeight:800}}>{fmt(Math.round(b.fare*0.85*100)/100)} €</span>
-                          <span style={{color:"#22c55e",fontSize:9,marginLeft:3}}>VIP</span>
-                        </span>
-                      ):b.fare?`${fmt(b.fare)} €`:"Sin tarifa"}</span>
+                {isDriver&&(
+                  <div style={{borderTop:"1px solid #dcfce7",paddingTop:8,display:"flex",flexDirection:"column",gap:5}}>
+                    <div style={{display:"flex",justifyContent:"space-between"}}>
+                      <span style={{color:"#64748b",fontSize:11}}>Comision hotel (20%)</span>
+                      <span style={{color:"#f59e0b",fontSize:12,fontWeight:700}}>-{fmt(b.fare*COMMISSION_RATE)} EUR</span>
+                    </div>
+                    <div style={{display:"flex",justifyContent:"space-between"}}>
+                      <span style={{color:"#15803d",fontSize:11,fontWeight:700}}>Tu ganancia (80%)</span>
+                      <span style={{color:"#16a34a",fontSize:16,fontWeight:900,fontFamily:"'Inter',sans-serif"}}>{fmt(b.fare*(1-COMMISSION_RATE))+" EUR"}</span>
+                    </div>
+                  </div>
+                )}
+                {!isDriver&&(
+                  <div style={{borderTop:"1px solid #dcfce7",paddingTop:8,display:"flex",justifyContent:"space-between"}}>
+                    <span style={{color:"#64748b",fontSize:11}}>Tu comision (20%)</span>
+                    <span style={{color:"#2563eb",fontSize:14,fontWeight:700,fontFamily:"'Inter',sans-serif"}}>+{fmt(b.fare*COMMISSION_RATE)+" EUR"}</span>
+                  </div>
+                )}
+              </div>
             )}
           </div>
-          {b.fare && !editingFare && (
-            <div style={{background:"#f0fdf4",borderRadius:10,padding:"12px 14px",display:"flex",flexDirection:"column",gap:6,marginTop:10}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <span style={{color:"#15803d",fontSize:12,fontWeight:700}}>💶 Precio del viaje</span>
-                <span style={{color:"#16a34a",fontSize:24,fontFamily:"'Inter',sans-serif",fontWeight:900}}>{fmt(b.fare)} €</span>
-              </div>
-              {isDriver && (
-                <div style={{borderTop:"1px solid #dcfce7",paddingTop:8,display:"flex",flexDirection:"column",gap:5}}>
-                  <div style={{display:"flex",justifyContent:"space-between"}}>
-                    <span style={{color:"#64748b",fontSize:11}}>Comisión hotel (20%)</span>
-                    <span style={{color:"#f59e0b",fontSize:12,fontWeight:700}}>−{fmt(b.fare*COMMISSION_RATE)} €</span>
-                  </div>
-                  <div style={{display:"flex",justifyContent:"space-between"}}>
-                    <span style={{color:"#15803d",fontSize:11,fontWeight:700}}>Tu ganancia (80%)</span>
-                    <span style={{color:"#16a34a",fontSize:16,fontWeight:900,fontFamily:"'Inter',sans-serif"}}>{fmt(b.fare*(1-COMMISSION_RATE))} €</span>
-                  </div>
-                </div>
-              )}
-              {!isDriver && (
-                <div style={{borderTop:"1px solid #dcfce7",paddingTop:8,display:"flex",justifyContent:"space-between"}}>
-                  <span style={{color:"#64748b",fontSize:11}}>Tu comisión (20%)</span>
-                  <span style={{color:"#2563eb",fontSize:14,fontWeight:700,fontFamily:"'Inter',sans-serif"}}>+{fmt(b.fare*COMMISSION_RATE)} €</span>
-                </div>
-              )}
+
+          {isDriver&&b.status==="pending"&&onAccept&&onReject&&(
+            <div style={{display:"flex",gap:8,marginTop:8}}>
+              <button onClick={()=>{onAccept(b.id);onClose();}} style={{flex:1,background:"linear-gradient(135deg,#16a34a,#22c55e)",border:"none",borderRadius:12,color:"#fff",padding:"13px 0",cursor:"pointer",fontSize:14,fontWeight:700}}>{"✓ Aceptar"}</button>
+              <button onClick={()=>{onReject(b.id);onClose();}} style={{flex:1,background:"linear-gradient(135deg,#ef4444,#b91c1c)",border:"none",borderRadius:12,color:"#fff",padding:"13px 0",cursor:"pointer",fontSize:14,fontWeight:700}}>{"Rechazar"}</button>
             </div>
           )}
-          </div>
-        </div>
-
-        {/* Bolt Screenshot */}
-        {b.boltScreenshot && (
-          <div style={{background:"#ffffff",border:"2px solid #e2e8f0",borderRadius:12,padding:"14px",marginBottom:14}}>
-            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
-              <span style={{fontSize:16}}>⚡</span>
-              <div style={{color:"#1e3a8a",fontSize:11,fontWeight:800,letterSpacing:2}}>CAPTURA BOLT (PRECIO VERIFICADO)</div>
-            </div>
-            <div style={{background:"#f8fafc",border:"1.5px solid #2563eb33",borderRadius:10,overflow:"hidden"}}>
-              <img
-                src={b.boltScreenshot.data}
-                alt="Captura Bolt"
-                style={{width:"100%",objectFit:"contain",maxHeight:300,background:"#f8fafc",display:"block"}}
-                onClick={()=>window.open(b.boltScreenshot.data,"_blank")}
-              />
-              <div style={{padding:"8px 12px",display:"flex",alignItems:"center",gap:7,background:"#eff6ff"}}>
-                <span style={{fontSize:14}}>🔒</span>
-                <span style={{color:"#2563eb",fontSize:11,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-                  Precio verificado por recepción · {b.boltScreenshot.name}
-                </span>
-                <button onClick={()=>window.open(b.boltScreenshot.data,"_blank")} style={{background:"#2563eb18",border:"1px solid #2563eb33",borderRadius:6,color:"#2563eb",fontSize:10,fontWeight:700,padding:"3px 8px",cursor:"pointer",flexShrink:0}}>
-                  Ver ↗
-                </button>
-              </div>
-            </div>
-            {b.fare && (
-              <div style={{marginTop:8,background:"#f0fdf4",border:"1px solid #22c55e33",borderRadius:8,padding:"8px 12px",display:"flex",alignItems:"center",gap:8}}>
-                <span style={{fontSize:14}}>✅</span>
-                <span style={{color:"#22c55e",fontSize:11}}>
-                  Tarifa declarada: <strong>{fmt(b.fare)} €</strong> — verifica que coincide con la captura
-                </span>
-              </div>
-            )}
-          </div>
-        )}
-        
-
-        {/* Driver-only action buttons (pending trips) */}
-        {isDriver && b.status==="pending" && onAccept && onReject && (
-          <div style={{display:"flex",gap:8,marginTop:16,padding:"0 20px"}}>
-            <button onClick={()=>{onAccept(b.id);onClose();}} style={{flex:1,background:"linear-gradient(135deg,#16a34a,#22c55e)",border:"none",borderRadius:12,color:"#fff",padding:"13px 0",cursor:"pointer",fontSize:14,fontWeight:700,boxShadow:"0 3px 10px rgba(34,197,94,0.3)"}}>✓ Aceptar viaje</button>
-            <button onClick={()=>{onReject(b.id);onClose();}} style={{flex:1,background:"linear-gradient(135deg,#ef4444,#b91c1c)",border:"none",borderRadius:12,color:"#fff",padding:"13px 0",cursor:"pointer",fontSize:14,fontWeight:700,boxShadow:"0 3px 10px rgba(239,68,68,0.3)"}}>✕ Rechazar</button>
-          </div>
-        )}
-        </div>
         </div>
       </div>
     </div>

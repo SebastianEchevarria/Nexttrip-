@@ -1549,8 +1549,8 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
             <div style={{margin:"0 12px 12px",display:"flex",flexDirection:"column",gap:8}}>
               <button onClick={()=>setChatBooking(upcoming)} style={{
                 width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8,
-                background:"linear-gradient(135deg,#1e0a3e,#e2e8f0)",border:"1px solid #a78bfa55",
-                borderRadius:10,padding:"12px 0",color:"#ffffff",fontSize:13,fontWeight:800,cursor:"pointer",background:"linear-gradient(135deg,#7c3aed,#6d28d9)",border:"none",
+                background:"linear-gradient(135deg,#7c3aed,#6d28d9)",border:"none",
+                borderRadius:10,padding:"12px 0",color:"#ffffff",fontSize:13,fontWeight:800,cursor:"pointer",
               }}>💬 {lang==="en"?"Chat with driver":"Chat con el conductor"}</button>
               {/* Cancel with double confirmation */}
               {cancelConfirm===upcoming.id?(
