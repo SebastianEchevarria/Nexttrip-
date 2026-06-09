@@ -1,0 +1,20 @@
+{
+  "name": "VELO Recepci\u00f3n",
+  "short_name": "VELO Rec.",
+  "description": "VELO Private Transfers \u2014 Gesti\u00f3n de Reservas",
+  "start_url": "/reception.html",
+  "scope": "/reception.html",
+  "id": "velo-reception",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1e3a8a",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon-driver.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
