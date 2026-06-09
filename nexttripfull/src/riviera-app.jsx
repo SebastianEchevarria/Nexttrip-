@@ -4575,68 +4575,75 @@ function CancelTripModal({ booking, onCancel, onClose }) {
   const [showCustom, setShowCustom] = useState(false);
   const b = booking;
   return (
-    <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:300,display:"flex",alignItems:"flex-end"}}>
+    <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(15,23,42,0.5)",zIndex:300,display:"flex",alignItems:"flex-end"}}>
       <div onClick={e=>e.stopPropagation()} style={{
-        background:"linear-gradient(180deg,#1e293b,#0f172a)",
-        borderRadius:"22px 22px 0 0",padding:"20px 20px 36px",width:"100%",
-        border:"1px solid #f9731633",borderBottom:"none",
+        background:"#ffffff",
+        borderRadius:"22px 22px 0 0",padding:"0 0 36px",width:"100%",
+        border:"1px solid #e2e8f0",borderBottom:"none",
+        boxShadow:"0 -8px 32px rgba(0,0,0,0.15)",
         animation:"slideUp 0.3s ease",
       }}>
-        <div style={{width:40,height:4,background:"#e2e8f0",borderRadius:2,margin:"0 auto 14px"}}/>
-        <button onClick={onClose} style={{
-          display:"flex",alignItems:"center",gap:6,background:"#f1f5f9",border:"none",borderRadius:20,
-          color:"#1e3a8a",fontSize:12,cursor:"pointer",padding:"7px 14px",
-          fontFamily:"inherit",fontWeight:700,marginBottom:16,
-        }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M19 12H5M12 19l-7-7 7-7"/>
-          </svg>
-          Volver
-        </button>
-        <div style={{color:"#f97316",fontSize:11,letterSpacing:3,marginBottom:6}}>CANCELAR VIAJE</div>
-        <div style={{color:"#0f172a",fontSize:16,fontFamily:"'Inter',sans-serif",marginBottom:4}}>{b.guest}</div>
-        <div style={{color:"#64748b",fontSize:11,marginBottom:18}}>{b.date} · {b.time} · {b.hotel}</div>
-        <div style={{color:"#64748b",fontSize:11,letterSpacing:2,marginBottom:12}}>MOTIVO DE CANCELACIÓN</div>
-        <div style={{display:"flex",flexDirection:"column",gap:8}}>
-          {CANCEL_REASONS.map(r=>(
-            r.custom ? (
-              <div key={r.id}>
-                <button onClick={()=>setShowCustom(v=>!v)} style={{
-                  width:"100%",display:"flex",alignItems:"center",gap:12,
-                  background:"#f9731610",border:`1px solid ${showCustom?"#f97316":"#f9731633"}`,
+        <div style={{width:40,height:4,background:"#cbd5e1",borderRadius:2,margin:"14px auto 18px"}}/>
+        <div style={{padding:"0 20px"}}>
+          <button onClick={onClose} style={{
+            display:"flex",alignItems:"center",gap:6,background:"#f1f5f9",border:"none",borderRadius:20,
+            color:"#1e3a8a",fontSize:12,cursor:"pointer",padding:"7px 14px",
+            fontFamily:"inherit",fontWeight:700,marginBottom:18,
+          }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" strokeWidth="2.5" strokeLinecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            Volver
+          </button>
+
+          {/* Header */}
+          <div style={{background:"#fff5f5",border:"2px solid #f9731644",borderRadius:14,padding:"14px 16px",marginBottom:18}}>
+            <div style={{color:"#f97316",fontSize:11,fontWeight:800,letterSpacing:2,marginBottom:6}}>CANCELAR VIAJE</div>
+            <div style={{color:"#0f172a",fontSize:18,fontWeight:800,marginBottom:2}}>{b.guest}</div>
+            <div style={{color:"#64748b",fontSize:11}}>{b.date} · {b.time} · {b.hotel}</div>
+          </div>
+
+          <div style={{color:"#1e3a8a",fontSize:11,fontWeight:800,letterSpacing:2,marginBottom:12}}>MOTIVO DE CANCELACIÓN</div>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {CANCEL_REASONS.map(r=>(
+              r.custom ? (
+                <div key={r.id}>
+                  <button onClick={()=>setShowCustom(v=>!v)} style={{
+                    width:"100%",display:"flex",alignItems:"center",gap:12,
+                    background:showCustom?"#fff7ed":"#f8fafc",
+                    border:"2px solid "+(showCustom?"#f97316":"#e2e8f0"),
+                    borderRadius:12,padding:"13px 16px",cursor:"pointer",textAlign:"left",transition:"all 0.15s",
+                  }}>
+                    <span style={{fontSize:20}}>{r.icon}</span>
+                    <span style={{color:"#0f172a",fontSize:13,fontWeight:600}}>{r.label}</span>
+                  </button>
+                  {showCustom&&(
+                    <div style={{marginTop:8,display:"flex",gap:8}}>
+                      <input value={customReason} onChange={e=>setCustomReason(e.target.value)}
+                        placeholder="Describe el motivo..." autoFocus
+                        style={{flex:1,background:"#f8fafc",border:"2px solid #f97316",borderRadius:8,
+                          color:"#0f172a",fontSize:13,padding:"10px 14px",outline:"none"}}/>
+                      <button onClick={()=>{if(customReason.trim())onCancel(b.id,customReason.trim());}} style={{
+                        background:"linear-gradient(135deg,#f97316,#ea580c)",border:"none",borderRadius:8,
+                        color:"#fff",padding:"10px 16px",cursor:"pointer",fontSize:13,fontWeight:700,
+                      }}>OK</button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <button key={r.id} onClick={()=>onCancel(b.id, r.label)} style={{
+                  display:"flex",alignItems:"center",gap:12,
+                  background:"#fff5f5",border:"2px solid #f9731633",
                   borderRadius:12,padding:"13px 16px",cursor:"pointer",textAlign:"left",transition:"all 0.15s",
-                }}>
+                }}
+                  onMouseEnter={e=>{e.currentTarget.style.borderColor="#f97316";e.currentTarget.style.background="#ffedd5";}}
+                  onMouseLeave={e=>{e.currentTarget.style.borderColor="#f9731633";e.currentTarget.style.background="#fff5f5";}}>
                   <span style={{fontSize:20}}>{r.icon}</span>
                   <span style={{color:"#0f172a",fontSize:13,fontWeight:600}}>{r.label}</span>
                 </button>
-                {showCustom&&(
-                  <div style={{marginTop:8,display:"flex",gap:8}}>
-                    <input value={customReason} onChange={e=>setCustomReason(e.target.value)}
-                      placeholder="Describe el motivo..." autoFocus
-                      style={{flex:1,background:"#f1f5f9",border:"1px solid #f97316",borderRadius:8,
-                        color:"#0f172a",fontSize:13,padding:"10px 14px",outline:"none"}}/>
-                    <button onClick={()=>{if(customReason.trim())onCancel(b.id,customReason.trim());}} style={{
-                      background:"linear-gradient(135deg,#f97316,#ea580c)",border:"none",borderRadius:8,
-                      color:"#fff",padding:"10px 16px",cursor:"pointer",fontSize:13,fontWeight:700,
-                    }}>Cancelar</button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <button key={r.id} onClick={()=>onCancel(b.id, r.label)} style={{
-                display:"flex",alignItems:"center",gap:12,
-                background:"#f9731610",border:"1px solid #f9731633",
-                borderRadius:12,padding:"13px 16px",cursor:"pointer",textAlign:"left",transition:"all 0.15s",
-              }}
-                onMouseEnter={e=>e.currentTarget.style.borderColor="#f97316"}
-                onMouseLeave={e=>e.currentTarget.style.borderColor="#f9731633"}>
-                <span style={{fontSize:20}}>{r.icon}</span>
-                <span style={{color:"#0f172a",fontSize:13,fontWeight:600}}>{r.label}</span>
-              </button>
-            )
-          ))}
+              )
+            ))}
+          </div>
+          <button onClick={onClose} style={{width:"100%",marginTop:14,background:"#f8fafc",border:"1.5px solid #e2e8f0",borderRadius:10,padding:"12px 0",color:"#64748b",fontSize:13,fontWeight:600,cursor:"pointer"}}>Volver</button>
         </div>
-        <button onClick={onClose} style={{width:"100%",marginTop:14,background:"#f1f5f9",border:"1px solid #2a3a4a",borderRadius:10,padding:"12px 0",color:"#64748b",fontSize:13,cursor:"pointer"}}>Volver</button>
       </div>
     </div>
   );
