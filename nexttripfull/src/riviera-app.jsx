@@ -1688,9 +1688,9 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
   const filtered = filterHotel==="all"?bookings:bookings.filter(b=>b.hotel===filterHotel);
   const fPend       = filtered.filter(b=>b.status==="pending");
   const fInProgress = filtered.filter(b=>b.status==="inprogress");
-  const fConf       = filtered.filter(b=>b.status==="confirmed");
-  const fRej     = filtered.filter(b=>b.status==="rejected");
-  const fHistory = filtered.filter(b=>b.status==="completed"||b.status==="cancelled");
+  const fConf       = filtered.filter(b=>b.status==="confirmed"||b.status==="inprogress");
+  const fRej     = []; // rejected now shown in history
+  const fHistory = filtered.filter(b=>b.status==="completed"||b.status==="cancelled"||b.status==="rejected").slice(-30).reverse();
 
   const openDetail=b=>{setSelected(b);};
 
@@ -2049,7 +2049,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
       {/* ── 1. PRÓXIMO VIAJE — CUENTA REGRESIVA ── */}
       {(()=>{
         const upcoming = [...bookings]
-          .filter(b=>b.status==="confirmed"||b.status==="inprogress")
+          .filter(b=>(b.status==="confirmed"||b.status==="inprogress")&&b.status!=="cancelled"&&b.status!=="rejected")
           .sort((a,b)=>{const dA=new Date(`${a.date}T${a.time}:00`),dB=new Date(`${b.date}T${b.time}:00`);return dA-dB;})
           .find(b=>{const dt=new Date(`${b.date}T${b.time}:00`);return dt-nowTick>-TRIP_DURATION*60*1000;});
         if(!upcoming) return null;
@@ -3184,7 +3184,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
               display:"flex",alignItems:"center",gap:8,background:"none",border:"none",cursor:"pointer",padding:0,
             }}>
               <span style={{color:"#1e3a8a",fontSize:13,fontWeight:900,letterSpacing:2}}>🗂 HISTORIAL DE VIAJES</span>
-              <span style={{background:"#f1f5f9",borderRadius:10,padding:"2px 8px",fontSize:10,color:"#64748b"}}>{fHistory.length}</span>
+              <span style={{background:"#f1f5f9",borderRadius:10,padding:"2px 8px",fontSize:10,color:"#64748b"}}>{fHistory.length} (últimos 30)</span>
               <span style={{color:"#475569",fontSize:14,transition:"transform 0.2s",display:"inline-block",transform:historyOpen?"rotate(180deg)":"none"}}>▾</span>
             </button>
             {/* Export to PDF */}
@@ -3194,8 +3194,6 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
               const totalEarned = completed.reduce((s,b)=>s+Number(b.fare||0),0);
               const totalComm   = completed.reduce((s,b)=>s+Number(b.fare||0)*COMMISSION_RATE,0);
               const now = new Date().toLocaleDateString("es-ES");
-
-              // Build HTML for PDF
               const rows = completed.map(b=>`
                 <tr>
                   <td>${b.date}</td>
@@ -3206,21 +3204,19 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
                   <td style="text-align:right">${Number(b.fare||0).toFixed(2)} €</td>
                   <td style="text-align:right;color:#2563eb">${(Number(b.fare||0)*COMMISSION_RATE).toFixed(2)} €</td>
                 </tr>`).join("");
-
               const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
-                <title>NextTrip — Historial de Viajes</title>
+                <title>VELO — Historial de Viajes</title>
                 <style>
                   body{font-family:Arial,sans-serif;color:#222;padding:24px;font-size:12px}
-                  h1{color:#a07840;font-size:20px;margin-bottom:4px}
+                  h1{color:#1e3a8a;font-size:20px;margin-bottom:4px}
                   .subtitle{color:#888;margin-bottom:20px;font-size:12px}
                   table{width:100%;border-collapse:collapse;margin-bottom:20px}
-                  th{background:#1e293b;color:#fff;padding:8px 10px;text-align:left;font-size:11px}
+                  th{background:#1e3a8a;color:#fff;padding:8px 10px;text-align:left;font-size:11px}
                   td{padding:7px 10px;border-bottom:1px solid #eee;font-size:11px}
                   tr:nth-child(even){background:#f9f9f9}
-                  .summary{background:#f5f0e8;border-left:4px solid #2563eb;padding:12px 16px;border-radius:4px}
-                  .summary b{color:#a07840}
+                  .summary{background:#eff6ff;border-left:4px solid #2563eb;padding:12px 16px;border-radius:4px}
                 </style></head><body>
-                <h1>NextTrip Private Transfers</h1>
+                <h1>VELO Private Transfers</h1>
                 <div class="subtitle">Historial de viajes completados — Exportado el ${now}</div>
                 <table>
                   <thead><tr>
@@ -3230,17 +3226,16 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
                   <tbody>${rows}</tbody>
                 </table>
                 <div class="summary">
-                  <b>Resumen:</b> ${completed.length} viajes completados ·
+                  Resumen: ${completed.length} viajes completados ·
                   Total facturado: <b>${totalEarned.toFixed(2)} €</b> ·
                   Comisiones generadas: <b>${totalComm.toFixed(2)} €</b>
                 </div>
                 </body></html>`;
-
               const blob = new Blob([html], {type:"text/html"});
               const url  = URL.createObjectURL(blob);
               const a    = document.createElement("a");
               a.href = url;
-              a.download = `nexttrip_historial_${now.replace(/\//g,"-")}.html`;
+              a.download = `velo_historial_${now.replace(/\//g,"-")}.html`;
               a.click();
               URL.revokeObjectURL(url);
               setToast("📄 Historial exportado");
@@ -3253,25 +3248,38 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
             </button>
           </div>
           {historyOpen&&(()=>{
-            const groups={};
-            fHistory.sort((a,b)=>b.date.localeCompare(a.date)||b.time.localeCompare(a.time)).forEach(b=>{if(!groups[b.guest])groups[b.guest]=[];groups[b.guest].push(b);});
-            return Object.entries(groups).map(([g,ts])=><HistoryGroup key={g} guest={g} trips={ts} fmt={fmt} COMMISSION_RATE={COMMISSION_RATE} initials={initials} EMPLOYEES={EMPLOYEES} loadUsers={loadUsers} setDocModal={setDocModal}/>);
+            return fHistory.map(b=>{
+              const isCancelled=b.status==="cancelled";
+              const isRejected=b.status==="rejected";
+              if(isCancelled||isRejected){
+                return(
+                  <div key={b.id} style={{
+                    background:isCancelled?"#fff5f5":"#fff8f0",
+                    border:`2px solid ${isCancelled?"#ef444433":"#f9731633"}`,
+                    borderRadius:12,padding:"10px 14px",marginBottom:8,
+                    display:"flex",justifyContent:"space-between",alignItems:"flex-start",
+                  }}>
+                    <div>
+                      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+                        <span style={{fontSize:11,background:isCancelled?"#ef4444":"#f97316",color:"#fff",borderRadius:6,padding:"1px 8px",fontWeight:700}}>{isCancelled?"CANCELADO":"RECHAZADO"}</span>
+                        <span style={{color:"#0f172a",fontSize:13,fontWeight:700}}>{b.guest}</span>
+                      </div>
+                      <div style={{color:"#64748b",fontSize:11}}>{b.date} · {b.time} · {b.hotel}</div>
+                      {(b.cancelReason||b.rejectionReason)&&<div style={{color:isCancelled?"#ef4444":"#f97316",fontSize:10,marginTop:3}}>Motivo: {b.cancelReason||b.rejectionReason}</div>}
+                    </div>
+                    {b.fare&&<span style={{color:"#94a3b8",fontSize:12,fontWeight:600,textDecoration:"line-through"}}>{fmt(b.fare)} €</span>}
+                  </div>
+                );
+              }
+              return null;
+            }).filter(Boolean).concat(
+              (()=>{
+                const groups={};
+                fHistory.filter(b=>b.status==="completed"||b.status==="cancelled"&&false).forEach(b=>{if(!groups[b.guest])groups[b.guest]=[];groups[b.guest].push(b);});
+                return Object.entries(groups).map(([g,ts])=><HistoryGroup key={g} guest={g} trips={ts} fmt={fmt} COMMISSION_RATE={COMMISSION_RATE} initials={initials} EMPLOYEES={EMPLOYEES} loadUsers={loadUsers} setDocModal={setDocModal}/>);
+              })()
+            );
           })()}
-
-          {/* ── RECHAZADOS inside history ── */}
-          {fRej.length>0&&(
-            <div style={{marginTop:16,borderTop:"1px solid #1e293b",paddingTop:12}}>
-              <button onClick={()=>setRejOpen(v=>!v)} style={{
-                width:"100%",display:"flex",alignItems:"center",gap:8,
-                background:"none",border:"none",cursor:"pointer",padding:"0 0 10px",
-              }}>
-                <span style={{color:"#ef4444",fontSize:13,fontWeight:900,letterSpacing:2}}>✕ RECHAZADOS</span>
-                <span style={{background:"#f1f5f9",borderRadius:10,padding:"2px 8px",fontSize:10,color:"#64748b"}}>{fRej.length}</span>
-                <span style={{color:"#475569",fontSize:14,display:"inline-block",transform:rejOpen?"rotate(180deg)":"none",transition:"transform 0.2s"}}>▾</span>
-              </button>
-              {rejOpen&&fRej.map(b=><Card key={b.id} b={b} showActions={false}/>)}
-            </div>
-          )}
         </section>
       )}
 
@@ -3666,7 +3674,7 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
       {(()=>{
         const now=nowTick;
         const upcoming=[...bookings]
-          .filter(b=>["confirmed","pending"].includes(b.status)&&!b.isClientBooking)
+          .filter(b=>["confirmed","pending","inprogress"].includes(b.status)&&!b.isClientBooking&&b.status!=="cancelled"&&b.status!=="rejected")
           .sort((a,b)=>new Date(`${a.date}T${a.time}:00`)-new Date(`${b.date}T${b.time}:00`))
           .find(b=>new Date(`${b.date}T${b.time}:00`)-now>-TRIP_DURATION*60*1000);
         if(!upcoming) return null;
@@ -3967,9 +3975,9 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
           <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12,paddingBottom:10,borderBottom:"2px solid #2563eb22"}}>
             <div style={{width:4,height:20,background:"#2563eb",borderRadius:2}}/>
             <span style={{color:"#1e3a8a",fontSize:14,letterSpacing:2,fontWeight:900}}>RESERVAS ACTIVAS</span>
-            <span style={{background:"#2563eb",color:"#fff",borderRadius:10,padding:"2px 8px",fontSize:10,fontWeight:700}}>{myBookings.filter(b=>!["completed","cancelled","rejected"].includes(b.status)).length}</span>
+            <span style={{background:"#2563eb",color:"#fff",borderRadius:10,padding:"2px 8px",fontSize:10,fontWeight:700}}>{myBookings.filter(b=>!["completed","cancelled","rejected","client_rejected"].includes(b.status)).length}</span>
           </div>
-          {myBookings.filter(b=>!["completed","cancelled","rejected"].includes(b.status)).length===0&&(
+          {myBookings.filter(b=>!["completed","cancelled","rejected","client_rejected"].includes(b.status)).length===0&&(
             <div style={{color:"#475569",fontSize:12,textAlign:"center",padding:"16px 0",background:"#f1f5f9",borderRadius:10,marginBottom:16}}>No hay reservas activas</div>
           )}
           {myBookings.filter(b=>!["completed","cancelled","rejected"].includes(b.status))

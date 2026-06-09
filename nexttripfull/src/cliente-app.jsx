@@ -1437,7 +1437,7 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
       {/* ── PRÓXIMO VIAJE CLIENTE ── */}
       {(()=>{
         const upcoming = myBookings
-          .filter(b=>["confirmed","inprogress"].includes(b.status))
+          .filter(b=>["confirmed","inprogress"].includes(b.status)&&b.status!=="cancelled"&&b.status!=="rejected")
           .sort((a,b)=>new Date(`${a.date}T${a.time}:00`)-new Date(`${b.date}T${b.time}:00`))
           .find(b=>new Date(`${b.date}T${b.time}:00`)-now>-TRIP_DURATION*60*1000);
         if(!upcoming) return null;
