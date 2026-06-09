@@ -5202,7 +5202,16 @@ export default function RivieraApp() {
     }
     setToast("✅ Viaje aceptado y cliente notificado");
   };
-  const handleReject    =(id,reason)=>fbMutateBookings(p=>p.map(b=>b.id===id?{...b,status:"rejected",rejectionReason:reason||""}:b),setBookings);
+  const handleReject=(id,reason)=>{
+    fbMutateBookings(p=>p.map(b=>b.id===id?{...b,status:"rejected",rejectionReason:reason||""}:b),setBookings);
+    const booking=bookings.find(b=>b.id===id);
+    if(booking){
+      handleSendMessage(id,{
+        from:"driver",fromName:"DRIVER",isSystem:true,ts:Date.now(),
+        text:"❌ Reserva rechazada\n📅 "+booking.date+" · "+booking.time+"\n👤 "+booking.guest+"\n📍 "+booking.origin+" → "+booking.destination+(reason?"\n\nMotivo: "+reason:""),
+      });
+    }
+  };
   const handleUpdateFare=(id,fare)=>fbMutateBookings(p=>p.map(b=>b.id===id?{...b,fare}:b),setBookings);
   const handlePayCommission=(id,proof)=>fbMutateBookings(p=>p.map(b=>b.id===id?{...b,commissionStatus:"paid",commissionProof:proof}:b),setBookings);
   const handleStartTrip  =id=>{fbMutateBookings(p=>p.map(b=>b.id===id?{...b,status:"inprogress"}:b),setBookings); setDriverStatus("onroute"); try{localStorage.setItem("nexttrip_trip_started","1");}catch{}};
