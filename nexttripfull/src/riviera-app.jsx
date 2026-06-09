@@ -1076,12 +1076,7 @@ function ReceptionAuth({ onLogin, onBack }) {
 
   return (
     <div style={{minHeight:"100vh",padding:"28px 24px",display:"flex",flexDirection:"column",alignItems:"center",background:"#ffffff"}}>
-      <button onClick={onBack} style={{alignSelf:"flex-start",display:"flex",alignItems:"center",gap:8,background:"#f1f5f9",border:"none",borderRadius:20,padding:"8px 16px",color:"#1e3a8a",cursor:"pointer",fontSize:12,fontWeight:700,letterSpacing:1,marginBottom:24,boxShadow:"0 1px 4px rgba(37,99,235,0.1)"}}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" strokeWidth="2.5" strokeLinecap="round">
-          <path d="M19 12H5M12 19l-7-7 7-7"/>
-        </svg>
-        VOLVER
-      </button>
+      {onBack&&(<button onClick={onBack} style={{alignSelf:"flex-start",display:"flex",alignItems:"center",gap:8,background:"#f1f5f9",border:"none",borderRadius:20,padding:"8px 16px",color:"#1e3a8a",cursor:"pointer",fontSize:12,fontWeight:700,letterSpacing:1,marginBottom:24}}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" strokeWidth="2.5" strokeLinecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>VOLVER</button>)}
 
       <RivieraLogo size={180}/>
       <div style={{marginBottom:24}}/>
@@ -1287,15 +1282,14 @@ function ReceptionAuth({ onLogin, onBack }) {
 function DriverLogin({ onLogin, onBack }) {
   return (
     <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:24,background:"#ffffff"}}>
-      <button onClick={onBack} style={{position:"absolute",top:24,left:20,display:"flex",alignItems:"center",gap:8,background:"#f1f5f9",border:"none",borderRadius:20,padding:"8px 16px",color:"#1e3a8a",cursor:"pointer",fontSize:12,fontWeight:700,letterSpacing:1}}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" strokeWidth="2.5" strokeLinecap="round">
-          <path d="M19 12H5M12 19l-7-7 7-7"/>
-        </svg>
-        VOLVER
-      </button>
+      {onBack&&(<button onClick={onBack} style={{position:"absolute",top:24,left:20,display:"flex",alignItems:"center",gap:8,background:"#f1f5f9",border:"none",borderRadius:20,padding:"8px 16px",color:"#1e3a8a",cursor:"pointer",fontSize:12,fontWeight:700,letterSpacing:1}}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" strokeWidth="2.5" strokeLinecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>VOLVER</button>)}
       <div style={{width:"100%",maxWidth:340,display:"flex",flexDirection:"column",alignItems:"center"}}>
         <RivieraLogo size={160}/>
-        <div style={{color:"#2563eb",fontSize:14,fontWeight:700,letterSpacing:5,marginTop:4,marginBottom:36}}>DRIVER APP</div>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,marginTop:4,marginBottom:32}}>
+          <div style={{height:2,width:40,background:"linear-gradient(90deg,transparent,#2563eb)",borderRadius:1}}/>
+          <span style={{color:"#1e3a8a",fontSize:16,fontWeight:900,letterSpacing:6}}>DRIVER</span>
+          <div style={{height:2,width:40,background:"linear-gradient(90deg,#2563eb,transparent)",borderRadius:1}}/>
+        </div>
         <PinKeypad correctPin={DRIVER_PIN} onSuccess={onLogin} onBack={null} subtitle="INTRODUCE TU PIN" accentColor="#22c55e"/>
       </div>
     </div>
@@ -5499,8 +5493,8 @@ export default function RivieraApp({ initialRole=null }) {
 
       <div style={{maxWidth:480,margin:"0 auto",width:"100%"}}>
       {screen==="roles"         &&<RoleSelector onSelect={r=>setScreen(r==="driver"?"driver-login":"reception-auth")} installPrompt={installPrompt}/>}
-      {screen==="driver-login"  &&<DriverLogin onLogin={()=>setScreen("driver")} onBack={()=>setScreen(initialRole==="driver"?"driver-login":"roles")}/>}
-      {screen==="reception-auth"&&<ReceptionAuth onLogin={user=>{setCurrentEmployee(user);setScreen("reception");}} onBack={()=>setScreen(initialRole==="reception"?"reception-auth":"roles")}/>}
+      {screen==="driver-login"  &&<DriverLogin onLogin={()=>setScreen("driver")} onBack={initialRole==="driver"?null:()=>setScreen("roles")}/>}
+      {screen==="reception-auth"&&<ReceptionAuth onLogin={user=>{setCurrentEmployee(user);setScreen("reception");}} onBack={initialRole==="reception"?null:()=>setScreen("roles")}/>}
       </div>
 
       {isApp&&(
