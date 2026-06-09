@@ -2407,9 +2407,9 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
                       {id:"other",label:"📝 Otros motivos"},
                     ].map(opt=>(
                       <button key={opt.id} onClick={()=>setCancelConfirm({step:opt.id==="other"?"custom":"confirm",reason:opt.label,custom:""})} style={{
-                        background:cancelConfirm.reason===opt.label?"#ef444422":"#f1f5f9",
-                        border:`1px solid ${cancelConfirm.reason===opt.label?"#ef4444":"#475569"}`,
-                        borderRadius:8,padding:"10px 14px",color:"#0f172a",fontSize:12,fontWeight:600,
+                        background:cancelConfirm.reason===opt.label?"#fee2e2":"#f8fafc",
+                        border:`2px solid ${cancelConfirm.reason===opt.label?"#ef4444":"#e2e8f0"}`,
+                        borderRadius:10,padding:"10px 14px",color:"#0f172a",fontSize:12,fontWeight:600,
                         cursor:"pointer",textAlign:"left",
                       }}>{opt.label}</button>
                     ))}
@@ -2426,14 +2426,14 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
                     value={cancelConfirm.custom||""}
                     onChange={e=>setCancelConfirm({...cancelConfirm,custom:e.target.value})}
                     placeholder="Escribe el motivo aquí..."
-                    style={{width:"100%",background:"#ffffff",border:"1px solid #475569",borderRadius:8,
+                    style={{width:"100%",background:"#f8fafc",border:"2px solid #e2e8f0",borderRadius:8,
                       padding:"10px",color:"#0f172a",fontSize:12,minHeight:80,resize:"none",
                       outline:"none",boxSizing:"border-box",marginBottom:10}}
                   />
                   <div style={{display:"flex",gap:8}}>
                     <button onClick={()=>setCancelConfirm({step:"choose",reason:"",custom:""})} style={{
-                      flex:1,background:"#f1f5f9",border:"1px solid #475569",borderRadius:8,
-                      padding:"10px 0",color:"#64748b",fontSize:12,cursor:"pointer",
+                      flex:1,background:"#f8fafc",border:"1.5px solid #e2e8f0",borderRadius:8,
+                      padding:"10px 0",color:"#64748b",fontSize:12,fontWeight:600,cursor:"pointer",
                     }}>← Volver</button>
                     <button onClick={()=>setCancelConfirm({...cancelConfirm,step:"confirm",reason:`📝 ${cancelConfirm.custom||"Otros motivos"}`})}
                       disabled={!cancelConfirm.custom?.trim()}
@@ -2453,7 +2453,7 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
                   <div style={{color:"#64748b",fontSize:11,textAlign:"center",marginBottom:12}}>Esta acción no se puede deshacer</div>
                   <div style={{display:"flex",gap:8}}>
                     <button onClick={()=>setCancelConfirm(null)} style={{
-                      flex:1,background:"#f1f5f9",border:"1px solid #475569",borderRadius:8,
+                      flex:1,background:"#f8fafc",border:"1.5px solid #e2e8f0",borderRadius:8,
                       padding:"10px 0",color:"#64748b",fontSize:12,fontWeight:600,cursor:"pointer",
                     }}>No, volver</button>
                     <button onClick={()=>{
@@ -2637,9 +2637,9 @@ function DriverView({ bookings, onAccept, onReject, onUpdateFare, onPayCommissio
             }}>
               <div style={{width:40,height:4,background:"#e2e8f0",borderRadius:2,margin:"0 auto 14px"}}/>
         <button onClick={()=>setHotelModal(null)} style={{
-          display:"flex",alignItems:"center",gap:6,background:"none",border:"none",
-          color:"#64748b",fontSize:13,cursor:"pointer",padding:"0 0 12px",
-          fontFamily:"inherit",letterSpacing:0.3,
+          display:"flex",alignItems:"center",gap:6,background:"#f1f5f9",border:"none",borderRadius:20,
+          color:"#1e3a8a",fontSize:12,cursor:"pointer",padding:"7px 14px",
+          fontFamily:"inherit",fontWeight:700,marginBottom:16,
         }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M19 12H5M12 19l-7-7 7-7"/>
@@ -4584,9 +4584,9 @@ function CancelTripModal({ booking, onCancel, onClose }) {
       }}>
         <div style={{width:40,height:4,background:"#e2e8f0",borderRadius:2,margin:"0 auto 14px"}}/>
         <button onClick={onClose} style={{
-          display:"flex",alignItems:"center",gap:6,background:"none",border:"none",
-          color:"#64748b",fontSize:13,cursor:"pointer",padding:"0 0 12px",
-          fontFamily:"inherit",letterSpacing:0.3,
+          display:"flex",alignItems:"center",gap:6,background:"#f1f5f9",border:"none",borderRadius:20,
+          color:"#1e3a8a",fontSize:12,cursor:"pointer",padding:"7px 14px",
+          fontFamily:"inherit",fontWeight:700,marginBottom:16,
         }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M19 12H5M12 19l-7-7 7-7"/>
@@ -4607,7 +4607,7 @@ function CancelTripModal({ booking, onCancel, onClose }) {
                   borderRadius:12,padding:"13px 16px",cursor:"pointer",textAlign:"left",transition:"all 0.15s",
                 }}>
                   <span style={{fontSize:20}}>{r.icon}</span>
-                  <span style={{color:"#0f172a",fontSize:13}}>{r.label}</span>
+                  <span style={{color:"#0f172a",fontSize:13,fontWeight:600}}>{r.label}</span>
                 </button>
                 {showCustom&&(
                   <div style={{marginTop:8,display:"flex",gap:8}}>
@@ -4631,7 +4631,7 @@ function CancelTripModal({ booking, onCancel, onClose }) {
                 onMouseEnter={e=>e.currentTarget.style.borderColor="#f97316"}
                 onMouseLeave={e=>e.currentTarget.style.borderColor="#f9731633"}>
                 <span style={{fontSize:20}}>{r.icon}</span>
-                <span style={{color:"#0f172a",fontSize:13}}>{r.label}</span>
+                <span style={{color:"#0f172a",fontSize:13,fontWeight:600}}>{r.label}</span>
               </button>
             )
           ))}
@@ -4815,26 +4815,25 @@ function RejectModal({ booking, onReject, onOpenChat, onClose }) {
   const allUsers = [...EMPLOYEES, ...loadUsers()];
   const emp = allUsers.find(e => e.id === b.employeeId);
   return (
-    <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:300,display:"flex",alignItems:"flex-end"}}>
+    <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(15,23,42,0.5)",zIndex:300,display:"flex",alignItems:"flex-end"}}>
       <div onClick={e=>e.stopPropagation()} style={{
-        background:"linear-gradient(180deg,#1e293b,#0f172a)",
+        background:"#ffffff",
         borderRadius:"22px 22px 0 0", padding:"20px 20px 36px", width:"100%",
-        border:"1px solid #ef444433", borderBottom:"none",
+        border:"1px solid #e2e8f0", borderBottom:"none",
+        boxShadow:"0 -8px 32px rgba(0,0,0,0.15)",
         animation:"slideUp 0.3s ease",
       }}>
         <div style={{width:40,height:4,background:"#e2e8f0",borderRadius:2,margin:"0 auto 14px"}}/>
         <button onClick={onClose} style={{
-          display:"flex",alignItems:"center",gap:6,background:"none",border:"none",
-          color:"#64748b",fontSize:13,cursor:"pointer",padding:"0 0 12px",
-          fontFamily:"inherit",letterSpacing:0.3,
+          display:"flex",alignItems:"center",gap:6,background:"#f1f5f9",border:"none",borderRadius:20,
+          color:"#1e3a8a",fontSize:12,cursor:"pointer",padding:"7px 14px",
+          fontFamily:"inherit",fontWeight:700,marginBottom:16,
         }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M19 12H5M12 19l-7-7 7-7"/>
-          </svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" strokeWidth="2.5" strokeLinecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
           Volver
         </button>
-        <div style={{color:"#ef4444",fontSize:11,letterSpacing:3,marginBottom:6}}>MOTIVO DE RECHAZO</div>
-        <div style={{color:"#0f172a",fontSize:16,fontFamily:"'Inter',sans-serif",marginBottom:4}}>{b.guest}</div>
+        <div style={{color:"#ef4444",fontSize:12,fontWeight:800,letterSpacing:2,marginBottom:6}}>MOTIVO DE RECHAZO</div>
+        <div style={{color:"#0f172a",fontSize:18,fontWeight:800,marginBottom:4}}>{b.guest}</div>
         {emp && (
           <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:18}}>
             <div style={{width:20,height:20,borderRadius:"50%",background:emp.avatar+"25",border:`1.5px solid ${emp.avatar}55`,display:"flex",alignItems:"center",justifyContent:"center",color:emp.avatar,fontSize:9,fontWeight:700}}>{initials(emp.name)}</div>
@@ -4846,12 +4845,12 @@ function RejectModal({ booking, onReject, onOpenChat, onClose }) {
             r.isChat ? (
               <button key={r.id} onClick={()=>{onClose();onOpenChat(b);}} style={{
                 display:"flex",alignItems:"center",gap:12,
-                background:"#2563eb15",border:"1px solid #2563eb33",
+                background:"#eff6ff",border:"2px solid #2563eb44",
                 borderRadius:12,padding:"13px 16px",cursor:"pointer",textAlign:"left",transition:"all 0.15s",
               }}
-                onMouseEnter={e=>e.currentTarget.style.borderColor="#2563eb"}
-                onMouseLeave={e=>e.currentTarget.style.borderColor="#2563eb33"}>
-                <span style={{fontSize:20}}>{r.icon}</span>
+                onMouseEnter={e=>{e.currentTarget.style.borderColor="#2563eb";e.currentTarget.style.background="#dbeafe";}}
+                onMouseLeave={e=>{e.currentTarget.style.borderColor="#2563eb44";e.currentTarget.style.background="#eff6ff";}}
+              >
                 <div>
                   <div style={{color:"#2563eb",fontSize:13,fontWeight:600}}>{r.label}</div>
                   {emp&&<div style={{color:"#64748b",fontSize:11,marginTop:2}}>Chatear con {emp.name}</div>}
@@ -4861,18 +4860,18 @@ function RejectModal({ booking, onReject, onOpenChat, onClose }) {
             ) : (
               <button key={r.id} onClick={()=>onReject(b.id, r.label)} style={{
                 display:"flex",alignItems:"center",gap:12,
-                background:"#ef444410",border:"1px solid #ef444433",
+                background:"#fff5f5",border:"2px solid #ef444433",
                 borderRadius:12,padding:"13px 16px",cursor:"pointer",textAlign:"left",transition:"all 0.15s",
               }}
-                onMouseEnter={e=>e.currentTarget.style.borderColor="#ef4444"}
-                onMouseLeave={e=>e.currentTarget.style.borderColor="#ef444433"}>
-                <span style={{fontSize:20}}>{r.icon}</span>
-                <span style={{color:"#0f172a",fontSize:13}}>{r.label}</span>
+                onMouseEnter={e=>{e.currentTarget.style.borderColor="#ef4444";e.currentTarget.style.background="#fee2e2";}}
+                onMouseLeave={e=>{e.currentTarget.style.borderColor="#ef444433";e.currentTarget.style.background="#fff5f5";}}
+              >
+                <span style={{color:"#0f172a",fontSize:13,fontWeight:600}}>{r.label}</span>
               </button>
             )
           ))}
         </div>
-        <button onClick={onClose} style={{width:"100%",marginTop:14,background:"#f1f5f9",border:"1px solid #2a3a4a",borderRadius:10,padding:"12px 0",color:"#64748b",fontSize:13,cursor:"pointer"}}>Cancelar</button>
+        <button onClick={onClose} style={{width:"100%",marginTop:14,background:"#f8fafc",border:"1.5px solid #e2e8f0",borderRadius:10,padding:"12px 0",color:"#64748b",fontSize:13,fontWeight:600,cursor:"pointer"}}>Cancelar</button>
       </div>
     </div>
   );
@@ -4914,9 +4913,9 @@ function CommissionPayModal({ booking, onPay, onClose }) {
       }}>
         <div style={{width:40,height:4,background:"#e2e8f0",borderRadius:2,margin:"0 auto 14px"}}/>
         <button onClick={onClose} style={{
-          display:"flex",alignItems:"center",gap:6,background:"none",border:"none",
-          color:"#64748b",fontSize:13,cursor:"pointer",padding:"0 0 12px",
-          fontFamily:"inherit",letterSpacing:0.3,
+          display:"flex",alignItems:"center",gap:6,background:"#f1f5f9",border:"none",borderRadius:20,
+          color:"#1e3a8a",fontSize:12,cursor:"pointer",padding:"7px 14px",
+          fontFamily:"inherit",fontWeight:700,marginBottom:16,
         }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M19 12H5M12 19l-7-7 7-7"/>
