@@ -7,6 +7,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         driver: 'driver.html',
+        'driver-desktop': 'driver-desktop.html',
         reception: 'reception.html',
         cliente: 'cliente.html',
       }

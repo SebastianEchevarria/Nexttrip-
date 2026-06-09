@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <meta name="theme-color" content="#1e3a8a"/>
+  <title>VELO Driver — Desktop</title>
+  <link rel="icon" href="/icon-driver.svg"/>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html,body,#root{width:100%;min-height:100%;background:#f1f5f9;}
+    #loading{position:fixed;inset:0;background:#f1f5f9;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.5s;}
+    #loading.hidden{opacity:0;pointer-events:none;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAfhidX6gGyElvwOwUpoBsNhbk_OFd4roY&libraries=places" async defer></script>
+</head>
+<body>
+  <div id="loading">
+    <img src="/logo-velo.jpg" style="width:80px;height:80px;object-fit:contain;margin-bottom:20px;border-radius:16px"/>
+    <div style="color:#1e3a8a;font-size:11px;letter-spacing:3px;margin-bottom:16px;font-family:sans-serif;font-weight:700">VELO DRIVER DESKTOP</div>
+    <div style="width:28px;height:28px;border-radius:50%;border:3px solid #dbeafe;border-top-color:#2563eb;animation:spin 0.8s linear infinite"></div>
+  </div>
+  <div id="root"></div>
+  <script type="module" src="/src/main-driver-desktop.jsx"></script>
+</body>
+</html>

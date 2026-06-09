@@ -7,6 +7,10 @@
       "destination": "/driver.html"
     },
     {
+      "source": "/driver-desktop.html",
+      "destination": "/driver-desktop.html"
+    },
+    {
       "source": "/reception.html",
       "destination": "/reception.html"
     },
