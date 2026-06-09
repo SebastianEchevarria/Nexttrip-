@@ -1,7 +1,7 @@
 {
-  "name": "VELO Transfers",
-  "short_name": "VELO",
-  "description": "VELO Private Transfers \u2014 Driver & Reception",
+  "name": "VELO Driver",
+  "short_name": "VELO Driver",
+  "description": "VELO Private Transfers \u2014 Driver App",
   "start_url": "/driver.html",
   "scope": "/driver.html",
   "id": "velo-driver",

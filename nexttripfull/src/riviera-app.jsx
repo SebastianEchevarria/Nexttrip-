@@ -1003,7 +1003,7 @@ function findUserByPin(pin) {
 
 // ─── RECEPTION AUTH SCREEN ────────────────────────────────────────────────────
 // Handles: login with PIN, or register new user (name + hotel + PIN)
-function ReceptionAuth({ onLogin, onBack }) {
+function ReceptionAuth({ onLogin, onBack, installPrompt=null, initialRole=null }) {
   const [mode, setMode] = useState("login"); // "login" | "register"
   const [loginPin, setLoginPin] = useState("");
   const [loginError, setLoginError] = useState("");
@@ -1079,7 +1079,49 @@ function ReceptionAuth({ onLogin, onBack }) {
       {onBack&&(<button onClick={onBack} style={{alignSelf:"flex-start",display:"flex",alignItems:"center",gap:8,background:"#f1f5f9",border:"none",borderRadius:20,padding:"8px 16px",color:"#1e3a8a",cursor:"pointer",fontSize:12,fontWeight:700,letterSpacing:1,marginBottom:24}}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" strokeWidth="2.5" strokeLinecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>VOLVER</button>)}
 
       <RivieraLogo size={180}/>
-      <div style={{marginBottom:24}}/>
+      <div style={{marginBottom:16}}/>
+      {/* Install button — only show when not installed and installPrompt available */}
+      {initialRole==="reception"&&(()=>{
+        const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+        const isStandalone=window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone;
+        if(isStandalone) return null;
+        if(isIOS){
+          return(
+            <div style={{width:"100%",maxWidth:320,marginBottom:16,background:"linear-gradient(135deg,#1e3a8a,#2563eb)",borderRadius:14,padding:"14px 18px",display:"flex",alignItems:"center",gap:12,boxShadow:"0 4px 16px rgba(37,99,235,0.3)"}}>
+              <div style={{width:44,height:44,borderRadius:12,overflow:"hidden",flexShrink:0,boxShadow:"0 2px 6px rgba(0,0,0,0.3)"}}>
+                <img src="/icon-reception.svg" width="44" height="44" style={{objectFit:"cover"}}/>
+              </div>
+              <div style={{flex:1}}>
+                <div style={{color:"#ffffff",fontSize:13,fontWeight:800,marginBottom:2}}>{"Instalar VELO Transfers"}</div>
+                <div style={{color:"#93c5fd",fontSize:10}}>{"Compartir → Añadir a inicio"}</div>
+              </div>
+              <span style={{fontSize:20}}>{"📲"}</span>
+            </div>
+          );
+        }
+        if(installPrompt){
+          return(
+            <button onClick={async()=>{installPrompt.prompt();await installPrompt.userChoice;}} style={{
+              width:"100%",maxWidth:320,marginBottom:16,
+              background:"linear-gradient(135deg,#1e3a8a,#2563eb)",
+              border:"none",borderRadius:14,padding:"14px 18px",
+              display:"flex",alignItems:"center",gap:12,cursor:"pointer",
+              boxShadow:"0 4px 16px rgba(37,99,235,0.3)",
+            }}>
+              <div style={{width:44,height:44,borderRadius:12,overflow:"hidden",flexShrink:0,boxShadow:"0 2px 6px rgba(0,0,0,0.3)"}}>
+                <img src="/icon-reception.svg" width="44" height="44" style={{objectFit:"cover"}}/>
+              </div>
+              <div style={{flex:1,textAlign:"left"}}>
+                <div style={{color:"#ffffff",fontSize:13,fontWeight:800,marginBottom:2}}>{"Instalar VELO Transfers"}</div>
+                <div style={{color:"#93c5fd",fontSize:10}}>{"Añadir a pantalla de inicio"}</div>
+              </div>
+              <span style={{color:"#ffffff",fontSize:18}}>{"⬇️"}</span>
+            </button>
+          );
+        }
+        return null;
+      })()}
+      <div style={{marginBottom:8}}/>
 
       {/* Mode toggle */}
       <div style={{display:"flex",background:"#dbeafe",borderRadius:50,padding:5,marginBottom:28,gap:4,width:"100%",maxWidth:320,boxShadow:"0 2px 8px rgba(37,99,235,0.15)"}}>
@@ -5494,7 +5536,7 @@ export default function RivieraApp({ initialRole=null }) {
       <div style={{maxWidth:480,margin:"0 auto",width:"100%"}}>
       {screen==="roles"         &&<RoleSelector onSelect={r=>setScreen(r==="driver"?"driver-login":"reception-auth")} installPrompt={installPrompt}/>}
       {screen==="driver-login"  &&<DriverLogin onLogin={()=>setScreen("driver")} onBack={initialRole==="driver"?null:()=>setScreen("roles")}/>}
-      {screen==="reception-auth"&&<ReceptionAuth onLogin={user=>{setCurrentEmployee(user);setScreen("reception");}} onBack={initialRole==="reception"?null:()=>setScreen("roles")}/>}
+      {screen==="reception-auth"&&<ReceptionAuth onLogin={user=>{setCurrentEmployee(user);setScreen("reception");}} onBack={initialRole==="reception"?null:()=>setScreen("roles")} installPrompt={installPrompt} initialRole={initialRole}/>}
       </div>
 
       {isApp&&(
@@ -5666,7 +5708,7 @@ export default function RivieraApp({ initialRole=null }) {
         </div>
         {/* Text */}
         <div style={{flex:1}}>
-          <div style={{color:"#1e3a8a",fontSize:14,fontWeight:800,marginBottom:2}}>{"Instalar VELO Transfers"}</div>
+          <div style={{color:"#1e3a8a",fontSize:14,fontWeight:800,marginBottom:2}}>{"Instalar VELO Driver"}</div>
           <div style={{color:"#2563eb",fontSize:11,fontWeight:600}}>{"VELO Private Transfers"}</div>
           <div style={{color:"#94a3b8",fontSize:10,marginTop:1}}>{"Añadir a pantalla de inicio"}</div>
         </div>

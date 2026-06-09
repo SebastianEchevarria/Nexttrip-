@@ -1,6 +1,6 @@
 {
-  "name": "VELO Recepci\u00f3n",
-  "short_name": "VELO Rec.",
+  "name": "VELO Transfers",
+  "short_name": "VELO Transfers",
   "description": "VELO Private Transfers \u2014 Gesti\u00f3n de Reservas",
   "start_url": "/reception.html",
   "scope": "/reception.html",
@@ -11,7 +11,7 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/icon-driver.svg",
+      "src": "/icon-reception.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
