@@ -366,7 +366,7 @@ function LoginScreen({onLogin}){
     <div style={{width:"100vw",height:"100vh",background:"#0a0a0a url('/bg-driver-desktop-login.jpg') center top/cover no-repeat",display:"flex",alignItems:"flex-start",justifyContent:"center",overflow:"hidden",position:"relative"}}>
       <style>{CSS}</style>
 
-      <div style={{textAlign:"center",width:300,zIndex:1,paddingTop:"39vh"}}>
+      <div style={{textAlign:"center",width:300,zIndex:1,paddingTop:"50vh"}}>
         {/* Dots */}
         <div style={{display:"flex",gap:14,justifyContent:"center",marginBottom:err?10:20,animation:shake?"shake 0.4s ease":undefined}}>
           {[0,1,2,3].map(i=>(
