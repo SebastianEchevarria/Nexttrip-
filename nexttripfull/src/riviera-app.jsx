@@ -1075,99 +1075,103 @@ function ReceptionAuth({ onLogin, onBack, installPrompt=null, initialRole=null }
   const hotelUserCount = users.filter(u => u.hotel === regWorkplace).length;
 
   return (
-    <div style={{minHeight:"100vh",padding:"28px 24px",display:"flex",flexDirection:"column",alignItems:"center",background:"#ffffff"}}>
-      {onBack&&(<button onClick={onBack} style={{alignSelf:"flex-start",display:"flex",alignItems:"center",gap:8,background:"#f1f5f9",border:"none",borderRadius:20,padding:"8px 16px",color:"#1e3a8a",cursor:"pointer",fontSize:12,fontWeight:700,letterSpacing:1,marginBottom:24}}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" strokeWidth="2.5" strokeLinecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>VOLVER</button>)}
+    <div style={{
+      minHeight:"100vh",
+      background:"url('/bg-reception-login.png') center top/cover no-repeat",
+      display:"flex",flexDirection:"column",alignItems:"center",
+      position:"relative",overflow:"hidden",
+    }}>
+      {/* Dark overlay — stronger at bottom for form readability */}
+      <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg,rgba(0,0,0,0.25) 0%,rgba(0,0,0,0.65) 45%,rgba(0,0,0,0.88) 100%)",pointerEvents:"none"}}/>
 
-      <RivieraLogo size={180}/>
-      <div style={{marginBottom:16}}/>
-      {/* Install button — only show when not installed and installPrompt available */}
-      {initialRole==="reception"&&(()=>{
-        const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
-        const isStandalone=window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone;
-        if(isStandalone) return null;
-        if(isIOS){
-          return(
-            <div style={{width:"100%",maxWidth:320,marginBottom:16,background:"linear-gradient(135deg,#1e3a8a,#2563eb)",borderRadius:14,padding:"14px 18px",display:"flex",alignItems:"center",gap:12,boxShadow:"0 4px 16px rgba(37,99,235,0.3)"}}>
-              <div style={{width:44,height:44,borderRadius:12,overflow:"hidden",flexShrink:0,boxShadow:"0 2px 6px rgba(0,0,0,0.3)"}}>
-                <img src="/icon-reception.svg" width="44" height="44" style={{objectFit:"cover"}}/>
+      {/* Content */}
+      <div style={{position:"relative",zIndex:1,width:"100%",maxWidth:380,padding:"32px 24px 40px",display:"flex",flexDirection:"column",alignItems:"center"}}>
+
+        {onBack&&(<button onClick={onBack} style={{alignSelf:"flex-start",display:"flex",alignItems:"center",gap:8,background:"rgba(255,255,255,0.12)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:20,padding:"8px 16px",color:"#ffffff",cursor:"pointer",fontSize:12,fontWeight:700,letterSpacing:1,marginBottom:20}}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>VOLVER</button>)}
+
+        {/* Spacer to push content below logo area in image */}
+        <div style={{height:220}}/>
+
+        {/* Install button */}
+        {initialRole==="reception"&&(()=>{
+          const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+          const isStandalone=window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone;
+          if(isStandalone) return null;
+          if(isIOS){
+            return(
+              <div style={{width:"100%",marginBottom:16,background:"rgba(37,99,235,0.9)",backdropFilter:"blur(12px)",borderRadius:14,padding:"14px 18px",display:"flex",alignItems:"center",gap:12,border:"1px solid rgba(255,255,255,0.2)"}}>
+                <img src="/icon-reception.svg" width="40" height="40" style={{borderRadius:10,objectFit:"cover",flexShrink:0}}/>
+                <div style={{flex:1}}>
+                  <div style={{color:"#ffffff",fontSize:13,fontWeight:800}}>{"Instalar VELO Transfers"}</div>
+                  <div style={{color:"rgba(255,255,255,0.6)",fontSize:10}}>{"Compartir → Añadir a inicio"}</div>
+                </div>
+                <span style={{fontSize:18}}>{"📲"}</span>
               </div>
-              <div style={{flex:1}}>
-                <div style={{color:"#ffffff",fontSize:13,fontWeight:800,marginBottom:2}}>{"Instalar VELO Transfers"}</div>
-                <div style={{color:"#93c5fd",fontSize:10}}>{"Compartir → Añadir a inicio"}</div>
-              </div>
-              <span style={{fontSize:20}}>{"📲"}</span>
-            </div>
-          );
-        }
-        if(installPrompt){
-          return(
-            <button onClick={async()=>{installPrompt.prompt();await installPrompt.userChoice;}} style={{
-              width:"100%",maxWidth:320,marginBottom:16,
-              background:"linear-gradient(135deg,#1e3a8a,#2563eb)",
-              border:"none",borderRadius:14,padding:"14px 18px",
-              display:"flex",alignItems:"center",gap:12,cursor:"pointer",
-              boxShadow:"0 4px 16px rgba(37,99,235,0.3)",
-            }}>
-              <div style={{width:44,height:44,borderRadius:12,overflow:"hidden",flexShrink:0,boxShadow:"0 2px 6px rgba(0,0,0,0.3)"}}>
-                <img src="/icon-reception.svg" width="44" height="44" style={{objectFit:"cover"}}/>
-              </div>
-              <div style={{flex:1,textAlign:"left"}}>
-                <div style={{color:"#ffffff",fontSize:13,fontWeight:800,marginBottom:2}}>{"Instalar VELO Transfers"}</div>
-                <div style={{color:"#93c5fd",fontSize:10}}>{"Añadir a pantalla de inicio"}</div>
-              </div>
-              <span style={{color:"#ffffff",fontSize:18}}>{"⬇️"}</span>
+            );
+          }
+          if(installPrompt){
+            return(
+              <button onClick={async()=>{installPrompt.prompt();await installPrompt.userChoice;}} style={{width:"100%",marginBottom:16,background:"rgba(37,99,235,0.9)",backdropFilter:"blur(12px)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:14,padding:"14px 18px",display:"flex",alignItems:"center",gap:12,cursor:"pointer"}}>
+                <img src="/icon-reception.svg" width="40" height="40" style={{borderRadius:10,objectFit:"cover",flexShrink:0}}/>
+                <div style={{flex:1,textAlign:"left"}}>
+                  <div style={{color:"#ffffff",fontSize:13,fontWeight:800}}>{"Instalar VELO Transfers"}</div>
+                  <div style={{color:"rgba(255,255,255,0.6)",fontSize:10}}>{"Añadir a pantalla de inicio"}</div>
+                </div>
+                <span style={{color:"#ffffff",fontSize:16}}>{"⬇️"}</span>
+              </button>
+            );
+          }
+          return null;
+        })()}
+
+        {/* Mode toggle */}
+        <div style={{display:"flex",background:"rgba(255,255,255,0.12)",backdropFilter:"blur(12px)",borderRadius:50,padding:4,marginBottom:24,gap:4,width:"100%",border:"1px solid rgba(255,255,255,0.15)"}}>
+          {[{id:"login",label:"Iniciar sesión"},{id:"register",label:"Crear cuenta"}].map(t=>(
+            <button key={t.id} onClick={()=>{setMode(t.id);setLoginPin("");setLoginError("");setRegStep(1);setRegError("");setRegPin("");setRegPin2("");}}
+              style={{flex:1,padding:"11px 4px",border:"none",borderRadius:46,cursor:"pointer",
+                background:mode===t.id?"#2563eb":"transparent",
+                color:"#ffffff",fontSize:13,fontWeight:700,transition:"all 0.2s",
+                boxShadow:mode===t.id?"0 2px 12px rgba(37,99,235,0.5)":"none"}}>
+              {t.label}
             </button>
-          );
-        }
-        return null;
-      })()}
-      <div style={{marginBottom:8}}/>
+          ))}
+        </div>
 
-      {/* Mode toggle */}
-      <div style={{display:"flex",background:"#dbeafe",borderRadius:50,padding:5,marginBottom:28,gap:4,width:"100%",maxWidth:320,boxShadow:"0 2px 8px rgba(37,99,235,0.15)"}}>
-        {[{id:"login",label:"Iniciar sesión"},{id:"register",label:"Crear cuenta"}].map(t=>(
-          <button key={t.id} onClick={()=>{setMode(t.id);setLoginPin("");setLoginError("");setRegStep(1);setRegError("");setRegPin("");setRegPin2("");}}
-            style={{flex:1,padding:"11px 4px",border:"none",borderRadius:46,cursor:"pointer",
-              background:mode===t.id?"#2563eb":"transparent",
-              color:mode===t.id?"#ffffff":"#1e3a8a",fontSize:13,fontWeight:700,transition:"all 0.2s",
-              boxShadow:mode===t.id?"0 2px 8px rgba(37,99,235,0.35)":"none"}}>
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      {/* ── LOGIN ── */}
-      {mode==="login"&&(
-        <div style={{width:"100%",maxWidth:320,display:"flex",flexDirection:"column",alignItems:"center"}}>
-          <div style={{color:"#0f172a",fontSize:14,letterSpacing:3,fontWeight:800,marginBottom:22}}>INTRODUCE TU PIN</div>
-          <div style={{display:"flex",gap:18,marginBottom:28}}>
-            {[0,1,2,3].map(i=>(
-              <div key={i} style={{width:18,height:18,borderRadius:"50%",
-                background:loginPin.length>i?(loginError?"#ef4444":"#2563eb"):"#e2e8f0",
-                border:`2.5px solid ${loginError?"#ef4444":loginPin.length>i?"#2563eb":"#cbd5e1"}`,
-                transition:"all 0.2s",transform:loginPin.length>i?"scale(1.3)":"scale(1)",
-                boxShadow:loginPin.length>i&&!loginError?"0 2px 8px rgba(37,99,235,0.4)":"none"}}/>
-            ))}
-          </div>
-          {loginError&&<div style={{color:"#ef4444",fontSize:11,marginBottom:14,letterSpacing:0.5,textAlign:"center"}}>{loginError}</div>}
-          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,width:230}}>
-            {[1,2,3,4,5,6,7,8,9,"",0,"⌫"].map((d,i)=>(
-              <button key={i} onClick={()=>d==="⌫"?setLoginPin(p=>{setLoginError("");return p.slice(0,-1);}):d!==""?handleLoginDigit(String(d)):null}
-                disabled={d===""} style={{height:60,borderRadius:12,
-                  background:d===""?"transparent":d==="⌫"?"#f1f5f9":"#eff6ff",
-                  border:d===""?"none":`2px solid ${d==="⌫"?"#e2e8f0":"#2563eb88"}`,
-                  color:d==="⌫"?"#94a3b8":"#1e3a8a",
-                  fontSize:d==="⌫"?20:24,fontFamily:"'Inter',sans-serif",fontWeight:800,
-                  cursor:d===""?"default":"pointer",transition:"all 0.12s",
-                  boxShadow:d===""||d==="⌫"?"none":"0 3px 10px rgba(37,99,235,0.18)"}}
-                onMouseDown={e=>{if(d!=="")e.currentTarget.style.transform="scale(0.92)";e.currentTarget.style.background=d==="⌫"?"#e2e8f0":"#eff6ff";}}
-                onMouseUp={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.background=d===""?"transparent":d==="⌫"?"#f8fafc":"#ffffff";}}>{d}</button>
-            ))}
-          </div>
-          {users.length===0&&(
-            <div style={{marginTop:20,color:"#64748b",fontSize:12,textAlign:"center"}}>
-              Aún no hay cuentas.<br/>
-              <button onClick={()=>setMode("register")} style={{background:"none",border:"none",color:"#2563eb",cursor:"pointer",fontSize:12,marginTop:4}}>Crear una cuenta →</button>
+        {/* ── LOGIN ── */}
+        {mode==="login"&&(
+          <div style={{width:"100%",display:"flex",flexDirection:"column",alignItems:"center"}}>
+            <div style={{color:"rgba(255,255,255,0.7)",fontSize:12,letterSpacing:4,fontWeight:700,marginBottom:20}}>INTRODUCE TU PIN</div>
+            <div style={{display:"flex",gap:18,marginBottom:28}}>
+              {[0,1,2,3].map(i=>(
+                <div key={i} style={{width:18,height:18,borderRadius:"50%",
+                  background:loginPin.length>i?(loginError?"#ef4444":"#38bdf8"):"rgba(255,255,255,0.2)",
+                  border:`2.5px solid ${loginError?"#ef4444":loginPin.length>i?"#38bdf8":"rgba(255,255,255,0.3)"}`,
+                  transition:"all 0.2s",transform:loginPin.length>i?"scale(1.3)":"scale(1)",
+                  boxShadow:loginPin.length>i&&!loginError?"0 0 12px rgba(56,189,248,0.6)":"none"}}/>
+              ))}
+            </div>
+            {loginError&&<div style={{color:"#fca5a5",fontSize:11,marginBottom:14,letterSpacing:0.5,textAlign:"center"}}>{loginError}</div>}
+            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,width:240}}>
+              {[1,2,3,4,5,6,7,8,9,"",0,"⌫"].map((d,i)=>(
+                <button key={i} onClick={()=>d==="⌫"?setLoginPin(p=>{setLoginError("");return p.slice(0,-1);}):d!==""?handleLoginDigit(String(d)):null}
+                  disabled={d===""} style={{height:64,borderRadius:14,
+                    background:d===""?"transparent":d==="⌫"?"rgba(255,255,255,0.08)":"rgba(255,255,255,0.1)",
+                    backdropFilter:d===""?"none":"blur(8px)",
+                    border:d===""?"none":`1px solid ${d==="⌫"?"rgba(255,255,255,0.1)":"rgba(96,165,250,0.4)"}`,
+                    color:d==="⌫"?"rgba(255,255,255,0.4)":"#ffffff",
+                    fontSize:d==="⌫"?22:26,fontFamily:"'Inter',sans-serif",fontWeight:700,
+                    cursor:d===""?"default":"pointer",transition:"all 0.12s",
+                    boxShadow:d===""||d==="⌫"?"none":"0 2px 8px rgba(0,0,0,0.3)"}}
+                  onMouseDown={e=>{if(d!=="")e.currentTarget.style.background="rgba(37,99,235,0.4)";}}
+                  onMouseUp={e=>{if(d!=="")e.currentTarget.style.background=d==="⌫"?"rgba(255,255,255,0.08)":"rgba(255,255,255,0.1)";}}>
+                  {d}
+                </button>
+              ))}
+            </div>
+            {users.length===0&&(
+              <div style={{marginTop:20,color:"rgba(255,255,255,0.5)",fontSize:12,textAlign:"center"}}>
+                Aún no hay cuentas.<br/>
+                <button onClick={()=>setMode("register")} style={{background:"none",border:"none",color:"#60a5fa",cursor:"pointer",fontSize:12,marginTop:4}}>Crear una cuenta →</button>
             </div>
           )}
         </div>
@@ -1193,26 +1197,26 @@ function ReceptionAuth({ onLogin, onBack, installPrompt=null, initialRole=null }
 
           {regStep===1&&(
             <div>
-              <div style={{color:"#1e3a8a",fontSize:10,letterSpacing:3,marginBottom:16,fontWeight:700}}>1. TUS DATOS</div>
+              <div style={{color:"rgba(255,255,255,0.6)",fontSize:10,letterSpacing:3,marginBottom:16,fontWeight:700}}>1. TUS DATOS</div>
 
-              <label style={{color:"#1e3a8a",fontSize:11,letterSpacing:2,display:"block",marginBottom:6,fontWeight:700}}>NOMBRE COMPLETO</label>
+              <label style={{color:"rgba(255,255,255,0.7)",fontSize:11,letterSpacing:2,display:"block",marginBottom:6,fontWeight:700}}>NOMBRE COMPLETO</label>
               <input value={regName} onChange={e=>setRegName(e.target.value)} placeholder="Tu nombre y apellido"
-                style={{...s,border:regName?"2px solid #2563eb":"2px solid #f59e0b",background:regName?"#f0f7ff":"#fffbeb"}}
+                style={{...s,border:regName?"2px solid #38bdf8":"2px solid rgba(245,158,11,0.6)",background:"rgba(255,255,255,0.08)",color:"#ffffff",backdropFilter:"blur(4px)"}}
                 onKeyDown={e=>e.key==="Enter"&&handleRegStep1()}/>
 
-              <label style={{color:"#1e3a8a",fontSize:11,letterSpacing:2,display:"block",marginBottom:6,fontWeight:700}}>TU HOTEL O LUGAR DE TRABAJO</label>
+              <label style={{color:"rgba(255,255,255,0.7)",fontSize:11,letterSpacing:2,display:"block",marginBottom:6,fontWeight:700}}>TU HOTEL O LUGAR DE TRABAJO</label>
               <input value={regWorkplace} onChange={e=>setRegWorkplace(e.target.value)}
                 placeholder="Ej: Hotel Ritz, Restaurante La Mar..."
-                style={{...s,border:regWorkplace?"2px solid #2563eb":"2px solid #f59e0b",background:regWorkplace?"#f0f7ff":"#fffbeb"}}/>
+                style={{...s,border:regWorkplace?"2px solid #38bdf8":"2px solid rgba(245,158,11,0.6)",background:"rgba(255,255,255,0.08)",color:"#ffffff",backdropFilter:"blur(4px)"}}/>
 
-              <label style={{color:"#1e3a8a",fontSize:11,letterSpacing:2,display:"block",marginBottom:6,fontWeight:700}}>DIRECCIÓN O PUNTO DE PARTIDA</label>
+              <label style={{color:"rgba(255,255,255,0.7)",fontSize:11,letterSpacing:2,display:"block",marginBottom:6,fontWeight:700}}>{"DIRECCIÓN O PUNTO DE PARTIDA"}</label>
               <input value={regOrigin} onChange={e=>setRegOrigin(e.target.value)}
-                placeholder="Ej: Calle Gran Vía 28, Madrid"
-                style={{...s,border:regOrigin?"2px solid #2563eb":"2px solid #f59e0b",background:regOrigin?"#f0f7ff":"#fffbeb"}}/>
+                placeholder="Ej: Calle Gran Via 28, Madrid"
+                style={{...s,border:regOrigin?"2px solid #38bdf8":"2px solid rgba(245,158,11,0.6)",background:"rgba(255,255,255,0.08)",color:"#ffffff",backdropFilter:"blur(4px)"}}/>
 
-              <label style={{color:"#1e3a8a",fontSize:11,letterSpacing:2,display:"block",marginBottom:6,fontWeight:700}}>TELÉFONO</label>
+              <label style={{color:"rgba(255,255,255,0.7)",fontSize:11,letterSpacing:2,display:"block",marginBottom:6,fontWeight:700}}>{"TELÉFONO"}</label>
               <input type="tel" value={regPhone} onChange={e=>setRegPhone(e.target.value)} placeholder="+34 600 000 000"
-                style={{...s,border:regPhone?"2px solid #2563eb":"2px solid #f59e0b",background:regPhone?"#f0f7ff":"#fffbeb"}}/>
+                style={{...s,border:regPhone?"2px solid #38bdf8":"2px solid rgba(245,158,11,0.6)",background:"rgba(255,255,255,0.08)",color:"#ffffff",backdropFilter:"blur(4px)"}}/>
 
               {/* Bizum toggle */}
               <div onClick={()=>setRegBizum(b=>!b)} style={{
@@ -1225,13 +1229,13 @@ function ReceptionAuth({ onLogin, onBack, installPrompt=null, initialRole=null }
                 <div style={{display:"flex",alignItems:"center",gap:10}}>
                   <span style={{fontSize:20}}>💙</span>
                   <div>
-                    <div style={{color:"#0f172a",fontSize:13,fontWeight:600}}>Tengo Bizum</div>
-                    <div style={{color:"#64748b",fontSize:11}}>El conductor te enviará la comisión por Bizum</div>
+                    <div style={{color:"#ffffff",fontSize:13,fontWeight:600}}>Tengo Bizum</div>
+                    <div style={{color:"rgba(255,255,255,0.5)",fontSize:11}}>El conductor te enviará la comisión por Bizum</div>
                   </div>
                 </div>
                 <div style={{
                   width:46,height:26,borderRadius:13,position:"relative",flexShrink:0,
-                  background:regBizum?"#2563eb":"#cbd5e1",transition:"background 0.2s",
+                  background:regBizum?"#38bdf8":"rgba(255,255,255,0.2)",transition:"background 0.2s",
                 }}>
                   <div style={{
                     position:"absolute",top:3,left:regBizum?22:3,width:20,height:20,
@@ -1248,7 +1252,7 @@ function ReceptionAuth({ onLogin, onBack, installPrompt=null, initialRole=null }
                   :"#e2e8f0",
                 border:"none",borderRadius:14,
                 padding:"15px 0",
-                color:regName&&regWorkplace&&regOrigin&&regPhone?"#ffffff":"#94a3b8",
+                color:"#ffffff",
                 fontSize:15,fontWeight:800,letterSpacing:1,cursor:"pointer",
                 boxShadow:regName&&regWorkplace&&regOrigin&&regPhone?"0 4px 14px rgba(37,99,235,0.35)":"none",
                 transition:"all 0.2s",
@@ -1268,7 +1272,7 @@ function ReceptionAuth({ onLogin, onBack, installPrompt=null, initialRole=null }
                 {[0,1,2,3].map(i=>(
                   <div key={i} style={{width:13,height:13,borderRadius:"50%",
                     background:regPin.length>i?"#2563eb":"#f1f5f9",
-                    border:`2px solid ${regPin.length>i?"#2563eb":"#e2e8f0"}`,
+                    border:`2px solid ${regPin.length>i?"#38bdf8":"rgba(255,255,255,0.2)"}`,
                     transition:"all 0.15s",transform:regPin.length>i?"scale(1.2)":"scale(1)"}}/>
                 ))}
               </div>
@@ -1317,6 +1321,7 @@ function ReceptionAuth({ onLogin, onBack, installPrompt=null, initialRole=null }
           )}
         </div>
       )}
+      </div>
     </div>
   );
 }
