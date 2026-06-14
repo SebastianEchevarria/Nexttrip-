@@ -366,9 +366,9 @@ function LoginScreen({onLogin}){
     <div style={{width:"100vw",height:"100vh",background:"#0a0a0a url('/bg-driver-desktop-login.jpg') center top/cover no-repeat",display:"flex",alignItems:"flex-start",justifyContent:"center",overflow:"hidden",position:"relative"}}>
       <style>{CSS}</style>
 
-      <div style={{textAlign:"center",width:300,zIndex:1,paddingTop:"50vh"}}>
+      <div style={{textAlign:"center",width:320,zIndex:1,paddingTop:"56vh"}}>
         {/* Dots */}
-        <div style={{display:"flex",gap:14,justifyContent:"center",marginBottom:err?10:20,animation:shake?"shake 0.4s ease":undefined}}>
+        <div style={{display:"flex",gap:14,justifyContent:"center",marginBottom:err?12:24,animation:shake?"shake 0.4s ease":undefined}}>
           {[0,1,2,3].map(i=>(
             <div key={i} style={{
               width:13,height:13,borderRadius:"50%",
@@ -383,14 +383,14 @@ function LoginScreen({onLogin}){
         {err&&<div style={{color:"#ef4444",fontSize:11,fontWeight:700,marginBottom:10,letterSpacing:1}}>PIN INCORRECTO</div>}
 
         {/* Keypad */}
-        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,maxWidth:230,margin:"0 auto"}}>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,maxWidth:270,margin:"0 auto"}}>
           {[1,2,3,4,5,6,7,8,9,"",0,"⌫"].map((d,i)=>(
             <button key={i} className="pin-btn" onClick={()=>d===""?null:d==="⌫"?del():digit(String(d))} disabled={d===""} style={{
-              height:50,borderRadius:12,
+              height:60,borderRadius:12,
               border:d===""?"none":`1px solid ${d==="⌫"?"rgba(255,255,255,0.1)":"rgba(96,165,250,0.4)"}`,
               background:d===""?"transparent":d==="⌫"?"rgba(255,255,255,0.05)":"rgba(37,99,235,0.15)",
               color:d==="⌫"?"rgba(255,255,255,0.4)":"#e2e8f0",
-              fontSize:d==="⌫"?18:20,fontWeight:700,
+              fontSize:d==="⌫"?22:24,fontWeight:700,
               cursor:d===""?"default":"pointer",
               backdropFilter:"blur(8px)",
             }}>
