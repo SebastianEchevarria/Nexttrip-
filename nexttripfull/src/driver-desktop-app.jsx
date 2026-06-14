@@ -363,40 +363,32 @@ function LoginScreen({onLogin}){
   const del=()=>{setPin(p=>p.slice(0,-1));setErr(false);};
 
   return(
-    <div style={{width:"100vw",height:"100vh",background:"linear-gradient(135deg,#0a0e1a 0%,#0f1729 50%,#1e2d4a 100%)",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",position:"relative"}}>
+    <div style={{width:"100vw",height:"100vh",background:"#000000 url('/bg-driver-desktop-login.jpg') center top/cover no-repeat",display:"flex",alignItems:"flex-start",justifyContent:"center",overflow:"auto",position:"relative"}}>
       <style>{CSS}</style>
-      {/* Background decoration */}
-      <div style={{position:"absolute",top:-200,right:-200,width:600,height:600,borderRadius:"50%",background:"radial-gradient(circle,rgba(37,99,235,0.15) 0%,transparent 70%)",pointerEvents:"none"}}/>
-      <div style={{position:"absolute",bottom:-150,left:-150,width:400,height:400,borderRadius:"50%",background:"radial-gradient(circle,rgba(37,99,235,0.1) 0%,transparent 70%)",pointerEvents:"none"}}/>
+      {/* Subtle dark overlay only at the bottom, to keep the logo crisp */}
+      <div style={{position:"fixed",inset:0,background:"linear-gradient(180deg,rgba(0,0,0,0) 0%,rgba(0,0,0,0) 40%,rgba(0,0,0,0.55) 60%,rgba(0,0,0,0.85) 100%)",pointerEvents:"none"}}/>
 
-      <div style={{textAlign:"center",width:420,zIndex:1}}>
-        {/* Logo */}
-        <div style={{marginBottom:12,display:"inline-block"}}>
-          <div style={{width:160,height:160,borderRadius:36,overflow:"hidden",margin:"0 auto",boxShadow:"0 20px 60px rgba(37,99,235,0.4), 0 0 0 1px rgba(255,255,255,0.05)"}}>
-            <img src="/logo-velo.jpg" style={{width:"100%",height:"100%",objectFit:"cover"}} alt="VELO"/>
-          </div>
-        </div>
-
+      <div style={{textAlign:"center",width:420,zIndex:1,paddingTop:460,paddingBottom:60}}>
         {/* DRIVER label */}
-        <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:16,marginBottom:48}}>
-          <div style={{height:1,width:60,background:"linear-gradient(90deg,transparent,rgba(96,165,250,0.6))"}}/>
-          <span style={{color:"#60a5fa",fontSize:20,fontWeight:900,letterSpacing:8}}>DRIVER</span>
-          <div style={{height:1,width:60,background:"linear-gradient(90deg,rgba(96,165,250,0.6),transparent)"}}/>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:16,marginBottom:40}}>
+          <div style={{height:1,width:60,background:"linear-gradient(90deg,transparent,rgba(56,189,248,0.6))"}}/>
+          <span style={{color:"#38bdf8",fontSize:20,fontWeight:900,letterSpacing:8}}>DRIVER</span>
+          <div style={{height:1,width:60,background:"linear-gradient(90deg,rgba(56,189,248,0.6),transparent)"}}/>
         </div>
 
         {/* PIN label */}
-        <div style={{color:"rgba(255,255,255,0.5)",fontSize:12,letterSpacing:4,marginBottom:24,fontWeight:600}}>INTRODUCE TU PIN</div>
+        <div style={{color:"rgba(255,255,255,0.6)",fontSize:12,letterSpacing:4,marginBottom:24,fontWeight:600}}>INTRODUCE TU PIN</div>
 
         {/* Dots */}
         <div style={{display:"flex",gap:18,justifyContent:"center",marginBottom:err?12:40,animation:shake?"shake 0.4s ease":undefined}}>
           {[0,1,2,3].map(i=>(
             <div key={i} style={{
               width:16,height:16,borderRadius:"50%",
-              background:pin.length>i?(err?"#ef4444":"#3b82f6"):"transparent",
-              border:`2.5px solid ${pin.length>i?(err?"#ef4444":"#3b82f6"):"rgba(255,255,255,0.2)"}`,
+              background:pin.length>i?(err?"#ef4444":"#38bdf8"):"transparent",
+              border:`2.5px solid ${pin.length>i?(err?"#ef4444":"#38bdf8"):"rgba(255,255,255,0.25)"}`,
               transition:"all 0.2s",
               transform:pin.length>i?"scale(1.3)":"scale(1)",
-              boxShadow:pin.length>i&&!err?"0 0 12px rgba(59,130,246,0.6)":"none",
+              boxShadow:pin.length>i&&!err?"0 0 12px rgba(56,189,248,0.6)":"none",
             }}/>
           ))}
         </div>
@@ -407,7 +399,7 @@ function LoginScreen({onLogin}){
           {[1,2,3,4,5,6,7,8,9,"",0,"⌫"].map((d,i)=>(
             <button key={i} className="pin-btn" onClick={()=>d===""?null:d==="⌫"?del():digit(String(d))} disabled={d===""} style={{
               height:72,borderRadius:16,
-              border:d===""?"none":`1px solid ${d==="⌫"?"rgba(255,255,255,0.1)":"rgba(96,165,250,0.3)"}`,
+              border:d===""?"none":`1px solid ${d==="⌫"?"rgba(255,255,255,0.1)":"rgba(96,165,250,0.4)"}`,
               background:d===""?"transparent":d==="⌫"?"rgba(255,255,255,0.05)":"rgba(37,99,235,0.15)",
               color:d==="⌫"?"rgba(255,255,255,0.4)":"#e2e8f0",
               fontSize:d==="⌫"?22:26,fontWeight:700,
