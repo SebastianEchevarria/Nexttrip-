@@ -17,6 +17,8 @@ function sLabel(s){return({confirmed:"Confirmado",pending:"Pendiente",rejected:"
 function sColor(s){return({confirmed:"#2563eb",pending:"#f59e0b",rejected:"#ef4444",inprogress:"#3b82f6",completed:"#22c55e",cancelled:"#f97316"})[s]||"#64748b";}
 function rUrl(o,d){return`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(o||"")}&destination=${encodeURIComponent(d||"")}&travelmode=driving`;}
 function mUrl(a){return`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(a||"")}`;}
+const t2m = t=>{ if(!t)return 0; const [h,m]=t.split(":").map(Number); return h*60+m; };
+const TRIP_DURATION = 45; // minutos bloqueados por viaje
 
 // ─── CSS ─────────────────────────────────────────────────────────────────────
 const CSS = `
@@ -52,6 +54,18 @@ export default function DriverDesktopApp() {
   const [chatMsg,setChatMsg]=useState("");
   const [toast,setToast]=useState("");
 
+  // Countdown tick for "Próximo viaje"
+  const [nowTick,setNowTick]=useState(()=>new Date());
+  useEffect(()=>{const t=setInterval(()=>setNowTick(new Date()),1000);return()=>clearInterval(t);},[]);
+
+  // Phase tracking — persisted so a page refresh doesn't lose progress
+  const [arrivedBookingId,setArrivedBookingId]=useState(()=>{try{return localStorage.getItem("velo_desktop_arrived_id")||null;}catch{return null;}});
+  useEffect(()=>{try{localStorage.setItem("velo_desktop_arrived_id",arrivedBookingId||"");}catch{}},[arrivedBookingId]);
+  const [tripStarted,setTripStarted]=useState(()=>{try{return localStorage.getItem("velo_desktop_trip_started")==="1";}catch{return false;}});
+  useEffect(()=>{try{localStorage.setItem("velo_desktop_trip_started",tripStarted?"1":"0");}catch{}},[tripStarted]);
+  const [showQuickMsgs,setShowQuickMsgs]=useState(false);
+  const [cancelConfirm,setCancelConfirm]=useState(null);
+
   const showToast=msg=>{setToast(msg);setTimeout(()=>setToast(""),3200);};
 
   useEffect(()=>{
@@ -73,6 +87,36 @@ export default function DriverDesktopApp() {
     const next={...messages,[k]:[...prev,msg]};
     setMessages(next);fbSet("nexttrip/messages",next);
   };
+  // Update local driver status AND push it to Firebase (merge-style, preserves serviceStatus/driverArrived)
+  const setDriverStatusRemote=status=>{
+    setDStatus(status);
+    fbGet("nexttrip/status").then(cur=>{
+      fbSet("nexttrip/status",{...(cur||{}),driverStatus:status,updatedAt:Date.now()});
+    });
+  };
+  // "He llegado" — marks arrival, notifies client, starts the 10-min courtesy window
+  const onArrive=b=>{
+    setArrivedBookingId(b.id);
+    setShowQuickMsgs(false);
+    const waitEnd=new Date(new Date(`${b.date}T${b.time}:00`).getTime()+10*60*1000);
+    const wH=String(waitEnd.getHours()).padStart(2,"0"),wM=String(waitEnd.getMinutes()).padStart(2,"0");
+    fbGet("nexttrip/status").then(cur=>{
+      fbSet("nexttrip/status",{...(cur||{}),driverArrived:{bookingId:b.id,arrivedAt:Date.now()},updatedAt:Date.now()});
+    });
+    sendMsg(b.id,`🚗 He llegado al punto de recogida y estoy esperándote. El tiempo de espera de 10 minutos comienza a las ${b.time} (hora de tu reserva) y finaliza a las ${wH}:${wM}.`);
+    showToast("✅ Cliente notificado — esperando desde las "+b.time);
+  };
+  // Clear the "driver arrived" flag in Firebase (keeps other status fields)
+  const clearArrived=()=>{
+    fbGet("nexttrip/status").then(cur=>{const u={...(cur||{})};delete u.driverArrived;fbSet("nexttrip/status",{...u,updatedAt:Date.now()});});
+  };
+  const onCancelTrip=(id,reason)=>{
+    mutate(id,{status:"cancelled",cancelReason:reason});
+    setArrivedBookingId(null);
+    setTripStarted(false);
+    setDriverStatusRemote("free");
+    clearArrived();
+  };
 
   if(!loggedIn) return <LoginScreen onLogin={()=>setLoggedIn(true)}/>;
 
@@ -83,7 +127,11 @@ export default function DriverDesktopApp() {
   const todayDone=bookings.filter(b=>b.date===today&&b.status==="completed");
   const todayEarnings=todayDone.reduce((s,b)=>s+Number(b.fare||0),0);
   const totalGross=bookings.filter(b=>b.status==="completed").reduce((s,b)=>s+Number(b.fare||0),0);
-  const upcoming=[...confirmed].filter(b=>new Date(`${b.date}T${b.time}`)>=new Date(Date.now()-3600000)).sort((a,b)=>new Date(`${a.date}T${a.time}`)-new Date(`${b.date}T${b.time}`))[0];
+  const upcoming=[...bookings]
+    .filter(b=>(b.status==="confirmed"||b.status==="inprogress"))
+    .sort((a,b)=>new Date(`${a.date}T${a.time}:00`)-new Date(`${b.date}T${b.time}:00`))
+    .find(b=>{const dt=new Date(`${b.date}T${b.time}:00`);return dt-nowTick>-TRIP_DURATION*60*1000;});
+  const isOnRoute=dStatus==="onroute";
 
   return (
     <div style={{display:"flex",height:"100vh",overflow:"hidden",background:"#f1f5f9"}}>
@@ -107,6 +155,7 @@ export default function DriverDesktopApp() {
         <nav style={{flex:1,padding:"16px 10px",display:"flex",flexDirection:"column",gap:2}}>
           {[
             {id:"dashboard",icon:"🏠",label:"Dashboard"},
+            {id:"calendar",  icon:"📅",label:"Calendario"},
             {id:"pending",  icon:"⏳",label:"Pendientes",badge:pending.length,badgeColor:"#f59e0b"},
             {id:"confirmed",icon:"✅",label:"Confirmados",badge:confirmed.length,badgeColor:"#2563eb"},
             {id:"history",  icon:"🗂", label:"Historial"},
@@ -140,7 +189,7 @@ export default function DriverDesktopApp() {
           <div style={{display:"flex",alignItems:"center",gap:12}}>
             <div style={{width:3,height:22,background:"linear-gradient(180deg,#1e3a8a,#2563eb)",borderRadius:2}}/>
             <span style={{color:"#0f172a",fontSize:19,fontWeight:800}}>
-              {{dashboard:"Dashboard",pending:"Viajes Pendientes",confirmed:"Viajes Confirmados",history:"Historial",billing:"Facturación"}[section]}
+              {{dashboard:"Dashboard",calendar:"Calendario",pending:"Viajes Pendientes",confirmed:"Viajes Confirmados",history:"Historial",billing:"Facturación"}[section]}
             </span>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:20}}>
@@ -180,51 +229,29 @@ export default function DriverDesktopApp() {
               {/* Main content grid */}
               <div style={{display:"grid",gridTemplateColumns:"1.4fr 1fr",gap:20}}>
                 {/* Next trip card */}
-                <div style={{background:"#ffffff",borderRadius:20,padding:"24px",border:"2px solid #e2e8f0",boxShadow:"0 2px 12px rgba(0,0,0,0.04)"}}>
-                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:20}}>
-                    <div style={{width:4,height:20,background:"linear-gradient(180deg,#1e3a8a,#2563eb)",borderRadius:2}}/>
-                    <span style={{color:"#1e3a8a",fontSize:13,fontWeight:800,letterSpacing:2}}>PRÓXIMO VIAJE</span>
-                  </div>
-                  {upcoming?(
-                    <div>
-                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16}}>
-                        <div>
-                          <div style={{color:"#0f172a",fontSize:26,fontWeight:900,lineHeight:1}}>{upcoming.guest}</div>
-                          <div style={{color:"#64748b",fontSize:12,marginTop:6}}>{upcoming.date} · <strong style={{color:"#1e3a8a"}}>{upcoming.time}</strong> · {upcoming.passengers} pax · {upcoming.hotel}</div>
-                        </div>
-                        <div style={{textAlign:"right",flexShrink:0,paddingLeft:12}}>
-                          <div style={{color:"#16a34a",fontSize:26,fontWeight:900}}>{upcoming.fare?fmt(upcoming.fare)+" €":"—"}</div>
-                          <span style={{background:sColor(upcoming.status)+"22",color:sColor(upcoming.status),borderRadius:20,padding:"3px 12px",fontSize:11,fontWeight:700}}>{sLabel(upcoming.status)}</span>
-                        </div>
-                      </div>
-                      <div style={{background:"linear-gradient(135deg,#eff6ff,#dbeafe)",borderRadius:12,padding:"14px",marginBottom:14,border:"1.5px solid #2563eb22"}}>
-                        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
-                          <span style={{color:"#2563eb",fontSize:18}}>▶</span>
-                          <span style={{color:"#0f172a",fontSize:13,fontWeight:600}}>{upcoming.origin}</span>
-                        </div>
-                        <div style={{height:1,background:"#2563eb22",margin:"0 28px 8px"}}/>
-                        <div style={{display:"flex",alignItems:"center",gap:8}}>
-                          <span style={{color:"#ef4444",fontSize:18}}>■</span>
-                          <span style={{color:"#0f172a",fontSize:13,fontWeight:600}}>{upcoming.destination}</span>
-                        </div>
-                      </div>
-                      {upcoming.notes&&<div style={{background:"#fffbeb",border:"1.5px solid #f59e0b44",borderRadius:10,padding:"10px 14px",marginBottom:14,fontSize:12,color:"#92400e",fontWeight:600}}>📝 {upcoming.notes}</div>}
-                      <div style={{display:"flex",gap:10}}>
-                        <a href={rUrl(upcoming.origin,upcoming.destination)} target="_blank" rel="noopener noreferrer" style={{flex:1,background:"linear-gradient(135deg,#1e3a8a,#2563eb)",borderRadius:12,padding:"12px 0",color:"#fff",fontSize:13,fontWeight:700,textDecoration:"none",textAlign:"center",boxShadow:"0 4px 12px rgba(37,99,235,0.3)"}}>🗺️ Navegar ruta</a>
-                        <button onClick={()=>{mutate(upcoming.id,{status:"inprogress"});setDStatus("onroute");showToast("🚗 Viaje iniciado");}} style={{flex:1,background:"linear-gradient(135deg,#15803d,#22c55e)",border:"none",borderRadius:12,padding:"12px 0",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",boxShadow:"0 4px 12px rgba(34,197,94,0.3)"}}>🚦 Iniciar viaje</button>
-                        <button onClick={()=>setChatB(upcoming)} style={{background:"linear-gradient(135deg,#6d28d9,#7c3aed)",border:"none",borderRadius:12,padding:"12px 16px",color:"#fff",fontSize:13,cursor:"pointer",position:"relative",boxShadow:"0 4px 12px rgba(124,58,237,0.3)"}}>
-                          💬{(messages[String(upcoming.id)]||[]).filter(m=>m.from!=="driver").length>0&&<span style={{position:"absolute",top:-4,right:-4,background:"#ef4444",borderRadius:"50%",width:16,height:16,fontSize:9,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>{(messages[String(upcoming.id)]||[]).filter(m=>m.from!=="driver").length}</span>}
-                        </button>
-                      </div>
-                    </div>
-                  ):(
-                    <div style={{textAlign:"center",padding:"40px 0",color:"#94a3b8"}}>
-                      <div style={{fontSize:48,marginBottom:12}}>🏖</div>
-                      <div style={{fontSize:15,fontWeight:600}}>Sin viajes programados</div>
-                      <div style={{fontSize:12,marginTop:4}}>Disfruta del descanso</div>
-                    </div>
-                  )}
-                </div>
+                <NextTripCard
+                  upcoming={upcoming}
+                  nowTick={nowTick}
+                  fmt={fmt}
+                  messages={messages}
+                  isOnRoute={isOnRoute}
+                  tripStarted={tripStarted}
+                  setTripStarted={setTripStarted}
+                  arrivedBookingId={arrivedBookingId}
+                  setArrivedBookingId={setArrivedBookingId}
+                  showQuickMsgs={showQuickMsgs}
+                  setShowQuickMsgs={setShowQuickMsgs}
+                  cancelConfirm={cancelConfirm}
+                  setCancelConfirm={setCancelConfirm}
+                  onStartTrip={id=>{mutate(id,{status:"inprogress"});setDriverStatusRemote("onroute");setTripStarted(true);showToast("🚗 Viaje iniciado");}}
+                  onEndTrip={id=>{mutate(id,{status:"completed"});setDriverStatusRemote("free");setTripStarted(false);setArrivedBookingId(null);clearArrived();showToast("✅ Viaje completado");}}
+                  onCancelTrip={onCancelTrip}
+                  onArrive={onArrive}
+                  sendMsg={sendMsg}
+                  setChatB={setChatB}
+                  setDriverStatusRemote={setDriverStatusRemote}
+                  showToast={showToast}
+                />
 
                 {/* Right column */}
                 <div style={{display:"flex",flexDirection:"column",gap:16}}>
@@ -273,6 +300,9 @@ export default function DriverDesktopApp() {
               </div>
             </div>
           )}
+
+          {/* ── CALENDARIO ── */}
+          {section==="calendar"&&<CalendarSection bookings={bookings} onSelect={setSelected}/>}
 
           {/* ── PENDING / CONFIRMED / HISTORY ── */}
           {(section==="pending"||section==="confirmed"||section==="history")&&(
@@ -341,6 +371,288 @@ export default function DriverDesktopApp() {
 
       {/* Toast */}
       {toast&&<div style={{position:"fixed",bottom:24,left:"50%",transform:"translateX(-50%)",background:"#0f172a",color:"#fff",padding:"12px 24px",borderRadius:12,fontSize:13,fontWeight:600,zIndex:9999,animation:"fadeIn 0.2s ease",boxShadow:"0 8px 24px rgba(0,0,0,0.25)"}}>{toast}</div>}
+    </div>
+  );
+}
+
+// ─── NEXT TRIP CARD (cuenta regresiva + fases) ─────────────────────────────────
+function NextTripCard({upcoming,nowTick,fmt,messages,isOnRoute,tripStarted,setTripStarted,arrivedBookingId,setArrivedBookingId,showQuickMsgs,setShowQuickMsgs,cancelConfirm,setCancelConfirm,onStartTrip,onEndTrip,onCancelTrip,onArrive,sendMsg,setChatB,setDriverStatusRemote,showToast}){
+  if(!upcoming){
+    return(
+      <div style={{background:"#ffffff",borderRadius:20,padding:"24px",border:"2px solid #e2e8f0",boxShadow:"0 2px 12px rgba(0,0,0,0.04)"}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:20}}>
+          <div style={{width:4,height:20,background:"linear-gradient(180deg,#1e3a8a,#2563eb)",borderRadius:2}}/>
+          <span style={{color:"#1e3a8a",fontSize:13,fontWeight:800,letterSpacing:2}}>PRÓXIMO VIAJE</span>
+        </div>
+        <div style={{textAlign:"center",padding:"40px 0",color:"#94a3b8"}}>
+          <div style={{fontSize:48,marginBottom:12}}>🏖</div>
+          <div style={{fontSize:15,fontWeight:600}}>Sin viajes programados</div>
+          <div style={{fontSize:12,marginTop:4}}>Disfruta del descanso</div>
+        </div>
+      </div>
+    );
+  }
+
+  const tripDt=new Date(`${upcoming.date}T${upcoming.time}:00`);
+  const diffMs=tripDt-nowTick;
+  // isOngoing: SOLO cuando el conductor pulsó "Iniciar viaje" (status inprogress)
+  const isOngoing=upcoming.status==="inprogress"||tripStarted;
+  // isWaiting: la hora llegó a 0 pero no se inició viaje — ventana de 10 min antes de "He llegado"
+  const isWaiting=diffMs<0&&diffMs>-10*60*1000&&!isOngoing;
+  const waitMs=10*60*1000+diffMs;
+  const absDiff=isWaiting?Math.abs(waitMs):Math.abs(diffMs);
+  const totalSecs=Math.floor(absDiff/1000);
+  const days=Math.floor(totalSecs/86400);
+  const hrs=Math.floor((totalSecs%86400)/3600);
+  const mins=Math.floor((totalSecs%3600)/60);
+  const secs=totalSecs%60;
+  const pad=n=>String(n).padStart(2,"0");
+  const countdownStr=days>0?`${days}d ${pad(hrs)}h ${pad(mins)}m`:`${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
+  const urgency=!isOngoing&&!isWaiting&&diffMs<30*60*1000&&diffMs>0;
+  const mapsPickup=mUrl(upcoming.origin);
+  const unread=(messages[String(upcoming.id)]||[]).filter(m=>m.from!=="driver").length;
+
+  const accent=isOngoing?"#16a34a":isWaiting?"#ef4444":urgency?"#f59e0b":"#2563eb";
+  const bg=isOngoing?"linear-gradient(135deg,#dcfce7,#f0fdf4)":isWaiting?"#fff0f0":urgency?"#fffbeb":"#ffffff";
+
+  return(
+    <div style={{background:bg,border:`2.5px solid ${accent}`,borderRadius:20,padding:"24px",boxShadow:`0 4px 20px ${accent}22`}}>
+      {/* Header */}
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <div style={{width:9,height:9,borderRadius:"50%",background:accent,animation:"pulse 1.2s infinite",flexShrink:0}}/>
+          <span style={{color:accent,fontSize:12,letterSpacing:2,fontWeight:800}}>
+            {isOngoing?"EN CURSO":isWaiting?"⏳ EN ESPERA — CLIENTE NO LLEGÓ":urgency?"PRÓXIMO VIAJE — ¡PRONTO!":"PRÓXIMO VIAJE"}
+          </span>
+        </div>
+        <span style={{background:accent+"18",border:`1px solid ${accent}44`,borderRadius:8,padding:"3px 12px",color:accent,fontSize:11,fontWeight:700}}>
+          {isWaiting?"🔴 EN ESPERA":"✅ Confirmado"}
+        </span>
+      </div>
+
+      {/* Guest + fare */}
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14}}>
+        <div>
+          <div style={{color:"#0f172a",fontSize:26,fontWeight:900,lineHeight:1}}>{upcoming.guest}</div>
+          <div style={{color:"#64748b",fontSize:12,marginTop:6}}>{upcoming.date} · <strong style={{color:"#1e3a8a"}}>{upcoming.time}</strong> · {upcoming.passengers} pax · {upcoming.hotel}</div>
+        </div>
+        {upcoming.fare>0&&(
+          <div style={{textAlign:"right",flexShrink:0,paddingLeft:12}}>
+            <div style={{color:"#16a34a",fontSize:26,fontWeight:900}}>{fmt(upcoming.fare)} €</div>
+            <span style={{background:sColor(upcoming.status)+"22",color:sColor(upcoming.status),borderRadius:20,padding:"3px 12px",fontSize:11,fontWeight:700}}>{sLabel(upcoming.status)}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Route */}
+      <div style={{background:"linear-gradient(135deg,#eff6ff,#dbeafe)",borderRadius:12,padding:"14px",marginBottom:12,border:"1.5px solid #2563eb22"}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+          <span style={{color:"#2563eb",fontSize:18}}>▶</span>
+          <span style={{color:"#0f172a",fontSize:13,fontWeight:600}}>{upcoming.origin}</span>
+        </div>
+        <div style={{height:1,background:"#2563eb22",margin:"0 28px 8px"}}/>
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <span style={{color:"#ef4444",fontSize:18}}>■</span>
+          <span style={{color:"#0f172a",fontSize:13,fontWeight:600}}>{upcoming.destination}</span>
+        </div>
+      </div>
+
+      {/* Notes */}
+      {upcoming.notes&&upcoming.notes.trim()&&(
+        <div style={{background:"#fffbeb",border:"1.5px solid #f59e0b44",borderRadius:10,padding:"10px 14px",marginBottom:12,fontSize:12,color:"#92400e",fontWeight:600}}>📝 {upcoming.notes}</div>
+      )}
+
+      {/* Countdown */}
+      <div style={{background:isOngoing?"#dcfce7":isWaiting?"#fee2e2":urgency?"#fef3c7":"#eff6ff",borderRadius:12,padding:"14px 18px",marginBottom:16,border:`1.5px solid ${accent}33`}}>
+        <div style={{color:isOngoing?"#16a34a":urgency?"#d97706":"#1e3a8a",fontSize:11,fontWeight:700,letterSpacing:2,marginBottom:4}}>{isOngoing?"EN CURSO":isWaiting?"⏳ EN ESPERA":"TIEMPO RESTANTE"}</div>
+        <div style={{color:isOngoing?"#16a34a":isWaiting?"#ef4444":urgency?"#d97706":"#0f172a",fontSize:36,fontFamily:"'Inter',sans-serif",fontWeight:900,letterSpacing:2}}>{countdownStr}</div>
+      </div>
+
+      {/* ── ACTION BUTTONS ── */}
+      <div style={{display:"flex",flexDirection:"column",gap:10}}>
+
+        {/* ── FASE 1: antes de llegar — Punto recogida + Chat + Mensajes rápidos + He llegado ── */}
+        {arrivedBookingId!==upcoming.id&&!isOngoing&&upcoming.status!=="inprogress"&&(
+          <>
+            <div style={{display:"flex",gap:10}}>
+              {mapsPickup&&(
+                <a href={mapsPickup} target="_blank" rel="noopener noreferrer" style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:7,background:"#f0fdf4",border:"2px solid #22c55e55",borderRadius:10,padding:"12px 0",color:"#15803d",fontSize:13,fontWeight:700,textDecoration:"none"}}>🗺️ Punto recogida</a>
+              )}
+              <button onClick={()=>setChatB(upcoming)} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:7,background:"#f5f3ff",border:"2px solid #7c3aed44",borderRadius:10,padding:"12px 0",color:"#7c3aed",fontSize:13,fontWeight:700,cursor:"pointer",position:"relative"}}>
+                💬 Chat
+                {unread>0&&<span style={{position:"absolute",top:-6,right:-6,background:"#ef4444",color:"#fff",borderRadius:"50%",width:18,height:18,fontSize:10,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>{unread}</span>}
+              </button>
+              <button onClick={()=>setShowQuickMsgs(v=>!v)} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:showQuickMsgs?"#f0fdf4":"#fffbeb",border:`2px solid ${showQuickMsgs?"#22c55e55":"#f59e0b44"}`,borderRadius:10,padding:"12px 0",color:showQuickMsgs?"#15803d":"#d97706",fontSize:13,fontWeight:700,cursor:"pointer"}}>⚡ Rápidos</button>
+            </div>
+
+            {/* INICIAR VIAJE — aparece tras "Estoy en camino" */}
+            {isOnRoute&&!tripStarted&&upcoming.destination&&(
+              <a href={mUrl(upcoming.destination)} target="_blank" rel="noopener noreferrer"
+                onClick={()=>{onStartTrip(upcoming.id);setShowQuickMsgs(false);}}
+                style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,background:"linear-gradient(135deg,#1e3a8a,#2563eb)",border:"none",borderRadius:12,padding:"14px 0",color:"#ffffff",fontSize:13,fontWeight:700,textDecoration:"none",boxShadow:"0 4px 12px rgba(37,99,235,0.3)"}}>
+                🗺️ Iniciar viaje → {upcoming.destination.split(",")[0]}
+              </a>
+            )}
+
+            {/* Mensajes rápidos */}
+            {showQuickMsgs&&(
+              <div style={{background:"#ffffff",border:"1.5px solid #e2e8f0",borderRadius:12,padding:"14px",display:"flex",flexDirection:"column",gap:8}}>
+                <div style={{color:"#64748b",fontSize:10,letterSpacing:2,marginBottom:2}}>MENSAJES RÁPIDOS</div>
+                {[
+                  {es:"🚗 Estoy en camino."},
+                  {es:"⏱️ Llegaré en aproximadamente 10 minutos."},
+                  {es:"🅿️ Estoy aparcado esperándote en el punto de recogida."},
+                  {es:"📞 Por favor llámame si tienes algún problema para encontrarme."},
+                ].map((msg,i)=>(
+                  <button key={i} onClick={()=>{
+                    sendMsg(upcoming.id,msg.es);
+                    if(i===0){setDriverStatusRemote("onroute");setTripStarted(false);}
+                    setShowQuickMsgs(false);
+                    showToast("✅ Mensaje enviado");
+                  }} style={{background:"#f8fafc",border:"1.5px solid #e2e8f0",borderRadius:8,padding:"10px 12px",color:"#0f172a",fontSize:12,textAlign:"left",cursor:"pointer"}}>{msg.es}</button>
+                ))}
+              </div>
+            )}
+
+            {/* HE LLEGADO */}
+            <button onClick={()=>onArrive(upcoming)} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:10,background:"linear-gradient(135deg,#16a34a,#22c55e)",border:"none",borderRadius:12,padding:"14px 0",color:"#ffffff",fontSize:14,fontWeight:700,cursor:"pointer",boxShadow:"0 4px 14px rgba(34,197,94,0.3)"}}>🚗 He llegado</button>
+          </>
+        )}
+
+        {/* ── FASE 2: He llegado — espera 15 min + Iniciar viaje + Chat ── */}
+        {arrivedBookingId===upcoming.id&&!isOngoing&&upcoming.status!=="inprogress"&&(
+          <>
+            {(()=>{
+              const bookingTime=tripDt.getTime();
+              const now=nowTick.getTime();
+              const beforeBooking=now<bookingTime;
+              const waitingMs=now-bookingTime;
+              const waitEndMs=bookingTime+15*60*1000;
+              const isExpired=waitingMs>0&&now>waitEndMs;
+              const remainingSecs=Math.floor(Math.max(0,waitEndMs-now)/1000);
+              const waitCountStr=`${pad(Math.floor(remainingSecs/60))}:${pad(remainingSecs%60)}`;
+
+              if(beforeBooking){
+                return(
+                  <div style={{background:"#eff6ff",border:"2px solid #2563eb44",borderRadius:12,padding:"14px",display:"flex",alignItems:"center",gap:10}}>
+                    <span style={{fontSize:20}}>✅</span>
+                    <div>
+                      <div style={{color:"#1e3a8a",fontSize:13,fontWeight:700}}>Has llegado al punto de recogida</div>
+                      <div style={{color:"#64748b",fontSize:11,marginTop:2}}>La espera de 15 min empieza a las <strong>{upcoming.time}</strong></div>
+                    </div>
+                  </div>
+                );
+              }
+              if(isExpired){
+                return(
+                  <div style={{background:"#fff0f0",border:"2px solid #ef4444",borderRadius:12,padding:"14px"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+                      <span style={{fontSize:18}}>⏰</span>
+                      <div style={{color:"#ef4444",fontSize:13,fontWeight:700}}>Tiempo de espera agotado</div>
+                    </div>
+                    <div style={{color:"#64748b",fontSize:11,marginBottom:12}}>Han pasado 15 minutos desde la hora de la reserva</div>
+                    <div style={{display:"flex",gap:8}}>
+                      <button onClick={()=>{
+                        sendMsg(upcoming.id,`❌ El conductor ha cancelado la reserva por no presentación del cliente.\n📅 ${upcoming.date} · ${upcoming.time}\n📍 ${upcoming.origin}`);
+                        onCancelTrip(upcoming.id,"No-show: cliente no se presentó");
+                        showToast("❌ Reserva cancelada por no presentación");
+                      }} style={{flex:1,background:"linear-gradient(135deg,#ef4444,#b91c1c)",border:"none",borderRadius:10,padding:"11px 0",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>❌ Cancelar reserva</button>
+                      <button onClick={()=>{onArrive(upcoming);showToast("⏳ Esperando más tiempo...");}} style={{flex:1,background:"#f0fdf4",border:"2px solid #22c55e44",borderRadius:10,padding:"11px 0",color:"#16a34a",fontSize:12,fontWeight:700,cursor:"pointer"}}>⏳ Seguir esperando</button>
+                    </div>
+                  </div>
+                );
+              }
+              return(
+                <div style={{background:"#fffbeb",border:"2px solid #f59e0b44",borderRadius:12,padding:"14px"}}>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8}}>
+                      <span style={{fontSize:18}}>⏰</span>
+                      <div>
+                        <div style={{color:"#d97706",fontSize:12,fontWeight:700}}>Esperando al cliente</div>
+                        <div style={{color:"#64748b",fontSize:10}}>Desde las {upcoming.time} · 15 min máx.</div>
+                      </div>
+                    </div>
+                    <div style={{textAlign:"right"}}>
+                      <div style={{color:"#d97706",fontSize:22,fontWeight:900,fontFamily:"'Inter',sans-serif",lineHeight:1}}>{waitCountStr}</div>
+                      <div style={{color:"#64748b",fontSize:9}}>restantes</div>
+                    </div>
+                  </div>
+                  <div style={{height:6,background:"#fef3c7",borderRadius:3,overflow:"hidden",marginBottom:12}}>
+                    <div style={{height:"100%",background:"linear-gradient(90deg,#f59e0b,#ef4444)",borderRadius:3,width:`${Math.min(100,(Math.max(0,waitingMs)/(15*60*1000))*100)}%`,transition:"width 1s linear"}}/>
+                  </div>
+                  <div style={{display:"flex",gap:8}}>
+                    <button onClick={()=>{
+                      sendMsg(upcoming.id,`❌ El conductor ha cancelado la reserva por no presentación del cliente.\n📅 ${upcoming.date} · ${upcoming.time}\n📍 ${upcoming.origin}`);
+                      onCancelTrip(upcoming.id,"No-show: cliente no se presentó");
+                      showToast("❌ Reserva cancelada por no presentación");
+                    }} style={{flex:1,background:"linear-gradient(135deg,#ef4444,#b91c1c)",border:"none",borderRadius:10,padding:"10px 0",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>❌ Cancelar</button>
+                    <button onClick={()=>{onArrive(upcoming);showToast("⏳ Esperando más tiempo...");}} style={{flex:1,background:"#f0fdf4",border:"2px solid #22c55e44",borderRadius:10,padding:"10px 0",color:"#16a34a",fontSize:12,fontWeight:700,cursor:"pointer"}}>⏳ Seguir esperando</button>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Iniciar viaje → Maps al destino */}
+            <a href={mUrl(upcoming.destination||upcoming.origin)} target="_blank" rel="noopener noreferrer"
+              onClick={()=>{onStartTrip(upcoming.id);setShowQuickMsgs(false);}}
+              style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,background:"linear-gradient(135deg,#1e3a8a,#2563eb)",border:"none",borderRadius:12,padding:"14px 0",color:"#ffffff",fontSize:13,fontWeight:700,textDecoration:"none",boxShadow:"0 3px 12px rgba(37,99,235,0.35)"}}>
+              🗺️ Iniciar viaje → {upcoming.destination||upcoming.origin}
+            </a>
+            <button onClick={()=>setChatB(upcoming)} style={{display:"flex",alignItems:"center",justifyContent:"center",gap:7,background:"#f5f3ff",border:"2px solid #7c3aed44",borderRadius:10,padding:"12px 0",color:"#7c3aed",fontSize:13,fontWeight:700,cursor:"pointer"}}>💬 Chat con cliente</button>
+          </>
+        )}
+
+        {/* ── FASE 3: en curso — Terminar viaje ── */}
+        {(upcoming.status==="inprogress"||tripStarted||isOngoing)&&(
+          <button onClick={()=>onEndTrip(upcoming.id)} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:10,background:"linear-gradient(135deg,#16a34a,#22c55e)",border:"none",borderRadius:12,padding:"15px 0",color:"#ffffff",fontSize:15,fontWeight:700,cursor:"pointer",boxShadow:"0 4px 14px rgba(34,197,94,0.3)"}}>🏁 Terminar viaje</button>
+        )}
+
+        {/* ── CANCELAR RESERVA — con motivos ── */}
+        {!cancelConfirm?(
+          <button onClick={()=>setCancelConfirm({step:"choose",reason:"",custom:""})} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:7,background:"#fff5f5",border:"1.5px solid #ef444466",borderRadius:10,padding:"10px 0",color:"#ef4444aa",fontSize:12,fontWeight:700,cursor:"pointer"}}>✕ Cancelar reserva</button>
+        ):cancelConfirm.step==="choose"?(
+          <div style={{background:"#fff5f5",border:"2px solid #ef4444",borderRadius:12,padding:"14px"}}>
+            <div style={{color:"#0f172a",fontSize:13,fontWeight:700,textAlign:"center",marginBottom:4}}>⚠️ Motivo de cancelación</div>
+            <div style={{color:"#64748b",fontSize:11,textAlign:"center",marginBottom:12}}>Selecciona el motivo</div>
+            <div style={{display:"flex",flexDirection:"column",gap:8}}>
+              {[
+                {id:"noshow",label:"👤 El cliente no se presentó"},
+                {id:"condition",label:"🚫 El cliente no está en condiciones"},
+                {id:"other",label:"📝 Otros motivos"},
+              ].map(opt=>(
+                <button key={opt.id} onClick={()=>setCancelConfirm({step:opt.id==="other"?"custom":"confirm",reason:opt.label,custom:""})} style={{background:"#f8fafc",border:"2px solid #e2e8f0",borderRadius:10,padding:"10px 14px",color:"#0f172a",fontSize:12,fontWeight:600,cursor:"pointer",textAlign:"left"}}>{opt.label}</button>
+              ))}
+              <button onClick={()=>setCancelConfirm(null)} style={{background:"transparent",border:"1px solid #cbd5e1",borderRadius:8,padding:"8px 0",color:"#64748b",fontSize:11,cursor:"pointer"}}>← Volver</button>
+            </div>
+          </div>
+        ):cancelConfirm.step==="custom"?(
+          <div style={{background:"#fff5f5",border:"2px solid #ef4444",borderRadius:12,padding:"14px"}}>
+            <div style={{color:"#0f172a",fontSize:13,fontWeight:700,marginBottom:10}}>📝 Describe el motivo</div>
+            <textarea value={cancelConfirm.custom||""} onChange={e=>setCancelConfirm({...cancelConfirm,custom:e.target.value})} placeholder="Escribe el motivo aquí..." style={{width:"100%",background:"#f8fafc",border:"2px solid #e2e8f0",borderRadius:8,padding:"10px",color:"#0f172a",fontSize:12,minHeight:80,resize:"none",outline:"none",boxSizing:"border-box",marginBottom:10}}/>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>setCancelConfirm({step:"choose",reason:"",custom:""})} style={{flex:1,background:"#f8fafc",border:"1.5px solid #e2e8f0",borderRadius:8,padding:"10px 0",color:"#64748b",fontSize:12,fontWeight:600,cursor:"pointer"}}>← Volver</button>
+              <button onClick={()=>setCancelConfirm({...cancelConfirm,step:"confirm",reason:`📝 ${cancelConfirm.custom||"Otros motivos"}`})} disabled={!cancelConfirm.custom?.trim()} style={{flex:1,background:cancelConfirm.custom?.trim()?"linear-gradient(135deg,#ef4444,#b91c1c)":"#cbd5e1",border:"none",borderRadius:8,padding:"10px 0",color:"#fff",fontSize:12,fontWeight:700,cursor:cancelConfirm.custom?.trim()?"pointer":"default"}}>Continuar →</button>
+            </div>
+          </div>
+        ):(
+          <div style={{background:"#fff5f5",border:"2px solid #ef4444",borderRadius:12,padding:"14px"}}>
+            <div style={{color:"#0f172a",fontSize:13,fontWeight:700,textAlign:"center",marginBottom:6}}>⚠️ ¿Confirmar cancelación?</div>
+            <div style={{background:"#ef444415",border:"1px solid #ef444433",borderRadius:8,padding:"8px 12px",marginBottom:12}}>
+              <div style={{color:"#ef4444",fontSize:11,fontWeight:700}}>{cancelConfirm.reason}</div>
+            </div>
+            <div style={{color:"#64748b",fontSize:11,textAlign:"center",marginBottom:12}}>Esta acción no se puede deshacer</div>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>setCancelConfirm(null)} style={{flex:1,background:"#f8fafc",border:"1.5px solid #e2e8f0",borderRadius:8,padding:"10px 0",color:"#64748b",fontSize:12,fontWeight:600,cursor:"pointer"}}>No, volver</button>
+              <button onClick={()=>{
+                sendMsg(upcoming.id,`❌ Reserva cancelada por el conductor.\n📅 ${upcoming.date} · ${upcoming.time}\n📍 ${upcoming.origin}\n📝 Motivo: ${cancelConfirm.reason}`);
+                onCancelTrip(upcoming.id,cancelConfirm.reason);
+                setCancelConfirm(null);
+                showToast("❌ Reserva cancelada: "+cancelConfirm.reason);
+              }} style={{flex:1,background:"linear-gradient(135deg,#ef4444,#b91c1c)",border:"none",borderRadius:8,padding:"10px 0",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>Sí, cancelar</button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -569,6 +881,86 @@ function BillingSection({bookings,fmt,CR}){
           <span style={{color:"#64748b",fontSize:12,fontWeight:600}}>Total últimos 6 meses</span>
           <span style={{color:"#1e3a8a",fontSize:20,fontWeight:900}}>{fmt(months.reduce((s,m)=>s+m.total,0))} €</span>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── CALENDARIO ───────────────────────────────────────────────────────────────
+function CalendarSection({bookings,onSelect}){
+  const [calDate,setCalDate]=useState(()=>new Date().toISOString().slice(0,10));
+  const hours=Array.from({length:17},(_,i)=>i+6); // 06:00 → 22:00
+
+  const dayBookings=bookings
+    .filter(b=>b.date===calDate&&b.status!=="rejected")
+    .sort((a,b)=>(a.time||"").localeCompare(b.time||""));
+
+  const shiftDay=delta=>{
+    const d=new Date(calDate+"T00:00:00");
+    d.setDate(d.getDate()+delta);
+    setCalDate(d.toISOString().slice(0,10));
+  };
+
+  const today=new Date().toISOString().slice(0,10);
+  const isToday=calDate===today;
+  const dateObj=new Date(calDate+"T00:00:00");
+  const dateLabel=dateObj.toLocaleDateString("es-ES",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+
+  const navBtn={width:40,height:40,borderRadius:10,border:"2px solid #e2e8f0",background:"#ffffff",color:"#1e3a8a",fontSize:18,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"};
+
+  return(
+    <div>
+      {/* Date navigation */}
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
+        <button onClick={()=>shiftDay(-1)} className="nav-item" style={navBtn}>‹</button>
+        <div style={{flex:1,background:"#ffffff",border:"2px solid #e2e8f0",borderRadius:14,padding:"12px 20px",textAlign:"center"}}>
+          <div style={{color:"#0f172a",fontSize:16,fontWeight:800,textTransform:"capitalize"}}>{dateLabel}{isToday&&<span style={{marginLeft:10,background:"#2563eb22",color:"#2563eb",borderRadius:8,padding:"2px 10px",fontSize:11,fontWeight:700}}>HOY</span>}</div>
+        </div>
+        <button onClick={()=>shiftDay(1)} className="nav-item" style={navBtn}>›</button>
+        <button onClick={()=>setCalDate(today)} style={{...navBtn,width:"auto",padding:"0 16px",fontSize:12,fontWeight:700}}>Hoy</button>
+        <input type="date" value={calDate} onChange={e=>setCalDate(e.target.value)} style={{...navBtn,width:"auto",padding:"0 12px",fontSize:12,fontWeight:600,color:"#0f172a"}}/>
+      </div>
+
+      {/* Day count */}
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
+        <div style={{width:4,height:18,background:"linear-gradient(180deg,#1e3a8a,#2563eb)",borderRadius:2}}/>
+        <span style={{color:"#1e3a8a",fontSize:13,fontWeight:800,letterSpacing:2}}>AGENDA DEL DÍA</span>
+        {dayBookings.length>0&&<span style={{background:"#2563eb",color:"#fff",borderRadius:10,padding:"1px 8px",fontSize:10,fontWeight:700}}>{dayBookings.length} viaje{dayBookings.length!==1?"s":""}</span>}
+      </div>
+
+      {/* Hourly grid */}
+      <div style={{background:"#ffffff",borderRadius:20,border:"2px solid #e2e8f0",overflow:"hidden",boxShadow:"0 2px 12px rgba(0,0,0,0.04)"}}>
+        {hours.map(h=>{
+          const hStr=String(h).padStart(2,"0")+":00";
+          const trips=dayBookings.filter(b=>{
+            const startM=t2m(b.time);
+            const endM=startM+TRIP_DURATION;
+            const slotStart=h*60, slotEnd=(h+1)*60;
+            return startM<slotEnd&&endM>slotStart;
+          });
+          const occupied=trips.length>0;
+          return(
+            <div key={h} style={{display:"flex",alignItems:"stretch",borderBottom:"1px solid #f1f5f9",minHeight:60,background:occupied?"#f8fafc":"transparent"}}>
+              <div style={{width:64,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",borderRight:"1px solid #f1f5f9"}}>
+                <span style={{color:"#94a3b8",fontSize:12,fontWeight:700}}>{hStr}</span>
+              </div>
+              <div style={{flex:1,padding:"8px 14px",display:"flex",flexDirection:"column",justifyContent:"center",gap:6}}>
+                {occupied?trips.map(trip=>(
+                  <div key={trip.id} className="row-hover" onClick={()=>onSelect(trip)} style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer",padding:"8px 12px",borderRadius:10,background:"#ffffff",border:`1.5px solid ${sColor(trip.status)}33`}}>
+                    <span style={{width:8,height:8,borderRadius:"50%",background:sColor(trip.status),flexShrink:0}}/>
+                    <span style={{flex:1,minWidth:0,color:"#0f172a",fontSize:13,fontWeight:700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{trip.guest}</span>
+                    <span style={{color:"#64748b",fontSize:11,flexShrink:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:180}}>{trip.origin} → {trip.destination}</span>
+                    <span style={{color:"#1e3a8a",fontSize:12,fontWeight:700,flexShrink:0}}>{trip.time}</span>
+                    <span style={{fontSize:10,padding:"2px 9px",borderRadius:6,background:sColor(trip.status)+"22",color:sColor(trip.status),fontWeight:700,flexShrink:0,whiteSpace:"nowrap"}}>{sLabel(trip.status)}</span>
+                    <span style={{color:"#2563eb",fontSize:13,flexShrink:0}}>›</span>
+                  </div>
+                )):(
+                  <span style={{color:"#cbd5e1",fontSize:12}}>Libre</span>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
