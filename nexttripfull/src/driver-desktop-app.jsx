@@ -13,12 +13,17 @@ function fbListen(p,cb)    { return onSnapshot(doc(_db,...p.split("/")),s=>cb(s.
 const PIN="3155", CR=0.20, BK="riviera_bookings_v1";
 function san(a){return(Array.isArray(a)?a:[]).filter(b=>b&&b.id&&b.guest);}
 function fmt(n){return isNaN(n)?"0":Number(n).toFixed(2).replace(".",",");}
-function sLabel(s){return({confirmed:"Confirmado",pending:"Pendiente",rejected:"Rechazado",inprogress:"En Curso",completed:"Completado",cancelled:"Cancelado"})[s]||s;}
-function sColor(s){return({confirmed:"#2563eb",pending:"#f59e0b",rejected:"#ef4444",inprogress:"#3b82f6",completed:"#22c55e",cancelled:"#f97316"})[s]||"#64748b";}
+function sLabel(s){return({confirmed:"Confirmado",pending:"Pendiente",rejected:"Rechazado",inprogress:"En Curso",completed:"Completado",cancelled:"Cancelado",price_proposed:"Precio Propuesto",client_rejected:"Rechazado por Cliente"})[s]||s;}
+function sColor(s){return({confirmed:"#2563eb",pending:"#f59e0b",rejected:"#ef4444",inprogress:"#3b82f6",completed:"#22c55e",cancelled:"#f97316",price_proposed:"#a78bfa",client_rejected:"#f97316"})[s]||"#64748b";}
 function rUrl(o,d){return`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(o||"")}&destination=${encodeURIComponent(d||"")}&travelmode=driving`;}
 function mUrl(a){return`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(a||"")}`;}
 const t2m = t=>{ if(!t)return 0; const [h,m]=t.split(":").map(Number); return h*60+m; };
 const TRIP_DURATION = 45; // minutos bloqueados por viaje
+const REJECTION_REASONS=[
+  {id:"r1",label:"Otras reservas programadas"},
+  {id:"r2",label:"Carga insuficiente del vehículo"},
+  {id:"r3",label:"Revisión de vehículo programada"},
+];
 
 // ─── CSS ─────────────────────────────────────────────────────────────────────
 const CSS = `
@@ -66,13 +71,37 @@ export default function DriverDesktopApp() {
   const [showQuickMsgs,setShowQuickMsgs]=useState(false);
   const [cancelConfirm,setCancelConfirm]=useState(null);
 
+  // Service status (En servicio / Fuera de servicio) — synced via nexttrip/status
+  const [serviceStatus,setServiceStatus]=useState({status:"online",returnDate:"",lastActiveDate:""});
+  const [showServiceModal,setShowServiceModal]=useState(false);
+  const [returnDateDraft,setReturnDateDraft]=useState("");
+  const [lastActiveDraft,setLastActiveDraft]=useState("");
+
+  // Price per km config (VELO App / V.Transfer) — synced via nexttrip/status
+  const [priceClient,setPriceClient]=useState(()=>{try{return Number(localStorage.getItem("ntprice_client")||3.15);}catch{return 3.15;}});
+  const [priceRecep,setPriceRecep]=useState(()=>{try{return Number(localStorage.getItem("ntprice_recep")||3.15);}catch{return 3.15;}});
+  const [showPriceModal,setShowPriceModal]=useState(false);
+  const [draftPriceClient,setDraftPriceClient]=useState("3.15");
+  const [draftPriceRecep,setDraftPriceRecep]=useState("3.15");
+
+  // Notas privadas / Hoja de ruta / Rechazo / Comisión
+  const [noteModal,setNoteModal]=useState(null);
+  const [docModal,setDocModal]=useState(null);
+  const [rejectModal,setRejectModal]=useState(null);
+  const [commissionModal,setCommissionModal]=useState(null);
+
   const showToast=msg=>{setToast(msg);setTimeout(()=>setToast(""),3200);};
 
   useEffect(()=>{
     if(!loggedIn)return;
     const u1=fbListen("nexttrip/bookings",d=>{if(d?.data){const s=san(d.data);setBookings(s);try{localStorage.setItem(BK,JSON.stringify(s));}catch{}}});
     const u2=fbListen("nexttrip/messages",d=>{if(d)setMessages(d);});
-    const u3=fbListen("nexttrip/status",d=>{if(d?.driverStatus)setDStatus(d.driverStatus);});
+    const u3=fbListen("nexttrip/status",d=>{
+      if(d?.driverStatus)setDStatus(d.driverStatus);
+      if(d?.serviceStatus)setServiceStatus(d.serviceStatus);
+      if(d?.pricePerKmClient)setPriceClient(d.pricePerKmClient);
+      if(d?.pricePerKmRecep)setPriceRecep(d.pricePerKmRecep);
+    });
     return()=>{u1();u2();u3();};
   },[loggedIn]);
 
@@ -117,6 +146,35 @@ export default function DriverDesktopApp() {
     setDriverStatusRemote("free");
     clearArrived();
   };
+  // Estado de servicio (En servicio / Fuera de servicio)
+  const handleSetService=s=>{
+    setServiceStatus(s);
+    try{localStorage.setItem("nexttrip_service",JSON.stringify(s));}catch{}
+    fbGet("nexttrip/status").then(cur=>{fbSet("nexttrip/status",{...(cur||{}),serviceStatus:s,updatedAt:Date.now()});});
+  };
+  // Precio por km (VELO App / V.Transfer)
+  const handleSavePriceConfig=()=>{
+    const c=Math.max(1,Number(draftPriceClient)||3.15);
+    const r=Math.max(1,Number(draftPriceRecep)||3.15);
+    setPriceClient(c);setPriceRecep(r);
+    try{localStorage.setItem("ntprice_client",String(c));localStorage.setItem("ntprice_recep",String(r));}catch{}
+    fbGet("nexttrip/status").then(cur=>{fbSet("nexttrip/status",{...(cur||{}),pricePerKmClient:c,pricePerKmRecep:r,updatedAt:Date.now()});});
+    setShowPriceModal(false);
+    showToast(`✅ Precios: VELO App ${c}€/km · V.Transfer ${r}€/km`);
+  };
+  // Hoja de ruta (documento)
+  const onUploadDoc=(id,doc)=>{mutate(id,{routeDoc:doc});showToast("✅ Hoja de ruta subida");};
+  // Nota privada
+  const onSaveNote=(id,note)=>{mutate(id,{driverNote:note});showToast(note?"📝 Nota guardada":"🗑 Nota eliminada");};
+  // Rechazo con motivo
+  const onReject=(id,reason)=>{
+    mutate(id,{status:"rejected",rejectionReason:reason||""});
+    const b=bookings.find(x=>x.id===id);
+    if(b)sendMsg(id,"❌ Reserva rechazada\n📅 "+b.date+" · "+b.time+"\n👤 "+b.guest+"\n📍 "+b.origin+" → "+b.destination+(reason?"\n\nMotivo: "+reason:""));
+    showToast(`❌ Viaje rechazado: ${reason}`);
+  };
+  // Pago de comisión a hotel
+  const onPayCommission=(id,proof)=>{mutate(id,{commissionStatus:"paid",commissionProof:proof});};
 
   if(!loggedIn) return <LoginScreen onLogin={()=>setLoggedIn(true)}/>;
 
@@ -132,6 +190,23 @@ export default function DriverDesktopApp() {
     .sort((a,b)=>new Date(`${a.date}T${a.time}:00`)-new Date(`${b.date}T${b.time}:00`))
     .find(b=>{const dt=new Date(`${b.date}T${b.time}:00`);return dt-nowTick>-TRIP_DURATION*60*1000;});
   const isOnRoute=dStatus==="onroute";
+  const isOffline=serviceStatus?.status==="offline";
+
+  // Earnings by hotel (all non-rejected with fare) — for Facturación
+  const withFare=bookings.filter(b=>b.fare&&b.status!=="rejected");
+  const byHotel={};
+  withFare.forEach(b=>{
+    if(!byHotel[b.hotel])byHotel[b.hotel]={trips:0,gross:0,commissions:0,pendingAmt:0,pendingTrips:[]};
+    byHotel[b.hotel].trips+=1;
+    byHotel[b.hotel].gross+=Number(b.fare||0);
+    if(!b.isClientBooking){
+      byHotel[b.hotel].commissions+=Math.round(Number(b.fare||0)*CR*100)/100;
+      if(b.status==="completed"&&b.commissionStatus!=="paid"){
+        byHotel[b.hotel].pendingAmt+=Number(b.fare||0)*CR;
+        byHotel[b.hotel].pendingTrips.push(b);
+      }
+    }
+  });
 
   return (
     <div style={{display:"flex",height:"100vh",overflow:"hidden",background:"#f1f5f9"}}>
@@ -144,12 +219,29 @@ export default function DriverDesktopApp() {
           <img src="/logo-velo.jpg" style={{width:52,height:52,objectFit:"contain",borderRadius:12,marginBottom:12}} alt="VELO"/>
           <div style={{color:"#fff",fontSize:18,fontWeight:900,letterSpacing:0.5}}>VELO Driver</div>
           <div style={{color:"#64748b",fontSize:10,letterSpacing:3,marginTop:2}}>DESKTOP PANEL</div>
-          {/* Status */}
-          <div style={{marginTop:14,display:"flex",alignItems:"center",gap:8,background:"rgba(255,255,255,0.06)",borderRadius:8,padding:"8px 10px"}}>
-            <div style={{width:8,height:8,borderRadius:"50%",background:dStatus==="onroute"?"#ef4444":"#22c55e",animation:"pulse 1.5s infinite",flexShrink:0}}/>
-            <span style={{color:dStatus==="onroute"?"#ef4444":"#22c55e",fontSize:11,fontWeight:700}}>{dStatus==="onroute"?"EN RUTA":"DISPONIBLE"}</span>
-          </div>
+          {/* Estado de servicio — clic para gestionar */}
+          <button onClick={()=>{setReturnDateDraft(serviceStatus?.returnDate||"");setLastActiveDraft(serviceStatus?.lastActiveDate||"");setShowServiceModal(true);}} style={{
+            marginTop:14,width:"100%",display:"flex",alignItems:"center",gap:8,
+            background:isOffline?"rgba(239,68,68,0.12)":"rgba(34,197,94,0.1)",
+            border:`1px solid ${isOffline?"rgba(239,68,68,0.35)":"rgba(34,197,94,0.25)"}`,
+            borderRadius:8,padding:"8px 10px",cursor:"pointer",textAlign:"left",
+          }}>
+            <div style={{width:8,height:8,borderRadius:"50%",background:isOffline?"#ef4444":(dStatus==="onroute"?"#ef4444":"#22c55e"),animation:"pulse 1.5s infinite",flexShrink:0}}/>
+            <span style={{color:isOffline?"#ef4444":(dStatus==="onroute"?"#ef4444":"#22c55e"),fontSize:11,fontWeight:700,flex:1}}>{isOffline?"FUERA DE SERVICIO":(dStatus==="onroute"?"EN RUTA":"DISPONIBLE")}</span>
+            <span style={{color:"#475569",fontSize:11}}>⚙</span>
+          </button>
+          {/* Precios por km */}
+          <button onClick={()=>{setDraftPriceClient(String(priceClient));setDraftPriceRecep(String(priceRecep));setShowPriceModal(true);}} style={{
+            marginTop:8,width:"100%",display:"flex",alignItems:"center",gap:8,
+            background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.08)",
+            borderRadius:8,padding:"8px 10px",cursor:"pointer",textAlign:"left",
+          }}>
+            <span style={{fontSize:13}}>💶</span>
+            <span style={{color:"#94a3b8",fontSize:11,fontWeight:700,flex:1}}>Precios por km</span>
+            <span style={{color:"#475569",fontSize:11}}>⚙</span>
+          </button>
         </div>
+
 
         {/* Nav */}
         <nav style={{flex:1,padding:"16px 10px",display:"flex",flexDirection:"column",gap:2}}>
@@ -210,6 +302,20 @@ export default function DriverDesktopApp() {
           {/* ── DASHBOARD ── */}
           {section==="dashboard"&&(
             <div>
+              {/* Banner FUERA DE SERVICIO */}
+              {isOffline&&(
+                <div style={{display:"flex",alignItems:"center",gap:14,background:"linear-gradient(135deg,#fff5f5,#fee2e2)",border:"2.5px solid #ef4444",borderRadius:16,padding:"16px 20px",marginBottom:20,boxShadow:"0 4px 16px rgba(239,68,68,0.15)"}}>
+                  <span style={{fontSize:28}}>🔴</span>
+                  <div style={{flex:1}}>
+                    <div style={{color:"#ef4444",fontSize:14,fontWeight:800}}>FUERA DE SERVICIO</div>
+                    <div style={{color:"#64748b",fontSize:12,marginTop:2}}>
+                      {serviceStatus?.returnDate?`Vuelves el ${serviceStatus.returnDate}`:"No estás recibiendo nuevas reservas"}
+                      {serviceStatus?.lastActiveDate&&` · Último día operativo: ${serviceStatus.lastActiveDate}`}
+                    </div>
+                  </div>
+                  <button onClick={()=>{handleSetService({status:"online",returnDate:"",lastActiveDate:""});showToast("✅ Conductor EN SERVICIO");}} style={{background:"linear-gradient(135deg,#16a34a,#22c55e)",border:"none",borderRadius:10,padding:"10px 18px",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>🟢 Volver a EN SERVICIO</button>
+                </div>
+              )}
               {/* KPI row */}
               <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:16,marginBottom:24}}>
                 {[
@@ -310,18 +416,22 @@ export default function DriverDesktopApp() {
               bookings={section==="pending"?pending:section==="confirmed"?confirmed:history}
               messages={messages}
               isHistory={section==="history"}
-              onAccept={section==="pending"?id=>{mutate(id,{status:"confirmed"});showToast("✅ Aceptado");}:null}
-              onReject={section==="pending"?id=>{mutate(id,{status:"rejected"});showToast("❌ Rechazado");}:null}
-              onStart={section==="confirmed"?id=>{mutate(id,{status:"inprogress"});setDStatus("onroute");showToast("🚗 Iniciado");}:null}
-              onEnd={section==="confirmed"?id=>{mutate(id,{status:"completed"});setDStatus("free");showToast("🏁 Completado");}:null}
-              onCancel={section==="confirmed"?id=>{mutate(id,{status:"cancelled",cancelReason:"Cancelado por conductor"});showToast("❌ Cancelado");}:null}
+              onAccept={section==="pending"?id=>{mutate(id,{status:"confirmed"});showToast(`✅ Viaje aceptado`);}:null}
+              onReject={section==="pending"?id=>{const b=pending.find(x=>x.id===id);setRejectModal(b);}:null}
+              onStart={section==="confirmed"?id=>{
+                const b=confirmed.find(x=>x.id===id);
+                if(b&&!b.routeDoc){showToast("⚠️ Sube la hoja de ruta antes de iniciar el viaje");setSelected(b);return;}
+                mutate(id,{status:"inprogress"});setDriverStatusRemote("onroute");setTripStarted(true);showToast("🚗 Viaje iniciado");
+              }:null}
+              onEnd={section==="confirmed"?id=>{mutate(id,{status:"completed"});setDriverStatusRemote("free");setTripStarted(false);setArrivedBookingId(null);clearArrived();showToast("🏁 Completado");}:null}
+              onCancel={section==="confirmed"?id=>onCancelTrip(id,"Cancelado por conductor"):null}
               onSelect={setSelected}
               onChat={setChatB}
             />
           )}
 
           {/* ── BILLING ── */}
-          {section==="billing"&&<BillingSection bookings={bookings} fmt={fmt} CR={CR}/>}
+          {section==="billing"&&<BillingSection bookings={bookings} fmt={fmt} CR={CR} byHotel={byHotel} totalGross={totalGross} setCommissionModal={setCommissionModal} setSelected={setSelected}/>}
         </main>
       </div>
 
@@ -333,7 +443,7 @@ export default function DriverDesktopApp() {
             <button onClick={()=>setSelected(null)} style={{background:"#f1f5f9",border:"none",borderRadius:8,color:"#64748b",width:30,height:30,cursor:"pointer",fontSize:16,fontWeight:700}}>✕</button>
           </div>
           <div style={{flex:1,overflowY:"auto",padding:"16px 20px"}}>
-            <DetailPanel b={selected} fmt={fmt} CR={CR} messages={messages} onSend={sendMsg} onChat={()=>setChatB(selected)}/>
+            <DetailPanel b={selected} fmt={fmt} CR={CR} messages={messages} onSend={sendMsg} onChat={()=>setChatB(selected)} onUploadDoc={onUploadDoc} setDocModal={setDocModal} setNoteModal={setNoteModal}/>
           </div>
         </aside>
       )}
@@ -371,6 +481,31 @@ export default function DriverDesktopApp() {
 
       {/* Toast */}
       {toast&&<div style={{position:"fixed",bottom:24,left:"50%",transform:"translateX(-50%)",background:"#0f172a",color:"#fff",padding:"12px 24px",borderRadius:12,fontSize:13,fontWeight:600,zIndex:9999,animation:"fadeIn 0.2s ease",boxShadow:"0 8px 24px rgba(0,0,0,0.25)"}}>{toast}</div>}
+
+      {/* ══ MODALES ══════════════════════════════════════════════════════════ */}
+      {showServiceModal&&(
+        <ServiceModal isOffline={isOffline} returnDateDraft={returnDateDraft} setReturnDateDraft={setReturnDateDraft} lastActiveDraft={lastActiveDraft} setLastActiveDraft={setLastActiveDraft}
+          onClose={()=>setShowServiceModal(false)}
+          onSetService={s=>{handleSetService(s);setShowServiceModal(false);}}/>
+      )}
+      {showPriceModal&&(
+        <PriceConfigModal draftPriceClient={draftPriceClient} setDraftPriceClient={setDraftPriceClient} draftPriceRecep={draftPriceRecep} setDraftPriceRecep={setDraftPriceRecep}
+          onClose={()=>setShowPriceModal(false)} onSave={handleSavePriceConfig}/>
+      )}
+      {noteModal&&(
+        <NoteModal booking={noteModal} onSave={(id,note)=>{onSaveNote(id,note);setNoteModal(null);}} onClose={()=>setNoteModal(null)}/>
+      )}
+      {docModal&&(
+        <DocModal booking={docModal} onClose={()=>setDocModal(null)}/>
+      )}
+      {rejectModal&&(
+        <RejectModal booking={rejectModal} onReject={(id,reason)=>{onReject(id,reason);setRejectModal(null);}} onClose={()=>setRejectModal(null)}/>
+      )}
+      {commissionModal&&(
+        <CommissionPayModal booking={commissionModal} fmt={fmt}
+          onPay={(id,proof)=>{onPayCommission(id,proof);}}
+          onClose={()=>{setCommissionModal(null);showToast("✅ Comisión marcada como pagada");}}/>
+      )}
     </div>
   );
 }
@@ -743,7 +878,11 @@ function BookingsTable({bookings,messages,isHistory,onAccept,onReject,onStart,on
               return(
                 <tr key={b.id} className="row-hover" style={{borderBottom:"1px solid #f1f5f9",cursor:"pointer",transition:"background 0.1s"}} onClick={()=>onSelect&&onSelect(b)}>
                   <td style={{padding:"14px 20px"}}>
-                    <div style={{color:"#0f172a",fontSize:13,fontWeight:700}}>{b.guest}</div>
+                    <div style={{display:"flex",alignItems:"center",gap:6}}>
+                      <div style={{color:"#0f172a",fontSize:13,fontWeight:700}}>{b.guest}</div>
+                      <span style={{background:b.isClientBooking?"#a78bfa":"#2563eb",borderRadius:5,padding:"1px 6px",fontSize:8,color:"#fff",fontWeight:700,whiteSpace:"nowrap"}}>{b.isClientBooking?"VIP":"RECEP."}</span>
+                      {["confirmed","inprogress"].includes(b.status)&&!b.routeDoc&&<span title="Falta hoja de ruta" style={{fontSize:11}}>⚠️</span>}
+                    </div>
                     <div style={{color:"#94a3b8",fontSize:10,marginTop:2}}>{b.hotel}</div>
                     {b.notes&&<div style={{color:"#d97706",fontSize:10,marginTop:3}}>📝 {b.notes.slice(0,28)}{b.notes.length>28?"…":""}</div>}
                   </td>
@@ -785,14 +924,24 @@ function BookingsTable({bookings,messages,isHistory,onAccept,onReject,onStart,on
 }
 
 // ─── DETAIL PANEL ─────────────────────────────────────────────────────────────
-function DetailPanel({b,fmt,CR,messages,onSend,onChat}){
+function DetailPanel({b,fmt,CR,messages,onSend,onChat,onUploadDoc,setDocModal,setNoteModal}){
   const [msg,setMsg]=useState("");
+  const showOps=["confirmed","inprogress","completed"].includes(b.status);
   return(
     <div>
       <div style={{background:sColor(b.status)+"15",border:`2px solid ${sColor(b.status)}33`,borderRadius:14,padding:"16px",marginBottom:16}}>
-        <div style={{color:"#0f172a",fontSize:22,fontWeight:900,lineHeight:1,marginBottom:6}}>{b.guest}</div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
+          <div style={{color:"#0f172a",fontSize:22,fontWeight:900,lineHeight:1}}>{b.guest}</div>
+          <span style={{background:b.isClientBooking?"#a78bfa":"#2563eb",borderRadius:6,padding:"2px 8px",fontSize:9,color:"#fff",fontWeight:700,whiteSpace:"nowrap"}}>{b.isClientBooking?"💜 VIP CLIENT":"🏨 RECEPCIÓN"}</span>
+        </div>
         <span style={{background:sColor(b.status),color:"#fff",borderRadius:20,padding:"3px 12px",fontSize:11,fontWeight:700}}>{sLabel(b.status)}</span>
       </div>
+      {b.status==="price_proposed"&&(
+        <div style={{background:"#faf5ff",border:"1.5px solid #7c3aed44",borderRadius:10,padding:"10px 12px",marginBottom:12}}>
+          <div style={{color:"#7c3aed",fontSize:12,fontWeight:800}}>💜 Precio propuesto: {fmt(b.proposedPrice)} €</div>
+          <div style={{color:"#64748b",fontSize:11,marginTop:2}}>Esperando respuesta del cliente</div>
+        </div>
+      )}
       {[["📅 Fecha",b.date],["🕐 Hora",b.time],["👥 Pasajeros",b.passengers+" pax"],["🏨 Hotel",b.hotel],["💳 Pago",b.paymentMethod==="card"?"Tarjeta":"Efectivo"],["📞 Teléfono",b.guestPhone]].filter(([,v])=>v).map(([k,v])=>(
         <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"9px 0",borderBottom:"1px solid #f1f5f9"}}>
           <span style={{color:"#64748b",fontSize:12}}>{k}</span>
@@ -800,20 +949,54 @@ function DetailPanel({b,fmt,CR,messages,onSend,onChat}){
         </div>
       ))}
       {b.notes&&<div style={{background:"#fffbeb",borderRadius:10,padding:"10px 12px",margin:"12px 0",fontSize:12,color:"#92400e",fontWeight:600}}>📝 {b.notes}</div>}
-      {b.fare&&<div style={{background:"linear-gradient(135deg,#f0fdf4,#dcfce7)",border:"2px solid #22c55e33",borderRadius:12,padding:"14px",margin:"12px 0"}}>
+      {b.fare>0&&<div style={{background:"linear-gradient(135deg,#f0fdf4,#dcfce7)",border:"2px solid #22c55e33",borderRadius:12,padding:"14px",margin:"12px 0"}}>
         <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
           <span style={{color:"#15803d",fontSize:12,fontWeight:700}}>Total viaje</span>
           <span style={{color:"#16a34a",fontSize:22,fontWeight:900}}>{fmt(b.fare)} €</span>
         </div>
         <div style={{display:"flex",justifyContent:"space-between"}}>
           <span style={{color:"#64748b",fontSize:11}}>Tu ganancia</span>
-          <span style={{color:"#16a34a",fontSize:14,fontWeight:700}}>{fmt(b.fare*(1-CR))} €</span>
+          <span style={{color:"#16a34a",fontSize:14,fontWeight:700}}>{fmt(b.fare*(b.isClientBooking?0.85:1-CR))} €</span>
         </div>
       </div>}
       <div style={{display:"flex",flexDirection:"column",gap:8,marginTop:4}}>
         <a href={rUrl(b.origin,b.destination)} target="_blank" rel="noopener noreferrer" style={{display:"block",background:"linear-gradient(135deg,#1e3a8a,#2563eb)",borderRadius:10,padding:"10px 0",color:"#fff",fontSize:12,fontWeight:700,textDecoration:"none",textAlign:"center",boxShadow:"0 3px 10px rgba(37,99,235,0.3)"}}>🗺️ Ver ruta completa</a>
         <button onClick={onChat} style={{background:"linear-gradient(135deg,#6d28d9,#7c3aed)",border:"none",borderRadius:10,padding:"10px 0",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>💬 Abrir chat</button>
       </div>
+
+      {/* ── HOJA DE RUTA ── */}
+      {showOps&&(
+        <div style={{marginTop:16}}>
+          <div style={{color:"#1e3a8a",fontSize:11,fontWeight:800,letterSpacing:1,marginBottom:8}}>HOJA DE RUTA (FOMENTO)</div>
+          <a href="https://sede.transportes.gob.es/regvtc/gestion/" target="_blank" rel="noopener noreferrer" style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,width:"100%",marginBottom:6,background:"#eff6ff",border:"1.5px solid #2563eb44",borderRadius:8,padding:"9px 0",textDecoration:"none",color:"#1e3a8a",fontSize:11,fontWeight:700}}>📋 Completar Hoja de Ruta — Sede Fomento</a>
+          {b.routeDoc?(
+            <div style={{display:"flex",gap:6}}>
+              <button onClick={()=>setDocModal(b)} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:"#dcfce7",border:"1px solid #22c55e44",borderRadius:8,padding:"8px 0",cursor:"pointer",color:"#16a34a",fontSize:11,fontWeight:700}}>👁 Ver documento</button>
+              <label style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:"#f1f5f9",border:"1px solid #e2e8f0",borderRadius:8,padding:"8px 0",cursor:"pointer",color:"#64748b",fontSize:11,fontWeight:600}}>
+                <input type="file" accept=".pdf,image/*" onChange={e=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=ev=>onUploadDoc(b.id,{data:ev.target.result,name:file.name,type:file.type});reader.readAsDataURL(file);}} style={{display:"none"}}/>
+                🔄 Reemplazar
+              </label>
+            </div>
+          ):(
+            <label style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,width:"100%",background:"#f8fafc",border:"2px dashed #2563eb55",borderRadius:8,padding:"10px 0",cursor:"pointer",color:"#64748b",fontSize:11,fontWeight:600}}>
+              <input type="file" accept=".pdf,image/*" onChange={e=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=ev=>onUploadDoc(b.id,{data:ev.target.result,name:file.name,type:file.type});reader.readAsDataURL(file);}} style={{display:"none"}}/>
+              📎 Subir Hoja de Ruta (PDF / imagen)
+            </label>
+          )}
+          {!b.routeDoc&&b.status==="confirmed"&&(
+            <div style={{marginTop:6,padding:"6px 10px",borderRadius:6,background:"#fff7ed",border:"1px solid #f9731633",color:"#f97316",fontSize:10,textAlign:"center"}}>⚠️ Sube la hoja de ruta para poder iniciar el viaje</div>
+          )}
+        </div>
+      )}
+
+      {/* ── NOTA PRIVADA ── */}
+      {showOps&&(
+        <button onClick={()=>setNoteModal(b)} style={{display:"flex",alignItems:"center",gap:8,width:"100%",marginTop:10,background:b.driverNote?"#f0fdf4":"#f8fafc",border:`1px solid ${b.driverNote?"#22c55e33":"#e2e8f0"}`,borderRadius:8,padding:"9px 12px",cursor:"pointer",color:b.driverNote?"#16a34a":"#64748b",fontSize:12,textAlign:"left"}}>
+          <span>📝</span>
+          <span style={{flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{b.driverNote||"Añadir nota privada..."}</span>
+        </button>
+      )}
+
       {/* Mini chat */}
       <div style={{marginTop:16}}>
         <div style={{color:"#1e3a8a",fontSize:11,fontWeight:800,letterSpacing:1,marginBottom:8}}>ÚLTIMOS MENSAJES</div>
@@ -835,7 +1018,7 @@ function DetailPanel({b,fmt,CR,messages,onSend,onChat}){
 }
 
 // ─── BILLING ──────────────────────────────────────────────────────────────────
-function BillingSection({bookings,fmt,CR}){
+function BillingSection({bookings,fmt,CR,byHotel,totalGross,setCommissionModal,setSelected}){
   const done=bookings.filter(b=>b.status==="completed");
   const gross=done.reduce((s,b)=>s+Number(b.fare||0),0);
   const net=gross*(1-CR);
@@ -847,7 +1030,9 @@ function BillingSection({bookings,fmt,CR}){
     return{key,label:d.toLocaleDateString("es-ES",{month:"short"}).toUpperCase(),total};
   });
   const maxM=Math.max(...months.map(m=>m.total),1);
+  const hotelEntries=Object.entries(byHotel||{}).sort(([,a],[,b])=>(b.pendingAmt||0)-(a.pendingAmt||0));
   return(
+    <div>
     <div style={{display:"grid",gridTemplateColumns:"340px 1fr",gap:20}}>
       <div style={{display:"flex",flexDirection:"column",gap:14}}>
         {[
@@ -882,6 +1067,39 @@ function BillingSection({bookings,fmt,CR}){
           <span style={{color:"#1e3a8a",fontSize:20,fontWeight:900}}>{fmt(months.reduce((s,m)=>s+m.total,0))} €</span>
         </div>
       </div>
+    </div>
+
+    {/* ── INGRESOS POR HOTEL + COMISIONES ── */}
+    {hotelEntries.length>0&&(
+      <div style={{background:"#ffffff",borderRadius:20,padding:"24px",border:"2px solid #e2e8f0",boxShadow:"0 2px 12px rgba(0,0,0,0.04)",marginTop:20}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:18}}>
+          <div style={{width:4,height:20,background:"linear-gradient(180deg,#1e3a8a,#2563eb)",borderRadius:2}}/>
+          <span style={{color:"#1e3a8a",fontSize:13,fontWeight:800,letterSpacing:2}}>🏨 INGRESOS POR HOTEL</span>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:12}}>
+          {hotelEntries.map(([hotel,data])=>(
+            <div key={hotel} onClick={()=>{if(data.pendingTrips.length>0){setCommissionModal({...data.pendingTrips[0],_empAllPending:data.pendingTrips,_empName:hotel,_totalComm:data.pendingAmt});}}} style={{
+              background:data.pendingAmt>0?"#fffbeb":"#f8fafc",
+              border:`2px solid ${data.pendingAmt>0?"#f59e0b":"#e2e8f0"}`,
+              borderRadius:14,padding:"14px 16px",
+              cursor:data.pendingTrips.length>0?"pointer":"default",
+              boxShadow:data.pendingAmt>0?"0 2px 10px rgba(245,158,11,0.15)":"none",
+            }}>
+              <div style={{color:"#0f172a",fontSize:13,fontWeight:800,marginBottom:4}}>{hotel||"—"}</div>
+              <div style={{color:"#64748b",fontSize:11,marginBottom:8}}>{data.trips} viaje{data.trips!==1?"s":""} · {fmt(data.gross)} € facturado</div>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <span style={{color:"#64748b",fontSize:11}}>Comisión total: {fmt(data.commissions||0)} €</span>
+                {data.pendingAmt>0?(
+                  <span style={{background:"#f59e0b",color:"#fff",borderRadius:8,padding:"3px 10px",fontSize:11,fontWeight:800}}>+{fmt(data.pendingAmt)} € pend.</span>
+                ):(
+                  <span style={{background:"#22c55e18",color:"#16a34a",borderRadius:8,padding:"3px 10px",fontSize:10,fontWeight:700}}>✓ al día</span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
     </div>
   );
 }
@@ -963,6 +1181,224 @@ function CalendarSection({bookings,onSelect}){
         })}
       </div>
     </div>
+  );
+}
+
+// ─── MODAL OVERLAY (helper) ────────────────────────────────────────────────────
+function ModalOverlay({onClose,children,maxWidth=440}){
+  return(
+    <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(15,23,42,0.55)",zIndex:2000,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div onClick={e=>e.stopPropagation()} style={{background:"#ffffff",borderRadius:20,padding:24,width:"100%",maxWidth,boxShadow:"0 20px 60px rgba(0,0,0,0.25)",maxHeight:"90vh",overflowY:"auto"}}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// ─── SERVICE STATUS MODAL ───────────────────────────────────────────────────────
+function ServiceModal({isOffline,returnDateDraft,setReturnDateDraft,lastActiveDraft,setLastActiveDraft,onClose,onSetService}){
+  const inputStyle={width:"100%",background:"#f8fafc",border:"2px solid #e2e8f0",borderRadius:10,color:"#0f172a",fontSize:14,fontWeight:700,padding:"12px 14px",outline:"none",colorScheme:"light",boxSizing:"border-box"};
+  return(
+    <ModalOverlay onClose={onClose}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16}}>
+        <div style={{color:"#1e3a8a",fontSize:16,fontWeight:800}}>⚙️ Estado de servicio</div>
+        <button onClick={onClose} style={{background:"#f1f5f9",border:"none",borderRadius:8,padding:"4px 10px",color:"#64748b",fontSize:12,cursor:"pointer"}}>✕</button>
+      </div>
+      {isOffline?(
+        <div>
+          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:18,padding:"14px",background:"#fff5f5",borderRadius:14,border:"2px solid #ef444433"}}>
+            <div style={{width:40,height:40,borderRadius:12,background:"#fee2e2",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>🔴</div>
+            <div>
+              <div style={{color:"#ef4444",fontSize:14,fontWeight:800}}>FUERA DE SERVICIO</div>
+              <div style={{color:"#64748b",fontSize:11}}>Actualiza tus fechas de disponibilidad</div>
+            </div>
+          </div>
+          <div style={{marginBottom:14}}>
+            <label style={{color:"#1e3a8a",fontSize:10,letterSpacing:2,fontWeight:800,display:"block",marginBottom:6}}>FECHA DE REINCORPORACIÓN</label>
+            <input type="date" value={returnDateDraft} onChange={e=>setReturnDateDraft(e.target.value)} style={inputStyle}/>
+          </div>
+          <div style={{marginBottom:18}}>
+            <label style={{color:"#1e3a8a",fontSize:10,letterSpacing:2,fontWeight:800,display:"block",marginBottom:6}}>ÚLTIMO DÍA OPERATIVO</label>
+            <input type="date" value={lastActiveDraft} onChange={e=>setLastActiveDraft(e.target.value)} style={inputStyle}/>
+          </div>
+          <button onClick={()=>onSetService({status:"offline",returnDate:returnDateDraft,lastActiveDate:lastActiveDraft})} style={{width:"100%",background:"#f8fafc",border:"2px solid #ef444433",borderRadius:12,padding:"13px 0",color:"#ef4444",fontSize:14,fontWeight:700,cursor:"pointer",marginBottom:10}}>Actualizar fechas</button>
+          <button onClick={()=>onSetService({status:"online",returnDate:"",lastActiveDate:""})} style={{width:"100%",background:"linear-gradient(135deg,#16a34a,#22c55e)",border:"none",borderRadius:12,padding:"14px 0",color:"#ffffff",fontSize:14,fontWeight:700,cursor:"pointer",boxShadow:"0 4px 12px rgba(34,197,94,0.3)"}}>🟢 Volver a EN SERVICIO</button>
+        </div>
+      ):(
+        <div>
+          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:18,padding:"14px",background:"#f0fdf4",borderRadius:14,border:"2px solid #22c55e33"}}>
+            <div style={{width:40,height:40,borderRadius:12,background:"#dcfce7",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>🟢</div>
+            <div>
+              <div style={{color:"#15803d",fontSize:14,fontWeight:800}}>EN SERVICIO</div>
+              <div style={{color:"#64748b",fontSize:11}}>Planifica tu disponibilidad futura</div>
+            </div>
+          </div>
+          <div style={{marginBottom:14}}>
+            <label style={{color:"#1e3a8a",fontSize:10,letterSpacing:2,fontWeight:800,display:"block",marginBottom:6}}>📅 ÚLTIMO DÍA OPERATIVO</label>
+            <input type="date" value={lastActiveDraft} onChange={e=>setLastActiveDraft(e.target.value)} style={{...inputStyle,background:"#eff6ff",border:"2px solid #2563eb"}}/>
+          </div>
+          <div style={{marginBottom:18}}>
+            <label style={{color:"#64748b",fontSize:10,letterSpacing:2,fontWeight:700,display:"block",marginBottom:6}}>FECHA DE REGRESO (opcional)</label>
+            <input type="date" value={returnDateDraft} onChange={e=>setReturnDateDraft(e.target.value)} style={inputStyle}/>
+          </div>
+          <button onClick={()=>onSetService({status:"online",returnDate:returnDateDraft,lastActiveDate:lastActiveDraft})} style={{width:"100%",background:"linear-gradient(135deg,#1e3a8a,#2563eb)",border:"none",borderRadius:12,padding:"14px 0",color:"#ffffff",fontSize:14,fontWeight:700,cursor:"pointer",marginBottom:10,boxShadow:"0 4px 12px rgba(37,99,235,0.3)"}}>💾 Publicar fecha</button>
+          <button onClick={()=>onSetService({status:"offline",returnDate:returnDateDraft,lastActiveDate:lastActiveDraft})} style={{width:"100%",background:"#fff5f5",border:"2px solid #ef444433",borderRadius:12,padding:"12px 0",color:"#ef4444",fontSize:13,fontWeight:700,cursor:"pointer"}}>🔴 Marcar FUERA DE SERVICIO</button>
+        </div>
+      )}
+    </ModalOverlay>
+  );
+}
+
+// ─── PRICE CONFIG MODAL ──────────────────────────────────────────────────────────
+function PriceConfigModal({draftPriceClient,setDraftPriceClient,draftPriceRecep,setDraftPriceRecep,onClose,onSave}){
+  return(
+    <ModalOverlay onClose={onClose} maxWidth={380}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
+        <div>
+          <div style={{color:"#0f172a",fontSize:16,fontWeight:800}}>⚙️ Precio por km</div>
+          <div style={{color:"#64748b",fontSize:11,marginTop:2}}>Se aplica en todos los cálculos automáticos</div>
+        </div>
+        <button onClick={onClose} style={{background:"#f1f5f9",border:"none",borderRadius:8,padding:"4px 10px",color:"#64748b",fontSize:12,cursor:"pointer"}}>✕</button>
+      </div>
+      <div style={{marginBottom:16}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+          <span style={{background:"#2563eb18",border:"1px solid #2563eb55",borderRadius:6,padding:"2px 8px",color:"#2563eb",fontSize:10,fontWeight:700}}>📱 VELO APP</span>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <input type="number" step="0.05" min="1" max="20" value={draftPriceClient} onChange={e=>setDraftPriceClient(e.target.value)} style={{flex:1,background:"#f8fafc",border:"1.5px solid #2563eb55",borderRadius:10,color:"#0f172a",fontSize:20,fontWeight:700,padding:"10px 14px",outline:"none",textAlign:"center"}}/>
+          <span style={{color:"#64748b",fontSize:14}}>€/km</span>
+        </div>
+        {draftPriceClient&&<div style={{color:"#2563eb",fontSize:10,marginTop:4}}>Ej. 30km → {Math.max(30,Math.round(30*Number(draftPriceClient)*100)/100)} €</div>}
+      </div>
+      <div style={{marginBottom:24}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+          <span style={{background:"#1e3a8a18",border:"1px solid #1e3a8a44",borderRadius:6,padding:"2px 8px",color:"#1e3a8a",fontSize:10,fontWeight:700}}>🏢 V. TRANSFER</span>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <input type="number" step="0.05" min="1" max="20" value={draftPriceRecep} onChange={e=>setDraftPriceRecep(e.target.value)} style={{flex:1,background:"#f8fafc",border:"1.5px solid #2563eb44",borderRadius:10,color:"#0f172a",fontSize:20,fontWeight:700,padding:"10px 14px",outline:"none",textAlign:"center"}}/>
+          <span style={{color:"#64748b",fontSize:14}}>€/km</span>
+        </div>
+        {draftPriceRecep&&<div style={{color:"#2563eb",fontSize:10,marginTop:4}}>Ej. 30km → {Math.max(30,Math.round(30*Number(draftPriceRecep)*100)/100)} €</div>}
+      </div>
+      <div style={{display:"flex",gap:8}}>
+        <button onClick={onClose} style={{flex:1,background:"#f1f5f9",border:"1px solid #e2e8f0",borderRadius:10,padding:"11px 0",color:"#64748b",fontSize:12,fontWeight:600,cursor:"pointer"}}>Cancelar</button>
+        <button onClick={onSave} style={{flex:2,background:"linear-gradient(135deg,#22c55e,#16a34a)",border:"none",borderRadius:10,padding:"11px 0",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer"}}>✓ Guardar</button>
+      </div>
+    </ModalOverlay>
+  );
+}
+
+// ─── NOTE MODAL (nota privada) ───────────────────────────────────────────────────
+function NoteModal({booking,onSave,onClose}){
+  const [draft,setDraft]=useState(booking.driverNote||"");
+  return(
+    <ModalOverlay onClose={onClose}>
+      <div style={{color:"#16a34a",fontSize:11,letterSpacing:3,fontWeight:800,marginBottom:4}}>📝 NOTA PRIVADA</div>
+      <div style={{color:"#0f172a",fontSize:16,fontWeight:800,marginBottom:2}}>{booking.guest}</div>
+      <div style={{color:"#64748b",fontSize:11,marginBottom:16}}>{booking.date} · {booking.time}</div>
+      <textarea value={draft} onChange={e=>setDraft(e.target.value)} placeholder="Solo tú puedes ver esta nota. Útil para aparcamiento, instrucciones especiales, detalles del cliente..." rows={5} style={{width:"100%",background:"#f8fafc",border:"2px solid #e2e8f0",borderRadius:10,color:"#0f172a",fontSize:13,padding:"12px 14px",outline:"none",resize:"none",boxSizing:"border-box",marginBottom:16}}/>
+      <div style={{display:"flex",gap:8}}>
+        <button onClick={()=>onSave(booking.id,draft)} style={{flex:2,background:"linear-gradient(135deg,#22c55e,#16a34a)",border:"none",borderRadius:12,padding:"13px 0",color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer"}}>Guardar nota</button>
+        {booking.driverNote&&<button onClick={()=>onSave(booking.id,"")} style={{flex:1,background:"#f1f5f9",border:"1px solid #ef444433",borderRadius:12,padding:"13px 0",color:"#ef4444",fontSize:13,fontWeight:600,cursor:"pointer"}}>Eliminar</button>}
+      </div>
+    </ModalOverlay>
+  );
+}
+
+// ─── DOCUMENT VIEWER MODAL (hoja de ruta) ────────────────────────────────────────
+function DocModal({booking,onClose}){
+  const doc=booking.routeDoc;
+  const isPdf=doc?.type==="application/pdf"||(doc?.name||"").toLowerCase().endsWith(".pdf");
+  return(
+    <ModalOverlay onClose={onClose} maxWidth={680}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+        <div>
+          <div style={{color:"#2563eb",fontSize:11,letterSpacing:2,marginBottom:2}}>HOJA DE RUTA</div>
+          <div style={{color:"#0f172a",fontSize:14,fontWeight:800}}>{booking.guest}</div>
+          <div style={{color:"#64748b",fontSize:11}}>{booking.date} · {booking.time}</div>
+        </div>
+        <div style={{display:"flex",gap:8}}>
+          <a href={doc?.data} download={doc?.name||"hoja-de-ruta"} style={{background:"linear-gradient(135deg,#3b82f6,#1d4ed8)",border:"none",borderRadius:8,padding:"8px 14px",color:"#fff",fontSize:12,fontWeight:700,textDecoration:"none"}}>⬇ Descargar</a>
+          <button onClick={onClose} style={{background:"#f1f5f9",border:"1px solid #e2e8f0",borderRadius:8,color:"#64748b",fontSize:13,padding:"8px 14px",cursor:"pointer"}}>✕</button>
+        </div>
+      </div>
+      <div style={{background:"#f8fafc",borderRadius:12,padding:8,minHeight:380,display:"flex",alignItems:"center",justifyContent:"center"}}>
+        {isPdf?(
+          <iframe src={doc?.data} style={{width:"100%",height:480,border:"none",borderRadius:8}} title="Hoja de Ruta"/>
+        ):(
+          <img src={doc?.data} alt="Hoja de Ruta" style={{maxWidth:"100%",maxHeight:480,objectFit:"contain",borderRadius:8}}/>
+        )}
+      </div>
+      <div style={{textAlign:"center",marginTop:10,color:"#94a3b8",fontSize:10}}>Mantén esta pantalla abierta para mostrarla en un control policial</div>
+    </ModalOverlay>
+  );
+}
+
+// ─── REJECT MODAL (motivo de rechazo) ────────────────────────────────────────────
+function RejectModal({booking,onReject,onClose}){
+  return(
+    <ModalOverlay onClose={onClose}>
+      <div style={{color:"#ef4444",fontSize:11,fontWeight:800,letterSpacing:2,marginBottom:6}}>MOTIVO DE RECHAZO</div>
+      <div style={{color:"#0f172a",fontSize:18,fontWeight:800,marginBottom:2}}>{booking.guest}</div>
+      <div style={{color:"#64748b",fontSize:12,marginBottom:18}}>{booking.date} · {booking.time} · {booking.hotel}</div>
+      <div style={{display:"flex",flexDirection:"column",gap:8}}>
+        {REJECTION_REASONS.map(r=>(
+          <button key={r.id} onClick={()=>onReject(booking.id,r.label)} style={{display:"flex",alignItems:"center",gap:12,background:"#fff5f5",border:"2px solid #ef444433",borderRadius:12,padding:"13px 16px",cursor:"pointer",textAlign:"left"}}>
+            <span style={{color:"#0f172a",fontSize:13,fontWeight:600}}>{r.label}</span>
+          </button>
+        ))}
+      </div>
+      <button onClick={onClose} style={{width:"100%",marginTop:14,background:"#f8fafc",border:"1.5px solid #e2e8f0",borderRadius:10,padding:"12px 0",color:"#64748b",fontSize:13,fontWeight:600,cursor:"pointer"}}>Cancelar</button>
+    </ModalOverlay>
+  );
+}
+
+// ─── COMMISSION PAY MODAL ─────────────────────────────────────────────────────────
+function CommissionPayModal({booking,fmt,onPay,onClose}){
+  const [proof,setProof]=useState(null);
+  const isMulti=!!booking._empAllPending;
+  const pendingTrips=isMulti?booking._empAllPending:[booking];
+  const totalComm=isMulti?booking._totalComm:Number(booking.fare||0)*CR;
+  const empName=isMulti?booking._empName:booking.hotel;
+
+  const handleFile=e=>{
+    const file=e.target.files[0];
+    if(!file)return;
+    const reader=new FileReader();
+    reader.onload=ev=>setProof(ev.target.result);
+    reader.readAsDataURL(file);
+  };
+  const handleConfirm=()=>{
+    pendingTrips.forEach(t=>onPay(t.id,proof||"confirmed"));
+    onClose();
+  };
+
+  return(
+    <ModalOverlay onClose={onClose} maxWidth={420}>
+      <div style={{color:"#2563eb",fontSize:11,letterSpacing:3,fontWeight:800,marginBottom:6}}>REGISTRAR PAGO DE COMISIÓN</div>
+      <div style={{color:"#0f172a",fontSize:16,fontWeight:800,marginBottom:14}}>{empName}</div>
+      <div style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:10,padding:"12px 16px",marginBottom:16}}>
+        {pendingTrips.map(t=>(
+          <div key={t.id} style={{display:"flex",justifyContent:"space-between",marginBottom:6,paddingBottom:6,borderBottom:"1px solid #e2e8f0"}}>
+            <span style={{color:"#64748b",fontSize:12}}>{t.guest} · {t.time}</span>
+            <span style={{color:"#0f172a",fontSize:12,fontWeight:600}}>{fmt(Number(t.fare||0)*CR)} €</span>
+          </div>
+        ))}
+        <div style={{display:"flex",justifyContent:"space-between",paddingTop:6}}>
+          <span style={{color:"#2563eb",fontSize:14,fontWeight:700}}>Total comisión a pagar</span>
+          <span style={{color:"#2563eb",fontSize:20,fontWeight:800}}>{fmt(totalComm)} €</span>
+        </div>
+      </div>
+      <div style={{marginBottom:16}}>
+        <div style={{color:"#64748b",fontSize:11,letterSpacing:2,marginBottom:8}}>ADJUNTAR COMPROBANTE (opcional)</div>
+        <label style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,background:"#f8fafc",border:`1px dashed ${proof?"#2563eb":"#e2e8f0"}`,borderRadius:10,padding:"14px 0",cursor:"pointer"}}>
+          <input type="file" accept="image/*" onChange={handleFile} style={{display:"none"}}/>
+          {proof?<img src={proof} alt="comprobante" style={{maxHeight:100,borderRadius:8,objectFit:"contain"}}/>:<span style={{color:"#64748b",fontSize:13}}>📎 Toca para adjuntar imagen</span>}
+        </label>
+      </div>
+      <button onClick={handleConfirm} style={{width:"100%",background:"linear-gradient(135deg,#22c55e,#16a34a)",border:"none",borderRadius:12,padding:"14px 0",color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer"}}>✓ Marcar como PAGADA</button>
+      <button onClick={onClose} style={{width:"100%",marginTop:8,background:"transparent",border:"none",color:"#64748b",fontSize:13,cursor:"pointer",padding:"8px 0"}}>Cancelar</button>
+    </ModalOverlay>
   );
 }
 
