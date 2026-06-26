@@ -227,6 +227,60 @@ function mapsUrl(a) { return `https://www.google.com/maps/dir/?api=1&destination
 function mapsRouteUrl(o, d) { return `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(o)}&destination=${encodeURIComponent(d)}&travelmode=driving`; }
 function initials(n) { return n.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase(); }
 
+// ─── VTC INTERURBANA — Municipios provincia de Toledo ─────────────────────────
+const TOLEDO_MUNICIPIOS = [
+  "ajofrín","alameda de la sagra","albarreal de tajo","alcabón","alcaudete de la jara",
+  "alcolea de tajo","aldea en cabo","aldeanueva de barbarroya","aldeanueva de san bartolomé",
+  "almendral de la cañada","almonacid de toledo","almorox","añover de tajo","arcicóllar",
+  "argés","azután","barcience","bargas","belvis de la jara","borox",
+  "burguillos de toledo","burujón","cabañas de la sagra","cabañas de yepes","camarena",
+  "camarenilla","campanario","cardiel de los montes","carmena","carpio de tajo","carranque",
+  "casarrubios del monte","casasbuenas","castillo de bayuela","cazalegas","cebolla",
+  "cedillo del condado","cervera de los montes","chozas de canales","ciruelos","cobeja",
+  "cobisa","consuegra","corral de almaguer","cuerva","domingo pérez","dosbarrios",
+  "erustes","escalona","escalonilla","espinoso del rey","esquivias","fuensalida",
+  "gálvez","garciotum","gerindote","guadamur","guardia","herencias","hinojosa de san vicente",
+  "huecas","huerta de valdecarábanos","illán de vacas","illescas","lagartera","lillo",
+  "lominchar","los cerralbos","lucillos","madridejos","magán","malpica de tajo",
+  "manzaneque","marjaliza","mascaraque","mazarambroz","menasalbas","méntrida",
+  "mesegar de tajo","miguel esteban","mocejón","mohedas de la jara","montearagón",
+  "montesclaros","mora","navahermosa","navalcán","navalmoralejo","navalmorales",
+  "navalucillos","navamorcuende","noblejas","noez","numancia de la sagra","ocaña",
+  "olías del rey","ontígola","orgaz","oropesa","otero","parrillas","pelahustán",
+  "pepino","polán","portillo de toledo","puebla de almoradiel","puebla de montalbán",
+  "pueblanueva","puente del arzobispo","puerto de san vicente","quero","quintanar de la orden",
+  "real de san vicente","recas","rielves","robledo del mazo","romeral",
+  "san bartolomé de las abiertas","san martín de montalbán","san martín de pusa",
+  "san pablo de los montes","san román de los montes","santa ana de pusa",
+  "santa cruz de la zarza","santa cruz del retamar","santa olalla","santo domingo caudilla",
+  "sartajada","segurilla","seseña","sevilleja de la jara","sonseca",
+  "talavera de la reina","talavera","tembleque","toledo",
+  "torralba de oropesa","torre de esteban hambrán","torrecilla de la jara","torrijos",
+  "totanés","turleque","ugena","urda","valdeverdeja","valmojado","velada",
+  "ventas con peña aguilera","villacañas","villa de don fadrique","villafranca de los caballeros",
+  "villaluenga de la sagra","villaminaya","villamuelas","villanueva de alcardete",
+  "villanueva de bogas","villarejo de montalbán","villarrubia de santiago",
+  "villaseca de la sagra","villasequilla","viso de san juan","yeles","yepes",
+  "yuncler","yunclillos","yuncos",
+];
+function normVTC(s){ return (s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim(); }
+function extractMunicipio(address){
+  const n=normVTC(address); let found=null, maxLen=0;
+  for(const m of TOLEDO_MUNICIPIOS){
+    const mn=normVTC(m);
+    const re=new RegExp("(^|[^a-záéíóúüñ])"+mn.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"($|[^a-záéíóúüñ])","i");
+    if(re.test(n)&&mn.length>maxLen){found=mn;maxLen=mn.length;}
+  }
+  return found;
+}
+function sameMunicipio(origin,destination){
+  if(!origin||!destination||origin.length<4||destination.length<4)return false;
+  const mO=extractMunicipio(origin), mD=extractMunicipio(destination);
+  if(!mO||!mD)return false;
+  const canonical=s=>s.replace("talavera de la reina","talavera");
+  return canonical(mO)===canonical(mD);
+}
+
 // ─── LOCAL TRIP ESTIMATOR (free, no API) ─────────────────────────────────────
 // Known coords for common Madrid landmarks / airports
 const KNOWN_PLACES = [
@@ -4324,9 +4378,24 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
               <label style={{color:"#1e3a8a",fontSize:11,letterSpacing:2,fontWeight:700}}>DESTINO</label>
             </div>
-            {/* no geo error here anymore */}
-            {false&&null}
-            <input type="text" value={form.destination} placeholder="Dirección de destino" onChange={e=>setForm({...form,destination:e.target.value})} style={{...inputStyle,border:form.destination?"2px solid #2563eb":"2px solid #f59e0b",background:form.destination?"#f0f7ff":"#fffbeb"}}/>
+            <input type="text" value={form.destination} placeholder="Dirección de destino" onChange={e=>setForm({...form,destination:e.target.value})}
+              style={{...inputStyle,
+                border:sameMunicipio(form.origin,form.destination)?"2px solid #ef4444":form.destination?"2px solid #2563eb":"2px solid #f59e0b",
+                background:sameMunicipio(form.origin,form.destination)?"#fff5f5":form.destination?"#f0f7ff":"#fffbeb"}}/>
+            {sameMunicipio(form.origin,form.destination)?(
+              <div style={{marginTop:8,background:"#fff5f5",border:"2px solid #ef4444",borderRadius:10,padding:"12px 14px",display:"flex",alignItems:"flex-start",gap:10}}>
+                <span style={{fontSize:18,flexShrink:0}}>🚫</span>
+                <div>
+                  <div style={{color:"#ef4444",fontSize:12,fontWeight:800,marginBottom:2}}>Viaje dentro del mismo municipio — no permitido</div>
+                  <div style={{color:"#64748b",fontSize:11,lineHeight:1.5}}>Licencia VTC Interurbana: el destino debe estar en un municipio diferente al punto de partida.</div>
+                </div>
+              </div>
+            ):form.origin&&!form.destination?(
+              <div style={{marginTop:6,display:"flex",alignItems:"center",gap:6,color:"#94a3b8",fontSize:10}}>
+                <span>ℹ️</span>
+                <span>El destino debe ser en un municipio diferente (licencia VTC Interurbana)</span>
+              </div>
+            ):null}
           </div>
           <TripEstimateBox origin={form.origin} destination={form.destination}/>
           <div style={{marginBottom:14}}>
@@ -4419,7 +4488,8 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
             </>
           )}
           {(() => {
-            const disabled = isOffline||!slotAvailable||!advanceOk||!form.guest||!form.origin||!form.destination||!form.time||!form.fare||Number(form.fare)<30;
+            const sameCity = sameMunicipio(form.origin, form.destination);
+            const disabled = isOffline||!slotAvailable||!advanceOk||!form.guest||!form.origin||!form.destination||!form.time||!form.fare||Number(form.fare)<30||sameCity;
             return (
               <button onClick={handleSubmit} disabled={disabled}
                 style={{width:"100%",
@@ -4427,7 +4497,7 @@ function ReceptionistView({ employee, bookings, onNewBooking, onCancelBooking, m
                   border:"none",borderRadius:12,padding:"16px 0",
                   color:disabled?"#94a3b8":"#ffffff",
                   fontSize:14,fontWeight:700,letterSpacing:1,cursor:disabled?"not-allowed":"pointer",transition:"all 0.2s"}}>
-                {isOffline?"🔴 Conductor fuera de servicio":"ENVIAR RESERVA AL CONDUCTOR"}
+                {isOffline?"🔴 Conductor fuera de servicio":sameCity?"🚫 Municipio origen = destino (no permitido)":"ENVIAR RESERVA AL CONDUCTOR"}
               </button>
             );
           })()}

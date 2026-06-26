@@ -299,6 +299,70 @@ function statusColor(s){return{confirmed:"#2563eb",pending:"#f59e0b",rejected:"#
 function statusLabel(s,t){return(t&&{confirmed:t.statusConfirmed,pending:t.statusPending,rejected:t.statusRejected,inprogress:t.statusInprogress,completed:t.statusCompleted,cancelled:t.statusCancelled}[s])||{confirmed:"Confirmado",pending:"Pendiente",rejected:"Rechazado",inprogress:"En Curso",completed:"Completado",cancelled:"Cancelado"}[s]||s;}
 function haversineKm(lat1,lng1,lat2,lng2){const R=6371,dLat=(lat2-lat1)*Math.PI/180,dLng=(lng2-lng1)*Math.PI/180,a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));}
 
+// ─── VTC INTERURBANA — lista de municipios de la provincia de Toledo ──────────
+// Detecta si origen y destino están en el mismo municipio → viaje no permitido
+const TOLEDO_MUNICIPIOS = [
+  "ajofrín","alameda de la sagra","albarreal de tajo","alcabón","alcaudete de la jara",
+  "alcolea de tajo","aldea en cabo","aldeanueva de barbarroya","aldeanueva de san bartolomé",
+  "almendral de la cañada","almonacid de toledo","almorox","añover de tajo","arcicóllar",
+  "argés","azután","barcience","bargas","belvis de la jara","borox","belvís de la jara",
+  "burguillos de toledo","burujón","cabañas de la sagra","cabañas de yepes","camarena",
+  "camarenilla","campanario","cardiel de los montes","carmena","carpio de tajo","carranque",
+  "casarrubios del monte","casasbuenas","castillo de bayuela","cazalegas","cebolla",
+  "cedillo del condado","cervera de los montes","chozas de canales","ciruelos","cobeja",
+  "cobisa","consuegra","corral de almaguer","cuerva","domingo pérez","dosbarrios",
+  "erustes","escalona","escalonilla","espinoso del rey","esquivias","fuensalida",
+  "gálvez","garciotum","gerindote","guadamur","guardia","herencias","hinojosa de san vicente",
+  "huecas","huerta de valdecarábanos","illán de vacas","illescas","lagartera","lillo",
+  "lillo","lominchar","los cerralbos","lucillos","madridejos","magán","malpica de tajo",
+  "manzaneque","marjaliza","mascaraque","mata","mazarambroz","menasalbas","méntrida",
+  "mesegar de tajo","miguel esteban","mocejón","mohedas de la jara","montearagón",
+  "montesclaros","mora","navahermosa","navalcán","navalmoralejo","navalmorales",
+  "navalucillos","navamorcuende","noblejas","noez","numancia de la sagra","ocaña",
+  "olías del rey","ontígola","orgaz","oropesa","otero","parrillas","pelahustán",
+  "pepino","polán","portillo de toledo","puebla de almoradiel","puebla de montalbán",
+  "pueblanueva","puente del arzobispo","puerto de san vicente","quero","quintanar de la orden",
+  "real de san vicente","recas","rielves","robledo del mazo","romeral","san bartolomé de las abiertas",
+  "san martín de montalbán","san martín de pusa","san pablo de los montes","san román de los montes",
+  "santa ana de pusa","santa cruz de la zarza","santa cruz del retamar","santa olalla",
+  "santo domingo caudilla","sartajada","segurilla","seseña","sevilleja de la jara",
+  "sisante","sonseca","talavera de la reina","talavera","tembleque","toledo",
+  "torralba de oropesa","torre de esteban hambrán","torrecilla de la jara","torrijos",
+  "totanés","turleque","ugena","urda","valdeverdeja","valmojado","velada","ventas con peña aguilera",
+  "villacañas","villa de don fadrique","villafranca de los caballeros","villaluenga de la sagra",
+  "villaminaya","villamuelas","villanueva de alcardete","villanueva de bogas","villarejo de montalbán",
+  "villarrubia de los ojos","villarrubia de santiago","villaseca de la sagra","villasequilla",
+  "viso de san juan","yebes","yeles","yepes","yuncler","yunclillos","yuncos",
+  // aliases y variantes comunes
+  "talavera de la reina","santa cruz","illescas","esquivias","recas","numancia","olías",
+];
+
+function norm(s){ return (s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim(); }
+
+function extractMunicipio(address){
+  const n = norm(address);
+  // Busca el municipio más largo que aparezca en la dirección (para evitar falsos positivos con nombres cortos)
+  let found = null;
+  let maxLen = 0;
+  for(const m of TOLEDO_MUNICIPIOS){
+    const mn = norm(m);
+    // Acepta coincidencia si está como palabra completa (no dentro de otra palabra)
+    const re = new RegExp("(^|[^a-záéíóúüñ])"+mn.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"($|[^a-záéíóúüñ])", "i");
+    if(re.test(n) && mn.length > maxLen){ found = mn; maxLen = mn.length; }
+  }
+  return found;
+}
+
+function sameMunicipio(origin, destination){
+  if(!origin || !destination || origin.length < 4 || destination.length < 4) return false;
+  const mO = extractMunicipio(origin);
+  const mD = extractMunicipio(destination);
+  if(!mO || !mD) return false;
+  // Alias: talavera de la reina = talavera
+  const canonical = s => s.replace("talavera de la reina","talavera");
+  return canonical(mO) === canonical(mD);
+}
+
 // ─── GEOLOCATION ──────────────────────────────────────────────────────────────
 function useGeolocation() {
   const [geoState,setGeoState]=useState({loading:false,error:null,denied:false});
@@ -2022,7 +2086,31 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
           </div>
           <div style={{marginBottom:14}}>
             <label style={{color:form.destination?"#334155":"#d97706",fontSize:11,letterSpacing:2,display:"block",marginBottom:5}}>{t.destination}{!form.destination&&" *"}</label>
-            <input value={form.destination} placeholder={t.destPlaceholder} onChange={e=>setForm({...form,destination:e.target.value})} style={{...inputStyle,border:form.destination?"2px solid #2563eb":"2px solid #f59e0b",background:form.destination?"#f0f7ff":"#fffbeb"}}/>
+            <input value={form.destination} placeholder={t.destPlaceholder} onChange={e=>setForm({...form,destination:e.target.value})}
+              style={{...inputStyle,
+                border:sameMunicipio(form.origin,form.destination)?"2px solid #ef4444":form.destination?"2px solid #2563eb":"2px solid #f59e0b",
+                background:sameMunicipio(form.origin,form.destination)?"#fff5f5":form.destination?"#f0f7ff":"#fffbeb"}}/>
+            {/* Aviso VTC Interurbana — solo cuando hay origen y el destino está en el mismo municipio */}
+            {sameMunicipio(form.origin,form.destination)?(
+              <div style={{marginTop:8,background:"#fff5f5",border:"2px solid #ef4444",borderRadius:10,padding:"12px 14px",display:"flex",alignItems:"flex-start",gap:10}}>
+                <span style={{fontSize:18,flexShrink:0}}>🚫</span>
+                <div>
+                  <div style={{color:"#ef4444",fontSize:12,fontWeight:800,marginBottom:2}}>
+                    {lang==="en"?"Intra-city trips not allowed":"Viaje dentro del mismo municipio — no permitido"}
+                  </div>
+                  <div style={{color:"#64748b",fontSize:11,lineHeight:1.5}}>
+                    {lang==="en"
+                      ?"Our VTC licence (Interurbana) only covers trips between different towns. Please enter a destination in a different municipality."
+                      :"Nuestra licencia VTC es Interurbana. El destino debe estar en un municipio diferente al punto de recogida."}
+                  </div>
+                </div>
+              </div>
+            ):form.origin&&!form.destination?(
+              <div style={{marginTop:6,display:"flex",alignItems:"center",gap:6,color:"#94a3b8",fontSize:10}}>
+                <span>ℹ️</span>
+                <span>{lang==="en"?"Destination must be in a different town (VTC Interurbana licence)":"El destino debe ser en un municipio diferente (licencia VTC Interurbana)"}</span>
+              </div>
+            ):null}
           </div>
           <TripEstimateBox origin={form.origin} destination={form.destination} lang={lang}/>
           <DistancePriceCalcClient origin={form.origin} destination={form.destination} pricePerKm={pricePerKm} lang={lang} onPriceCalculated={(price,km,durMin)=>setForm(f=>({...f,fare:price,tripKm:km,durationMin:durMin}))}/>
@@ -2090,14 +2178,14 @@ function ClientView({ client, bookings, setBookings, onNewBooking, onClientAccep
           )}
 
           <button onClick={handleSubmit}
-            disabled={isOffline||!slotAvailable||!form.guest||!form.origin||!form.destination||!form.time}
+            disabled={isOffline||!slotAvailable||!form.guest||!form.origin||!form.destination||!form.time||sameMunicipio(form.origin,form.destination)}
             style={{width:"100%",
-              background:(isOffline||!slotAvailable||!form.guest||!form.origin||!form.destination||!form.time)?"#e2e8f0":"linear-gradient(135deg,#2563eb,#1d4ed8)",
+              background:(isOffline||!slotAvailable||!form.guest||!form.origin||!form.destination||!form.time||sameMunicipio(form.origin,form.destination))?"#e2e8f0":"linear-gradient(135deg,#2563eb,#1d4ed8)",
               border:"none",borderRadius:12,padding:"16px 0",
-              color:(isOffline||!slotAvailable||!form.guest||!form.origin||!form.destination||!form.time)?"#475569":"#0a0a0a",
+              color:(isOffline||!slotAvailable||!form.guest||!form.origin||!form.destination||!form.time||sameMunicipio(form.origin,form.destination))?"#475569":"#0a0a0a",
               fontSize:14,fontWeight:700,letterSpacing:1,cursor:"pointer",transition:"all 0.2s",marginBottom:12,
             }}>
-            {isOffline?t.offlineBtn:t.submitBtn}
+            {isOffline?t.offlineBtn:sameMunicipio(form.origin,form.destination)?"🚫 "+(lang==="en"?"Intra-city trip not allowed":"Municipio origen = destino"):t.submitBtn}
           </button>
           <button onClick={()=>setTab("avail")} style={{width:"100%",background:"none",border:"1px solid #e2e8f0",borderRadius:12,padding:"11px 0",color:"#334155",fontSize:13,cursor:"pointer"}}>{t.backToAvail}</button>
         </div>
