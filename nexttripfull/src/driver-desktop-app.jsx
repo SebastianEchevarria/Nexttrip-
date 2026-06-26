@@ -363,36 +363,37 @@ function LoginScreen({onLogin}){
   const del=()=>{setPin(p=>p.slice(0,-1));setErr(false);};
 
   return(
-    <div style={{width:"100vw",height:"100vh",background:"#0a0a0a url('/bg-driver-desktop-login.jpg') center top/cover no-repeat",display:"flex",alignItems:"flex-start",justifyContent:"center",overflow:"hidden",position:"relative"}}>
+    <div style={{width:"100vw",height:"100vh",background:"#b0b0b0 url('/bg-driver-desktop-login.jpg') center top/cover no-repeat",display:"flex",alignItems:"flex-start",justifyContent:"center",overflow:"hidden",position:"relative"}}>
       <style>{CSS}</style>
 
-      <div style={{textAlign:"center",width:300,zIndex:1,paddingTop:"39vh"}}>
+      <div style={{textAlign:"center",width:320,zIndex:1,paddingTop:"58vh"}}>
         {/* Dots */}
         <div style={{display:"flex",gap:14,justifyContent:"center",marginBottom:err?10:20,animation:shake?"shake 0.4s ease":undefined}}>
           {[0,1,2,3].map(i=>(
             <div key={i} style={{
               width:13,height:13,borderRadius:"50%",
-              background:pin.length>i?(err?"#ef4444":"#38bdf8"):"transparent",
-              border:`2.5px solid ${pin.length>i?(err?"#ef4444":"#38bdf8"):"rgba(255,255,255,0.3)"}`,
+              background:pin.length>i?(err?"#ef4444":"#2563eb"):"transparent",
+              border:`2.5px solid ${pin.length>i?(err?"#ef4444":"#2563eb"):"rgba(0,0,0,0.25)"}`,
               transition:"all 0.2s",
               transform:pin.length>i?"scale(1.3)":"scale(1)",
-              boxShadow:pin.length>i&&!err?"0 0 12px rgba(56,189,248,0.6)":"none",
+              boxShadow:pin.length>i&&!err?"0 0 12px rgba(37,99,235,0.5)":"none",
             }}/>
           ))}
         </div>
-        {err&&<div style={{color:"#ef4444",fontSize:11,fontWeight:700,marginBottom:10,letterSpacing:1}}>PIN INCORRECTO</div>}
+        {err&&<div style={{color:"#ef4444",fontSize:11,fontWeight:700,marginBottom:10,letterSpacing:1,textShadow:"0 1px 2px rgba(255,255,255,0.8)"}}>PIN INCORRECTO</div>}
 
         {/* Keypad */}
-        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,maxWidth:230,margin:"0 auto"}}>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,maxWidth:270,margin:"0 auto"}}>
           {[1,2,3,4,5,6,7,8,9,"",0,"⌫"].map((d,i)=>(
             <button key={i} className="pin-btn" onClick={()=>d===""?null:d==="⌫"?del():digit(String(d))} disabled={d===""} style={{
-              height:50,borderRadius:12,
-              border:d===""?"none":`1px solid ${d==="⌫"?"rgba(255,255,255,0.1)":"rgba(96,165,250,0.4)"}`,
-              background:d===""?"transparent":d==="⌫"?"rgba(255,255,255,0.05)":"rgba(37,99,235,0.15)",
-              color:d==="⌫"?"rgba(255,255,255,0.4)":"#e2e8f0",
-              fontSize:d==="⌫"?18:20,fontWeight:700,
+              height:60,borderRadius:12,
+              border:d===""?"none":`1px solid ${d==="⌫"?"rgba(0,0,0,0.1)":"rgba(37,99,235,0.35)"}`,
+              background:d===""?"transparent":d==="⌫"?"rgba(0,0,0,0.06)":"rgba(37,99,235,0.12)",
+              color:d==="⌫"?"rgba(0,0,0,0.35)":"#1e3a8a",
+              fontSize:d==="⌫"?22:24,fontWeight:700,
               cursor:d===""?"default":"pointer",
               backdropFilter:"blur(8px)",
+              boxShadow:d===""?"none":"0 1px 4px rgba(0,0,0,0.08)",
             }}>
               {d}
             </button>
