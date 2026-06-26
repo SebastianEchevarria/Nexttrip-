@@ -13,17 +13,10 @@ function fbListen(p,cb)    { return onSnapshot(doc(_db,...p.split("/")),s=>cb(s.
 const PIN="3155", CR=0.20, BK="riviera_bookings_v1";
 function san(a){return(Array.isArray(a)?a:[]).filter(b=>b&&b.id&&b.guest);}
 function fmt(n){return isNaN(n)?"0":Number(n).toFixed(2).replace(".",",");}
-function sLabel(s){return({confirmed:"Confirmado",pending:"Pendiente",rejected:"Rechazado",inprogress:"En Curso",completed:"Completado",cancelled:"Cancelado",price_proposed:"Precio Propuesto",client_rejected:"Rechazado por Cliente"})[s]||s;}
-function sColor(s){return({confirmed:"#2563eb",pending:"#f59e0b",rejected:"#ef4444",inprogress:"#3b82f6",completed:"#22c55e",cancelled:"#f97316",price_proposed:"#a78bfa",client_rejected:"#f97316"})[s]||"#64748b";}
+function sLabel(s){return({confirmed:"Confirmado",pending:"Pendiente",rejected:"Rechazado",inprogress:"En Curso",completed:"Completado",cancelled:"Cancelado"})[s]||s;}
+function sColor(s){return({confirmed:"#2563eb",pending:"#f59e0b",rejected:"#ef4444",inprogress:"#3b82f6",completed:"#22c55e",cancelled:"#f97316"})[s]||"#64748b";}
 function rUrl(o,d){return`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(o||"")}&destination=${encodeURIComponent(d||"")}&travelmode=driving`;}
 function mUrl(a){return`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(a||"")}`;}
-const t2m = t=>{ if(!t)return 0; const [h,m]=t.split(":").map(Number); return h*60+m; };
-const TRIP_DURATION = 45; // minutos bloqueados por viaje
-const REJECTION_REASONS=[
-  {id:"r1",label:"Otras reservas programadas"},
-  {id:"r2",label:"Carga insuficiente del vehículo"},
-  {id:"r3",label:"Revisión de vehículo programada"},
-];
 
 // ─── CSS ─────────────────────────────────────────────────────────────────────
 const CSS = `
@@ -59,49 +52,13 @@ export default function DriverDesktopApp() {
   const [chatMsg,setChatMsg]=useState("");
   const [toast,setToast]=useState("");
 
-  // Countdown tick for "Próximo viaje"
-  const [nowTick,setNowTick]=useState(()=>new Date());
-  useEffect(()=>{const t=setInterval(()=>setNowTick(new Date()),1000);return()=>clearInterval(t);},[]);
-
-  // Phase tracking — persisted so a page refresh doesn't lose progress
-  const [arrivedBookingId,setArrivedBookingId]=useState(()=>{try{return localStorage.getItem("velo_desktop_arrived_id")||null;}catch{return null;}});
-  useEffect(()=>{try{localStorage.setItem("velo_desktop_arrived_id",arrivedBookingId||"");}catch{}},[arrivedBookingId]);
-  const [tripStarted,setTripStarted]=useState(()=>{try{return localStorage.getItem("velo_desktop_trip_started")==="1";}catch{return false;}});
-  useEffect(()=>{try{localStorage.setItem("velo_desktop_trip_started",tripStarted?"1":"0");}catch{}},[tripStarted]);
-  const [showQuickMsgs,setShowQuickMsgs]=useState(false);
-  const [cancelConfirm,setCancelConfirm]=useState(null);
-
-  // Service status (En servicio / Fuera de servicio) — synced via nexttrip/status
-  const [serviceStatus,setServiceStatus]=useState({status:"online",returnDate:"",lastActiveDate:""});
-  const [showServiceModal,setShowServiceModal]=useState(false);
-  const [returnDateDraft,setReturnDateDraft]=useState("");
-  const [lastActiveDraft,setLastActiveDraft]=useState("");
-
-  // Price per km config (VELO App / V.Transfer) — synced via nexttrip/status
-  const [priceClient,setPriceClient]=useState(()=>{try{return Number(localStorage.getItem("ntprice_client")||3.15);}catch{return 3.15;}});
-  const [priceRecep,setPriceRecep]=useState(()=>{try{return Number(localStorage.getItem("ntprice_recep")||3.15);}catch{return 3.15;}});
-  const [showPriceModal,setShowPriceModal]=useState(false);
-  const [draftPriceClient,setDraftPriceClient]=useState("3.15");
-  const [draftPriceRecep,setDraftPriceRecep]=useState("3.15");
-
-  // Notas privadas / Hoja de ruta / Rechazo / Comisión
-  const [noteModal,setNoteModal]=useState(null);
-  const [docModal,setDocModal]=useState(null);
-  const [rejectModal,setRejectModal]=useState(null);
-  const [commissionModal,setCommissionModal]=useState(null);
-
   const showToast=msg=>{setToast(msg);setTimeout(()=>setToast(""),3200);};
 
   useEffect(()=>{
     if(!loggedIn)return;
     const u1=fbListen("nexttrip/bookings",d=>{if(d?.data){const s=san(d.data);setBookings(s);try{localStorage.setItem(BK,JSON.stringify(s));}catch{}}});
     const u2=fbListen("nexttrip/messages",d=>{if(d)setMessages(d);});
-    const u3=fbListen("nexttrip/status",d=>{
-      if(d?.driverStatus)setDStatus(d.driverStatus);
-      if(d?.serviceStatus)setServiceStatus(d.serviceStatus);
-      if(d?.pricePerKmClient)setPriceClient(d.pricePerKmClient);
-      if(d?.pricePerKmRecep)setPriceRecep(d.pricePerKmRecep);
-    });
+    const u3=fbListen("nexttrip/status",d=>{if(d?.driverStatus)setDStatus(d.driverStatus);});
     return()=>{u1();u2();u3();};
   },[loggedIn]);
 
@@ -116,65 +73,6 @@ export default function DriverDesktopApp() {
     const next={...messages,[k]:[...prev,msg]};
     setMessages(next);fbSet("nexttrip/messages",next);
   };
-  // Update local driver status AND push it to Firebase (merge-style, preserves serviceStatus/driverArrived)
-  const setDriverStatusRemote=status=>{
-    setDStatus(status);
-    fbGet("nexttrip/status").then(cur=>{
-      fbSet("nexttrip/status",{...(cur||{}),driverStatus:status,updatedAt:Date.now()});
-    });
-  };
-  // "He llegado" — marks arrival, notifies client, starts the 10-min courtesy window
-  const onArrive=b=>{
-    setArrivedBookingId(b.id);
-    setShowQuickMsgs(false);
-    const waitEnd=new Date(new Date(`${b.date}T${b.time}:00`).getTime()+10*60*1000);
-    const wH=String(waitEnd.getHours()).padStart(2,"0"),wM=String(waitEnd.getMinutes()).padStart(2,"0");
-    fbGet("nexttrip/status").then(cur=>{
-      fbSet("nexttrip/status",{...(cur||{}),driverArrived:{bookingId:b.id,arrivedAt:Date.now()},updatedAt:Date.now()});
-    });
-    sendMsg(b.id,`🚗 He llegado al punto de recogida y estoy esperándote. El tiempo de espera de 10 minutos comienza a las ${b.time} (hora de tu reserva) y finaliza a las ${wH}:${wM}.`);
-    showToast("✅ Cliente notificado — esperando desde las "+b.time);
-  };
-  // Clear the "driver arrived" flag in Firebase (keeps other status fields)
-  const clearArrived=()=>{
-    fbGet("nexttrip/status").then(cur=>{const u={...(cur||{})};delete u.driverArrived;fbSet("nexttrip/status",{...u,updatedAt:Date.now()});});
-  };
-  const onCancelTrip=(id,reason)=>{
-    mutate(id,{status:"cancelled",cancelReason:reason});
-    setArrivedBookingId(null);
-    setTripStarted(false);
-    setDriverStatusRemote("free");
-    clearArrived();
-  };
-  // Estado de servicio (En servicio / Fuera de servicio)
-  const handleSetService=s=>{
-    setServiceStatus(s);
-    try{localStorage.setItem("nexttrip_service",JSON.stringify(s));}catch{}
-    fbGet("nexttrip/status").then(cur=>{fbSet("nexttrip/status",{...(cur||{}),serviceStatus:s,updatedAt:Date.now()});});
-  };
-  // Precio por km (VELO App / V.Transfer)
-  const handleSavePriceConfig=()=>{
-    const c=Math.max(1,Number(draftPriceClient)||3.15);
-    const r=Math.max(1,Number(draftPriceRecep)||3.15);
-    setPriceClient(c);setPriceRecep(r);
-    try{localStorage.setItem("ntprice_client",String(c));localStorage.setItem("ntprice_recep",String(r));}catch{}
-    fbGet("nexttrip/status").then(cur=>{fbSet("nexttrip/status",{...(cur||{}),pricePerKmClient:c,pricePerKmRecep:r,updatedAt:Date.now()});});
-    setShowPriceModal(false);
-    showToast(`✅ Precios: VELO App ${c}€/km · V.Transfer ${r}€/km`);
-  };
-  // Hoja de ruta (documento)
-  const onUploadDoc=(id,doc)=>{mutate(id,{routeDoc:doc});showToast("✅ Hoja de ruta subida");};
-  // Nota privada
-  const onSaveNote=(id,note)=>{mutate(id,{driverNote:note});showToast(note?"📝 Nota guardada":"🗑 Nota eliminada");};
-  // Rechazo con motivo
-  const onReject=(id,reason)=>{
-    mutate(id,{status:"rejected",rejectionReason:reason||""});
-    const b=bookings.find(x=>x.id===id);
-    if(b)sendMsg(id,"❌ Reserva rechazada\n📅 "+b.date+" · "+b.time+"\n👤 "+b.guest+"\n📍 "+b.origin+" → "+b.destination+(reason?"\n\nMotivo: "+reason:""));
-    showToast(`❌ Viaje rechazado: ${reason}`);
-  };
-  // Pago de comisión a hotel
-  const onPayCommission=(id,proof)=>{mutate(id,{commissionStatus:"paid",commissionProof:proof});};
 
   if(!loggedIn) return <LoginScreen onLogin={()=>setLoggedIn(true)}/>;
 
@@ -185,28 +83,7 @@ export default function DriverDesktopApp() {
   const todayDone=bookings.filter(b=>b.date===today&&b.status==="completed");
   const todayEarnings=todayDone.reduce((s,b)=>s+Number(b.fare||0),0);
   const totalGross=bookings.filter(b=>b.status==="completed").reduce((s,b)=>s+Number(b.fare||0),0);
-  const upcoming=[...bookings]
-    .filter(b=>(b.status==="confirmed"||b.status==="inprogress"))
-    .sort((a,b)=>new Date(`${a.date}T${a.time}:00`)-new Date(`${b.date}T${b.time}:00`))
-    .find(b=>{const dt=new Date(`${b.date}T${b.time}:00`);return dt-nowTick>-TRIP_DURATION*60*1000;});
-  const isOnRoute=dStatus==="onroute";
-  const isOffline=serviceStatus?.status==="offline";
-
-  // Earnings by hotel (all non-rejected with fare) — for Facturación
-  const withFare=bookings.filter(b=>b.fare&&b.status!=="rejected");
-  const byHotel={};
-  withFare.forEach(b=>{
-    if(!byHotel[b.hotel])byHotel[b.hotel]={trips:0,gross:0,commissions:0,pendingAmt:0,pendingTrips:[]};
-    byHotel[b.hotel].trips+=1;
-    byHotel[b.hotel].gross+=Number(b.fare||0);
-    if(!b.isClientBooking){
-      byHotel[b.hotel].commissions+=Math.round(Number(b.fare||0)*CR*100)/100;
-      if(b.status==="completed"&&b.commissionStatus!=="paid"){
-        byHotel[b.hotel].pendingAmt+=Number(b.fare||0)*CR;
-        byHotel[b.hotel].pendingTrips.push(b);
-      }
-    }
-  });
+  const upcoming=[...confirmed].filter(b=>new Date(`${b.date}T${b.time}`)>=new Date(Date.now()-3600000)).sort((a,b)=>new Date(`${a.date}T${a.time}`)-new Date(`${b.date}T${b.time}`))[0];
 
   return (
     <div style={{display:"flex",height:"100vh",overflow:"hidden",background:"#f1f5f9"}}>
@@ -219,35 +96,17 @@ export default function DriverDesktopApp() {
           <img src="/logo-velo.jpg" style={{width:52,height:52,objectFit:"contain",borderRadius:12,marginBottom:12}} alt="VELO"/>
           <div style={{color:"#fff",fontSize:18,fontWeight:900,letterSpacing:0.5}}>VELO Driver</div>
           <div style={{color:"#64748b",fontSize:10,letterSpacing:3,marginTop:2}}>DESKTOP PANEL</div>
-          {/* Estado de servicio — clic para gestionar */}
-          <button onClick={()=>{setReturnDateDraft(serviceStatus?.returnDate||"");setLastActiveDraft(serviceStatus?.lastActiveDate||"");setShowServiceModal(true);}} style={{
-            marginTop:14,width:"100%",display:"flex",alignItems:"center",gap:8,
-            background:isOffline?"rgba(239,68,68,0.12)":"rgba(34,197,94,0.1)",
-            border:`1px solid ${isOffline?"rgba(239,68,68,0.35)":"rgba(34,197,94,0.25)"}`,
-            borderRadius:8,padding:"8px 10px",cursor:"pointer",textAlign:"left",
-          }}>
-            <div style={{width:8,height:8,borderRadius:"50%",background:isOffline?"#ef4444":(dStatus==="onroute"?"#ef4444":"#22c55e"),animation:"pulse 1.5s infinite",flexShrink:0}}/>
-            <span style={{color:isOffline?"#ef4444":(dStatus==="onroute"?"#ef4444":"#22c55e"),fontSize:11,fontWeight:700,flex:1}}>{isOffline?"FUERA DE SERVICIO":(dStatus==="onroute"?"EN RUTA":"DISPONIBLE")}</span>
-            <span style={{color:"#475569",fontSize:11}}>⚙</span>
-          </button>
-          {/* Precios por km */}
-          <button onClick={()=>{setDraftPriceClient(String(priceClient));setDraftPriceRecep(String(priceRecep));setShowPriceModal(true);}} style={{
-            marginTop:8,width:"100%",display:"flex",alignItems:"center",gap:8,
-            background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.08)",
-            borderRadius:8,padding:"8px 10px",cursor:"pointer",textAlign:"left",
-          }}>
-            <span style={{fontSize:13}}>💶</span>
-            <span style={{color:"#94a3b8",fontSize:11,fontWeight:700,flex:1}}>Precios por km</span>
-            <span style={{color:"#475569",fontSize:11}}>⚙</span>
-          </button>
+          {/* Status */}
+          <div style={{marginTop:14,display:"flex",alignItems:"center",gap:8,background:"rgba(255,255,255,0.06)",borderRadius:8,padding:"8px 10px"}}>
+            <div style={{width:8,height:8,borderRadius:"50%",background:dStatus==="onroute"?"#ef4444":"#22c55e",animation:"pulse 1.5s infinite",flexShrink:0}}/>
+            <span style={{color:dStatus==="onroute"?"#ef4444":"#22c55e",fontSize:11,fontWeight:700}}>{dStatus==="onroute"?"EN RUTA":"DISPONIBLE"}</span>
+          </div>
         </div>
-
 
         {/* Nav */}
         <nav style={{flex:1,padding:"16px 10px",display:"flex",flexDirection:"column",gap:2}}>
           {[
             {id:"dashboard",icon:"🏠",label:"Dashboard"},
-            {id:"calendar",  icon:"📅",label:"Calendario"},
             {id:"pending",  icon:"⏳",label:"Pendientes",badge:pending.length,badgeColor:"#f59e0b"},
             {id:"confirmed",icon:"✅",label:"Confirmados",badge:confirmed.length,badgeColor:"#2563eb"},
             {id:"history",  icon:"🗂", label:"Historial"},
@@ -281,7 +140,7 @@ export default function DriverDesktopApp() {
           <div style={{display:"flex",alignItems:"center",gap:12}}>
             <div style={{width:3,height:22,background:"linear-gradient(180deg,#1e3a8a,#2563eb)",borderRadius:2}}/>
             <span style={{color:"#0f172a",fontSize:19,fontWeight:800}}>
-              {{dashboard:"Dashboard",calendar:"Calendario",pending:"Viajes Pendientes",confirmed:"Viajes Confirmados",history:"Historial",billing:"Facturación"}[section]}
+              {{dashboard:"Dashboard",pending:"Viajes Pendientes",confirmed:"Viajes Confirmados",history:"Historial",billing:"Facturación"}[section]}
             </span>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:20}}>
@@ -302,20 +161,6 @@ export default function DriverDesktopApp() {
           {/* ── DASHBOARD ── */}
           {section==="dashboard"&&(
             <div>
-              {/* Banner FUERA DE SERVICIO */}
-              {isOffline&&(
-                <div style={{display:"flex",alignItems:"center",gap:14,background:"linear-gradient(135deg,#fff5f5,#fee2e2)",border:"2.5px solid #ef4444",borderRadius:16,padding:"16px 20px",marginBottom:20,boxShadow:"0 4px 16px rgba(239,68,68,0.15)"}}>
-                  <span style={{fontSize:28}}>🔴</span>
-                  <div style={{flex:1}}>
-                    <div style={{color:"#ef4444",fontSize:14,fontWeight:800}}>FUERA DE SERVICIO</div>
-                    <div style={{color:"#64748b",fontSize:12,marginTop:2}}>
-                      {serviceStatus?.returnDate?`Vuelves el ${serviceStatus.returnDate}`:"No estás recibiendo nuevas reservas"}
-                      {serviceStatus?.lastActiveDate&&` · Último día operativo: ${serviceStatus.lastActiveDate}`}
-                    </div>
-                  </div>
-                  <button onClick={()=>{handleSetService({status:"online",returnDate:"",lastActiveDate:""});showToast("✅ Conductor EN SERVICIO");}} style={{background:"linear-gradient(135deg,#16a34a,#22c55e)",border:"none",borderRadius:10,padding:"10px 18px",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>🟢 Volver a EN SERVICIO</button>
-                </div>
-              )}
               {/* KPI row */}
               <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:16,marginBottom:24}}>
                 {[
@@ -335,29 +180,51 @@ export default function DriverDesktopApp() {
               {/* Main content grid */}
               <div style={{display:"grid",gridTemplateColumns:"1.4fr 1fr",gap:20}}>
                 {/* Next trip card */}
-                <NextTripCard
-                  upcoming={upcoming}
-                  nowTick={nowTick}
-                  fmt={fmt}
-                  messages={messages}
-                  isOnRoute={isOnRoute}
-                  tripStarted={tripStarted}
-                  setTripStarted={setTripStarted}
-                  arrivedBookingId={arrivedBookingId}
-                  setArrivedBookingId={setArrivedBookingId}
-                  showQuickMsgs={showQuickMsgs}
-                  setShowQuickMsgs={setShowQuickMsgs}
-                  cancelConfirm={cancelConfirm}
-                  setCancelConfirm={setCancelConfirm}
-                  onStartTrip={id=>{mutate(id,{status:"inprogress"});setDriverStatusRemote("onroute");setTripStarted(true);showToast("🚗 Viaje iniciado");}}
-                  onEndTrip={id=>{mutate(id,{status:"completed"});setDriverStatusRemote("free");setTripStarted(false);setArrivedBookingId(null);clearArrived();showToast("✅ Viaje completado");}}
-                  onCancelTrip={onCancelTrip}
-                  onArrive={onArrive}
-                  sendMsg={sendMsg}
-                  setChatB={setChatB}
-                  setDriverStatusRemote={setDriverStatusRemote}
-                  showToast={showToast}
-                />
+                <div style={{background:"#ffffff",borderRadius:20,padding:"24px",border:"2px solid #e2e8f0",boxShadow:"0 2px 12px rgba(0,0,0,0.04)"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:20}}>
+                    <div style={{width:4,height:20,background:"linear-gradient(180deg,#1e3a8a,#2563eb)",borderRadius:2}}/>
+                    <span style={{color:"#1e3a8a",fontSize:13,fontWeight:800,letterSpacing:2}}>PRÓXIMO VIAJE</span>
+                  </div>
+                  {upcoming?(
+                    <div>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16}}>
+                        <div>
+                          <div style={{color:"#0f172a",fontSize:26,fontWeight:900,lineHeight:1}}>{upcoming.guest}</div>
+                          <div style={{color:"#64748b",fontSize:12,marginTop:6}}>{upcoming.date} · <strong style={{color:"#1e3a8a"}}>{upcoming.time}</strong> · {upcoming.passengers} pax · {upcoming.hotel}</div>
+                        </div>
+                        <div style={{textAlign:"right",flexShrink:0,paddingLeft:12}}>
+                          <div style={{color:"#16a34a",fontSize:26,fontWeight:900}}>{upcoming.fare?fmt(upcoming.fare)+" €":"—"}</div>
+                          <span style={{background:sColor(upcoming.status)+"22",color:sColor(upcoming.status),borderRadius:20,padding:"3px 12px",fontSize:11,fontWeight:700}}>{sLabel(upcoming.status)}</span>
+                        </div>
+                      </div>
+                      <div style={{background:"linear-gradient(135deg,#eff6ff,#dbeafe)",borderRadius:12,padding:"14px",marginBottom:14,border:"1.5px solid #2563eb22"}}>
+                        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+                          <span style={{color:"#2563eb",fontSize:18}}>▶</span>
+                          <span style={{color:"#0f172a",fontSize:13,fontWeight:600}}>{upcoming.origin}</span>
+                        </div>
+                        <div style={{height:1,background:"#2563eb22",margin:"0 28px 8px"}}/>
+                        <div style={{display:"flex",alignItems:"center",gap:8}}>
+                          <span style={{color:"#ef4444",fontSize:18}}>■</span>
+                          <span style={{color:"#0f172a",fontSize:13,fontWeight:600}}>{upcoming.destination}</span>
+                        </div>
+                      </div>
+                      {upcoming.notes&&<div style={{background:"#fffbeb",border:"1.5px solid #f59e0b44",borderRadius:10,padding:"10px 14px",marginBottom:14,fontSize:12,color:"#92400e",fontWeight:600}}>📝 {upcoming.notes}</div>}
+                      <div style={{display:"flex",gap:10}}>
+                        <a href={rUrl(upcoming.origin,upcoming.destination)} target="_blank" rel="noopener noreferrer" style={{flex:1,background:"linear-gradient(135deg,#1e3a8a,#2563eb)",borderRadius:12,padding:"12px 0",color:"#fff",fontSize:13,fontWeight:700,textDecoration:"none",textAlign:"center",boxShadow:"0 4px 12px rgba(37,99,235,0.3)"}}>🗺️ Navegar ruta</a>
+                        <button onClick={()=>{mutate(upcoming.id,{status:"inprogress"});setDStatus("onroute");showToast("🚗 Viaje iniciado");}} style={{flex:1,background:"linear-gradient(135deg,#15803d,#22c55e)",border:"none",borderRadius:12,padding:"12px 0",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",boxShadow:"0 4px 12px rgba(34,197,94,0.3)"}}>🚦 Iniciar viaje</button>
+                        <button onClick={()=>setChatB(upcoming)} style={{background:"linear-gradient(135deg,#6d28d9,#7c3aed)",border:"none",borderRadius:12,padding:"12px 16px",color:"#fff",fontSize:13,cursor:"pointer",position:"relative",boxShadow:"0 4px 12px rgba(124,58,237,0.3)"}}>
+                          💬{(messages[String(upcoming.id)]||[]).filter(m=>m.from!=="driver").length>0&&<span style={{position:"absolute",top:-4,right:-4,background:"#ef4444",borderRadius:"50%",width:16,height:16,fontSize:9,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>{(messages[String(upcoming.id)]||[]).filter(m=>m.from!=="driver").length}</span>}
+                        </button>
+                      </div>
+                    </div>
+                  ):(
+                    <div style={{textAlign:"center",padding:"40px 0",color:"#94a3b8"}}>
+                      <div style={{fontSize:48,marginBottom:12}}>🏖</div>
+                      <div style={{fontSize:15,fontWeight:600}}>Sin viajes programados</div>
+                      <div style={{fontSize:12,marginTop:4}}>Disfruta del descanso</div>
+                    </div>
+                  )}
+                </div>
 
                 {/* Right column */}
                 <div style={{display:"flex",flexDirection:"column",gap:16}}>
@@ -407,31 +274,24 @@ export default function DriverDesktopApp() {
             </div>
           )}
 
-          {/* ── CALENDARIO ── */}
-          {section==="calendar"&&<CalendarSection bookings={bookings} onSelect={setSelected}/>}
-
           {/* ── PENDING / CONFIRMED / HISTORY ── */}
           {(section==="pending"||section==="confirmed"||section==="history")&&(
             <BookingsTable
               bookings={section==="pending"?pending:section==="confirmed"?confirmed:history}
               messages={messages}
               isHistory={section==="history"}
-              onAccept={section==="pending"?id=>{mutate(id,{status:"confirmed"});showToast(`✅ Viaje aceptado`);}:null}
-              onReject={section==="pending"?id=>{const b=pending.find(x=>x.id===id);setRejectModal(b);}:null}
-              onStart={section==="confirmed"?id=>{
-                const b=confirmed.find(x=>x.id===id);
-                if(b&&!b.routeDoc){showToast("⚠️ Sube la hoja de ruta antes de iniciar el viaje");setSelected(b);return;}
-                mutate(id,{status:"inprogress"});setDriverStatusRemote("onroute");setTripStarted(true);showToast("🚗 Viaje iniciado");
-              }:null}
-              onEnd={section==="confirmed"?id=>{mutate(id,{status:"completed"});setDriverStatusRemote("free");setTripStarted(false);setArrivedBookingId(null);clearArrived();showToast("🏁 Completado");}:null}
-              onCancel={section==="confirmed"?id=>onCancelTrip(id,"Cancelado por conductor"):null}
+              onAccept={section==="pending"?id=>{mutate(id,{status:"confirmed"});showToast("✅ Aceptado");}:null}
+              onReject={section==="pending"?id=>{mutate(id,{status:"rejected"});showToast("❌ Rechazado");}:null}
+              onStart={section==="confirmed"?id=>{mutate(id,{status:"inprogress"});setDStatus("onroute");showToast("🚗 Iniciado");}:null}
+              onEnd={section==="confirmed"?id=>{mutate(id,{status:"completed"});setDStatus("free");showToast("🏁 Completado");}:null}
+              onCancel={section==="confirmed"?id=>{mutate(id,{status:"cancelled",cancelReason:"Cancelado por conductor"});showToast("❌ Cancelado");}:null}
               onSelect={setSelected}
               onChat={setChatB}
             />
           )}
 
           {/* ── BILLING ── */}
-          {section==="billing"&&<BillingSection bookings={bookings} fmt={fmt} CR={CR} byHotel={byHotel} totalGross={totalGross} setCommissionModal={setCommissionModal} setSelected={setSelected}/>}
+          {section==="billing"&&<BillingSection bookings={bookings} fmt={fmt} CR={CR}/>}
         </main>
       </div>
 
@@ -443,7 +303,7 @@ export default function DriverDesktopApp() {
             <button onClick={()=>setSelected(null)} style={{background:"#f1f5f9",border:"none",borderRadius:8,color:"#64748b",width:30,height:30,cursor:"pointer",fontSize:16,fontWeight:700}}>✕</button>
           </div>
           <div style={{flex:1,overflowY:"auto",padding:"16px 20px"}}>
-            <DetailPanel b={selected} fmt={fmt} CR={CR} messages={messages} onSend={sendMsg} onChat={()=>setChatB(selected)} onUploadDoc={onUploadDoc} setDocModal={setDocModal} setNoteModal={setNoteModal}/>
+            <DetailPanel b={selected} fmt={fmt} CR={CR} messages={messages} onSend={sendMsg} onChat={()=>setChatB(selected)}/>
           </div>
         </aside>
       )}
@@ -481,313 +341,6 @@ export default function DriverDesktopApp() {
 
       {/* Toast */}
       {toast&&<div style={{position:"fixed",bottom:24,left:"50%",transform:"translateX(-50%)",background:"#0f172a",color:"#fff",padding:"12px 24px",borderRadius:12,fontSize:13,fontWeight:600,zIndex:9999,animation:"fadeIn 0.2s ease",boxShadow:"0 8px 24px rgba(0,0,0,0.25)"}}>{toast}</div>}
-
-      {/* ══ MODALES ══════════════════════════════════════════════════════════ */}
-      {showServiceModal&&(
-        <ServiceModal isOffline={isOffline} returnDateDraft={returnDateDraft} setReturnDateDraft={setReturnDateDraft} lastActiveDraft={lastActiveDraft} setLastActiveDraft={setLastActiveDraft}
-          onClose={()=>setShowServiceModal(false)}
-          onSetService={s=>{handleSetService(s);setShowServiceModal(false);}}/>
-      )}
-      {showPriceModal&&(
-        <PriceConfigModal draftPriceClient={draftPriceClient} setDraftPriceClient={setDraftPriceClient} draftPriceRecep={draftPriceRecep} setDraftPriceRecep={setDraftPriceRecep}
-          onClose={()=>setShowPriceModal(false)} onSave={handleSavePriceConfig}/>
-      )}
-      {noteModal&&(
-        <NoteModal booking={noteModal} onSave={(id,note)=>{onSaveNote(id,note);setNoteModal(null);}} onClose={()=>setNoteModal(null)}/>
-      )}
-      {docModal&&(
-        <DocModal booking={docModal} onClose={()=>setDocModal(null)}/>
-      )}
-      {rejectModal&&(
-        <RejectModal booking={rejectModal} onReject={(id,reason)=>{onReject(id,reason);setRejectModal(null);}} onClose={()=>setRejectModal(null)}/>
-      )}
-      {commissionModal&&(
-        <CommissionPayModal booking={commissionModal} fmt={fmt}
-          onPay={(id,proof)=>{onPayCommission(id,proof);}}
-          onClose={()=>{setCommissionModal(null);showToast("✅ Comisión marcada como pagada");}}/>
-      )}
-    </div>
-  );
-}
-
-// ─── NEXT TRIP CARD (cuenta regresiva + fases) ─────────────────────────────────
-function NextTripCard({upcoming,nowTick,fmt,messages,isOnRoute,tripStarted,setTripStarted,arrivedBookingId,setArrivedBookingId,showQuickMsgs,setShowQuickMsgs,cancelConfirm,setCancelConfirm,onStartTrip,onEndTrip,onCancelTrip,onArrive,sendMsg,setChatB,setDriverStatusRemote,showToast}){
-  if(!upcoming){
-    return(
-      <div style={{background:"#ffffff",borderRadius:20,padding:"24px",border:"2px solid #e2e8f0",boxShadow:"0 2px 12px rgba(0,0,0,0.04)"}}>
-        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:20}}>
-          <div style={{width:4,height:20,background:"linear-gradient(180deg,#1e3a8a,#2563eb)",borderRadius:2}}/>
-          <span style={{color:"#1e3a8a",fontSize:13,fontWeight:800,letterSpacing:2}}>PRÓXIMO VIAJE</span>
-        </div>
-        <div style={{textAlign:"center",padding:"40px 0",color:"#94a3b8"}}>
-          <div style={{fontSize:48,marginBottom:12}}>🏖</div>
-          <div style={{fontSize:15,fontWeight:600}}>Sin viajes programados</div>
-          <div style={{fontSize:12,marginTop:4}}>Disfruta del descanso</div>
-        </div>
-      </div>
-    );
-  }
-
-  const tripDt=new Date(`${upcoming.date}T${upcoming.time}:00`);
-  const diffMs=tripDt-nowTick;
-  // isOngoing: SOLO cuando el conductor pulsó "Iniciar viaje" (status inprogress)
-  const isOngoing=upcoming.status==="inprogress"||tripStarted;
-  // isWaiting: la hora llegó a 0 pero no se inició viaje — ventana de 10 min antes de "He llegado"
-  const isWaiting=diffMs<0&&diffMs>-10*60*1000&&!isOngoing;
-  const waitMs=10*60*1000+diffMs;
-  const absDiff=isWaiting?Math.abs(waitMs):Math.abs(diffMs);
-  const totalSecs=Math.floor(absDiff/1000);
-  const days=Math.floor(totalSecs/86400);
-  const hrs=Math.floor((totalSecs%86400)/3600);
-  const mins=Math.floor((totalSecs%3600)/60);
-  const secs=totalSecs%60;
-  const pad=n=>String(n).padStart(2,"0");
-  const countdownStr=days>0?`${days}d ${pad(hrs)}h ${pad(mins)}m`:`${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
-  const urgency=!isOngoing&&!isWaiting&&diffMs<30*60*1000&&diffMs>0;
-  const mapsPickup=mUrl(upcoming.origin);
-  const unread=(messages[String(upcoming.id)]||[]).filter(m=>m.from!=="driver").length;
-
-  const accent=isOngoing?"#16a34a":isWaiting?"#ef4444":urgency?"#f59e0b":"#2563eb";
-  const bg=isOngoing?"linear-gradient(135deg,#dcfce7,#f0fdf4)":isWaiting?"#fff0f0":urgency?"#fffbeb":"#ffffff";
-
-  return(
-    <div style={{background:bg,border:`2.5px solid ${accent}`,borderRadius:20,padding:"24px",boxShadow:`0 4px 20px ${accent}22`}}>
-      {/* Header */}
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
-        <div style={{display:"flex",alignItems:"center",gap:8}}>
-          <div style={{width:9,height:9,borderRadius:"50%",background:accent,animation:"pulse 1.2s infinite",flexShrink:0}}/>
-          <span style={{color:accent,fontSize:12,letterSpacing:2,fontWeight:800}}>
-            {isOngoing?"EN CURSO":isWaiting?"⏳ EN ESPERA — CLIENTE NO LLEGÓ":urgency?"PRÓXIMO VIAJE — ¡PRONTO!":"PRÓXIMO VIAJE"}
-          </span>
-        </div>
-        <span style={{background:accent+"18",border:`1px solid ${accent}44`,borderRadius:8,padding:"3px 12px",color:accent,fontSize:11,fontWeight:700}}>
-          {isWaiting?"🔴 EN ESPERA":"✅ Confirmado"}
-        </span>
-      </div>
-
-      {/* Guest + fare */}
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14}}>
-        <div>
-          <div style={{color:"#0f172a",fontSize:26,fontWeight:900,lineHeight:1}}>{upcoming.guest}</div>
-          <div style={{color:"#64748b",fontSize:12,marginTop:6}}>{upcoming.date} · <strong style={{color:"#1e3a8a"}}>{upcoming.time}</strong> · {upcoming.passengers} pax · {upcoming.hotel}</div>
-        </div>
-        {upcoming.fare>0&&(
-          <div style={{textAlign:"right",flexShrink:0,paddingLeft:12}}>
-            <div style={{color:"#16a34a",fontSize:26,fontWeight:900}}>{fmt(upcoming.fare)} €</div>
-            <span style={{background:sColor(upcoming.status)+"22",color:sColor(upcoming.status),borderRadius:20,padding:"3px 12px",fontSize:11,fontWeight:700}}>{sLabel(upcoming.status)}</span>
-          </div>
-        )}
-      </div>
-
-      {/* Route */}
-      <div style={{background:"linear-gradient(135deg,#eff6ff,#dbeafe)",borderRadius:12,padding:"14px",marginBottom:12,border:"1.5px solid #2563eb22"}}>
-        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
-          <span style={{color:"#2563eb",fontSize:18}}>▶</span>
-          <span style={{color:"#0f172a",fontSize:13,fontWeight:600}}>{upcoming.origin}</span>
-        </div>
-        <div style={{height:1,background:"#2563eb22",margin:"0 28px 8px"}}/>
-        <div style={{display:"flex",alignItems:"center",gap:8}}>
-          <span style={{color:"#ef4444",fontSize:18}}>■</span>
-          <span style={{color:"#0f172a",fontSize:13,fontWeight:600}}>{upcoming.destination}</span>
-        </div>
-      </div>
-
-      {/* Notes */}
-      {upcoming.notes&&upcoming.notes.trim()&&(
-        <div style={{background:"#fffbeb",border:"1.5px solid #f59e0b44",borderRadius:10,padding:"10px 14px",marginBottom:12,fontSize:12,color:"#92400e",fontWeight:600}}>📝 {upcoming.notes}</div>
-      )}
-
-      {/* Countdown */}
-      <div style={{background:isOngoing?"#dcfce7":isWaiting?"#fee2e2":urgency?"#fef3c7":"#eff6ff",borderRadius:12,padding:"14px 18px",marginBottom:16,border:`1.5px solid ${accent}33`}}>
-        <div style={{color:isOngoing?"#16a34a":urgency?"#d97706":"#1e3a8a",fontSize:11,fontWeight:700,letterSpacing:2,marginBottom:4}}>{isOngoing?"EN CURSO":isWaiting?"⏳ EN ESPERA":"TIEMPO RESTANTE"}</div>
-        <div style={{color:isOngoing?"#16a34a":isWaiting?"#ef4444":urgency?"#d97706":"#0f172a",fontSize:36,fontFamily:"'Inter',sans-serif",fontWeight:900,letterSpacing:2}}>{countdownStr}</div>
-      </div>
-
-      {/* ── ACTION BUTTONS ── */}
-      <div style={{display:"flex",flexDirection:"column",gap:10}}>
-
-        {/* ── FASE 1: antes de llegar — Punto recogida + Chat + Mensajes rápidos + He llegado ── */}
-        {arrivedBookingId!==upcoming.id&&!isOngoing&&upcoming.status!=="inprogress"&&(
-          <>
-            <div style={{display:"flex",gap:10}}>
-              {mapsPickup&&(
-                <a href={mapsPickup} target="_blank" rel="noopener noreferrer" style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:7,background:"#f0fdf4",border:"2px solid #22c55e55",borderRadius:10,padding:"12px 0",color:"#15803d",fontSize:13,fontWeight:700,textDecoration:"none"}}>🗺️ Punto recogida</a>
-              )}
-              <button onClick={()=>setChatB(upcoming)} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:7,background:"#f5f3ff",border:"2px solid #7c3aed44",borderRadius:10,padding:"12px 0",color:"#7c3aed",fontSize:13,fontWeight:700,cursor:"pointer",position:"relative"}}>
-                💬 Chat
-                {unread>0&&<span style={{position:"absolute",top:-6,right:-6,background:"#ef4444",color:"#fff",borderRadius:"50%",width:18,height:18,fontSize:10,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>{unread}</span>}
-              </button>
-              <button onClick={()=>setShowQuickMsgs(v=>!v)} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:showQuickMsgs?"#f0fdf4":"#fffbeb",border:`2px solid ${showQuickMsgs?"#22c55e55":"#f59e0b44"}`,borderRadius:10,padding:"12px 0",color:showQuickMsgs?"#15803d":"#d97706",fontSize:13,fontWeight:700,cursor:"pointer"}}>⚡ Rápidos</button>
-            </div>
-
-            {/* INICIAR VIAJE — aparece tras "Estoy en camino" */}
-            {isOnRoute&&!tripStarted&&upcoming.destination&&(
-              <a href={mUrl(upcoming.destination)} target="_blank" rel="noopener noreferrer"
-                onClick={()=>{onStartTrip(upcoming.id);setShowQuickMsgs(false);}}
-                style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,background:"linear-gradient(135deg,#1e3a8a,#2563eb)",border:"none",borderRadius:12,padding:"14px 0",color:"#ffffff",fontSize:13,fontWeight:700,textDecoration:"none",boxShadow:"0 4px 12px rgba(37,99,235,0.3)"}}>
-                🗺️ Iniciar viaje → {upcoming.destination.split(",")[0]}
-              </a>
-            )}
-
-            {/* Mensajes rápidos */}
-            {showQuickMsgs&&(
-              <div style={{background:"#ffffff",border:"1.5px solid #e2e8f0",borderRadius:12,padding:"14px",display:"flex",flexDirection:"column",gap:8}}>
-                <div style={{color:"#64748b",fontSize:10,letterSpacing:2,marginBottom:2}}>MENSAJES RÁPIDOS</div>
-                {[
-                  {es:"🚗 Estoy en camino."},
-                  {es:"⏱️ Llegaré en aproximadamente 10 minutos."},
-                  {es:"🅿️ Estoy aparcado esperándote en el punto de recogida."},
-                  {es:"📞 Por favor llámame si tienes algún problema para encontrarme."},
-                ].map((msg,i)=>(
-                  <button key={i} onClick={()=>{
-                    sendMsg(upcoming.id,msg.es);
-                    if(i===0){setDriverStatusRemote("onroute");setTripStarted(false);}
-                    setShowQuickMsgs(false);
-                    showToast("✅ Mensaje enviado");
-                  }} style={{background:"#f8fafc",border:"1.5px solid #e2e8f0",borderRadius:8,padding:"10px 12px",color:"#0f172a",fontSize:12,textAlign:"left",cursor:"pointer"}}>{msg.es}</button>
-                ))}
-              </div>
-            )}
-
-            {/* HE LLEGADO */}
-            <button onClick={()=>onArrive(upcoming)} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:10,background:"linear-gradient(135deg,#16a34a,#22c55e)",border:"none",borderRadius:12,padding:"14px 0",color:"#ffffff",fontSize:14,fontWeight:700,cursor:"pointer",boxShadow:"0 4px 14px rgba(34,197,94,0.3)"}}>🚗 He llegado</button>
-          </>
-        )}
-
-        {/* ── FASE 2: He llegado — espera 15 min + Iniciar viaje + Chat ── */}
-        {arrivedBookingId===upcoming.id&&!isOngoing&&upcoming.status!=="inprogress"&&(
-          <>
-            {(()=>{
-              const bookingTime=tripDt.getTime();
-              const now=nowTick.getTime();
-              const beforeBooking=now<bookingTime;
-              const waitingMs=now-bookingTime;
-              const waitEndMs=bookingTime+15*60*1000;
-              const isExpired=waitingMs>0&&now>waitEndMs;
-              const remainingSecs=Math.floor(Math.max(0,waitEndMs-now)/1000);
-              const waitCountStr=`${pad(Math.floor(remainingSecs/60))}:${pad(remainingSecs%60)}`;
-
-              if(beforeBooking){
-                return(
-                  <div style={{background:"#eff6ff",border:"2px solid #2563eb44",borderRadius:12,padding:"14px",display:"flex",alignItems:"center",gap:10}}>
-                    <span style={{fontSize:20}}>✅</span>
-                    <div>
-                      <div style={{color:"#1e3a8a",fontSize:13,fontWeight:700}}>Has llegado al punto de recogida</div>
-                      <div style={{color:"#64748b",fontSize:11,marginTop:2}}>La espera de 15 min empieza a las <strong>{upcoming.time}</strong></div>
-                    </div>
-                  </div>
-                );
-              }
-              if(isExpired){
-                return(
-                  <div style={{background:"#fff0f0",border:"2px solid #ef4444",borderRadius:12,padding:"14px"}}>
-                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
-                      <span style={{fontSize:18}}>⏰</span>
-                      <div style={{color:"#ef4444",fontSize:13,fontWeight:700}}>Tiempo de espera agotado</div>
-                    </div>
-                    <div style={{color:"#64748b",fontSize:11,marginBottom:12}}>Han pasado 15 minutos desde la hora de la reserva</div>
-                    <div style={{display:"flex",gap:8}}>
-                      <button onClick={()=>{
-                        sendMsg(upcoming.id,`❌ El conductor ha cancelado la reserva por no presentación del cliente.\n📅 ${upcoming.date} · ${upcoming.time}\n📍 ${upcoming.origin}`);
-                        onCancelTrip(upcoming.id,"No-show: cliente no se presentó");
-                        showToast("❌ Reserva cancelada por no presentación");
-                      }} style={{flex:1,background:"linear-gradient(135deg,#ef4444,#b91c1c)",border:"none",borderRadius:10,padding:"11px 0",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>❌ Cancelar reserva</button>
-                      <button onClick={()=>{onArrive(upcoming);showToast("⏳ Esperando más tiempo...");}} style={{flex:1,background:"#f0fdf4",border:"2px solid #22c55e44",borderRadius:10,padding:"11px 0",color:"#16a34a",fontSize:12,fontWeight:700,cursor:"pointer"}}>⏳ Seguir esperando</button>
-                    </div>
-                  </div>
-                );
-              }
-              return(
-                <div style={{background:"#fffbeb",border:"2px solid #f59e0b44",borderRadius:12,padding:"14px"}}>
-                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
-                    <div style={{display:"flex",alignItems:"center",gap:8}}>
-                      <span style={{fontSize:18}}>⏰</span>
-                      <div>
-                        <div style={{color:"#d97706",fontSize:12,fontWeight:700}}>Esperando al cliente</div>
-                        <div style={{color:"#64748b",fontSize:10}}>Desde las {upcoming.time} · 15 min máx.</div>
-                      </div>
-                    </div>
-                    <div style={{textAlign:"right"}}>
-                      <div style={{color:"#d97706",fontSize:22,fontWeight:900,fontFamily:"'Inter',sans-serif",lineHeight:1}}>{waitCountStr}</div>
-                      <div style={{color:"#64748b",fontSize:9}}>restantes</div>
-                    </div>
-                  </div>
-                  <div style={{height:6,background:"#fef3c7",borderRadius:3,overflow:"hidden",marginBottom:12}}>
-                    <div style={{height:"100%",background:"linear-gradient(90deg,#f59e0b,#ef4444)",borderRadius:3,width:`${Math.min(100,(Math.max(0,waitingMs)/(15*60*1000))*100)}%`,transition:"width 1s linear"}}/>
-                  </div>
-                  <div style={{display:"flex",gap:8}}>
-                    <button onClick={()=>{
-                      sendMsg(upcoming.id,`❌ El conductor ha cancelado la reserva por no presentación del cliente.\n📅 ${upcoming.date} · ${upcoming.time}\n📍 ${upcoming.origin}`);
-                      onCancelTrip(upcoming.id,"No-show: cliente no se presentó");
-                      showToast("❌ Reserva cancelada por no presentación");
-                    }} style={{flex:1,background:"linear-gradient(135deg,#ef4444,#b91c1c)",border:"none",borderRadius:10,padding:"10px 0",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>❌ Cancelar</button>
-                    <button onClick={()=>{onArrive(upcoming);showToast("⏳ Esperando más tiempo...");}} style={{flex:1,background:"#f0fdf4",border:"2px solid #22c55e44",borderRadius:10,padding:"10px 0",color:"#16a34a",fontSize:12,fontWeight:700,cursor:"pointer"}}>⏳ Seguir esperando</button>
-                  </div>
-                </div>
-              );
-            })()}
-
-            {/* Iniciar viaje → Maps al destino */}
-            <a href={mUrl(upcoming.destination||upcoming.origin)} target="_blank" rel="noopener noreferrer"
-              onClick={()=>{onStartTrip(upcoming.id);setShowQuickMsgs(false);}}
-              style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,background:"linear-gradient(135deg,#1e3a8a,#2563eb)",border:"none",borderRadius:12,padding:"14px 0",color:"#ffffff",fontSize:13,fontWeight:700,textDecoration:"none",boxShadow:"0 3px 12px rgba(37,99,235,0.35)"}}>
-              🗺️ Iniciar viaje → {upcoming.destination||upcoming.origin}
-            </a>
-            <button onClick={()=>setChatB(upcoming)} style={{display:"flex",alignItems:"center",justifyContent:"center",gap:7,background:"#f5f3ff",border:"2px solid #7c3aed44",borderRadius:10,padding:"12px 0",color:"#7c3aed",fontSize:13,fontWeight:700,cursor:"pointer"}}>💬 Chat con cliente</button>
-          </>
-        )}
-
-        {/* ── FASE 3: en curso — Terminar viaje ── */}
-        {(upcoming.status==="inprogress"||tripStarted||isOngoing)&&(
-          <button onClick={()=>onEndTrip(upcoming.id)} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:10,background:"linear-gradient(135deg,#16a34a,#22c55e)",border:"none",borderRadius:12,padding:"15px 0",color:"#ffffff",fontSize:15,fontWeight:700,cursor:"pointer",boxShadow:"0 4px 14px rgba(34,197,94,0.3)"}}>🏁 Terminar viaje</button>
-        )}
-
-        {/* ── CANCELAR RESERVA — con motivos ── */}
-        {!cancelConfirm?(
-          <button onClick={()=>setCancelConfirm({step:"choose",reason:"",custom:""})} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:7,background:"#fff5f5",border:"1.5px solid #ef444466",borderRadius:10,padding:"10px 0",color:"#ef4444aa",fontSize:12,fontWeight:700,cursor:"pointer"}}>✕ Cancelar reserva</button>
-        ):cancelConfirm.step==="choose"?(
-          <div style={{background:"#fff5f5",border:"2px solid #ef4444",borderRadius:12,padding:"14px"}}>
-            <div style={{color:"#0f172a",fontSize:13,fontWeight:700,textAlign:"center",marginBottom:4}}>⚠️ Motivo de cancelación</div>
-            <div style={{color:"#64748b",fontSize:11,textAlign:"center",marginBottom:12}}>Selecciona el motivo</div>
-            <div style={{display:"flex",flexDirection:"column",gap:8}}>
-              {[
-                {id:"noshow",label:"👤 El cliente no se presentó"},
-                {id:"condition",label:"🚫 El cliente no está en condiciones"},
-                {id:"other",label:"📝 Otros motivos"},
-              ].map(opt=>(
-                <button key={opt.id} onClick={()=>setCancelConfirm({step:opt.id==="other"?"custom":"confirm",reason:opt.label,custom:""})} style={{background:"#f8fafc",border:"2px solid #e2e8f0",borderRadius:10,padding:"10px 14px",color:"#0f172a",fontSize:12,fontWeight:600,cursor:"pointer",textAlign:"left"}}>{opt.label}</button>
-              ))}
-              <button onClick={()=>setCancelConfirm(null)} style={{background:"transparent",border:"1px solid #cbd5e1",borderRadius:8,padding:"8px 0",color:"#64748b",fontSize:11,cursor:"pointer"}}>← Volver</button>
-            </div>
-          </div>
-        ):cancelConfirm.step==="custom"?(
-          <div style={{background:"#fff5f5",border:"2px solid #ef4444",borderRadius:12,padding:"14px"}}>
-            <div style={{color:"#0f172a",fontSize:13,fontWeight:700,marginBottom:10}}>📝 Describe el motivo</div>
-            <textarea value={cancelConfirm.custom||""} onChange={e=>setCancelConfirm({...cancelConfirm,custom:e.target.value})} placeholder="Escribe el motivo aquí..." style={{width:"100%",background:"#f8fafc",border:"2px solid #e2e8f0",borderRadius:8,padding:"10px",color:"#0f172a",fontSize:12,minHeight:80,resize:"none",outline:"none",boxSizing:"border-box",marginBottom:10}}/>
-            <div style={{display:"flex",gap:8}}>
-              <button onClick={()=>setCancelConfirm({step:"choose",reason:"",custom:""})} style={{flex:1,background:"#f8fafc",border:"1.5px solid #e2e8f0",borderRadius:8,padding:"10px 0",color:"#64748b",fontSize:12,fontWeight:600,cursor:"pointer"}}>← Volver</button>
-              <button onClick={()=>setCancelConfirm({...cancelConfirm,step:"confirm",reason:`📝 ${cancelConfirm.custom||"Otros motivos"}`})} disabled={!cancelConfirm.custom?.trim()} style={{flex:1,background:cancelConfirm.custom?.trim()?"linear-gradient(135deg,#ef4444,#b91c1c)":"#cbd5e1",border:"none",borderRadius:8,padding:"10px 0",color:"#fff",fontSize:12,fontWeight:700,cursor:cancelConfirm.custom?.trim()?"pointer":"default"}}>Continuar →</button>
-            </div>
-          </div>
-        ):(
-          <div style={{background:"#fff5f5",border:"2px solid #ef4444",borderRadius:12,padding:"14px"}}>
-            <div style={{color:"#0f172a",fontSize:13,fontWeight:700,textAlign:"center",marginBottom:6}}>⚠️ ¿Confirmar cancelación?</div>
-            <div style={{background:"#ef444415",border:"1px solid #ef444433",borderRadius:8,padding:"8px 12px",marginBottom:12}}>
-              <div style={{color:"#ef4444",fontSize:11,fontWeight:700}}>{cancelConfirm.reason}</div>
-            </div>
-            <div style={{color:"#64748b",fontSize:11,textAlign:"center",marginBottom:12}}>Esta acción no se puede deshacer</div>
-            <div style={{display:"flex",gap:8}}>
-              <button onClick={()=>setCancelConfirm(null)} style={{flex:1,background:"#f8fafc",border:"1.5px solid #e2e8f0",borderRadius:8,padding:"10px 0",color:"#64748b",fontSize:12,fontWeight:600,cursor:"pointer"}}>No, volver</button>
-              <button onClick={()=>{
-                sendMsg(upcoming.id,`❌ Reserva cancelada por el conductor.\n📅 ${upcoming.date} · ${upcoming.time}\n📍 ${upcoming.origin}\n📝 Motivo: ${cancelConfirm.reason}`);
-                onCancelTrip(upcoming.id,cancelConfirm.reason);
-                setCancelConfirm(null);
-                showToast("❌ Reserva cancelada: "+cancelConfirm.reason);
-              }} style={{flex:1,background:"linear-gradient(135deg,#ef4444,#b91c1c)",border:"none",borderRadius:8,padding:"10px 0",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>Sí, cancelar</button>
-            </div>
-          </div>
-        )}
-      </div>
     </div>
   );
 }
@@ -813,9 +366,9 @@ function LoginScreen({onLogin}){
     <div style={{width:"100vw",height:"100vh",background:"#0a0a0a url('/bg-driver-desktop-login.jpg') center top/cover no-repeat",display:"flex",alignItems:"flex-start",justifyContent:"center",overflow:"hidden",position:"relative"}}>
       <style>{CSS}</style>
 
-      <div style={{textAlign:"center",width:320,zIndex:1,paddingTop:"56vh"}}>
+      <div style={{textAlign:"center",width:300,zIndex:1,paddingTop:"39vh"}}>
         {/* Dots */}
-        <div style={{display:"flex",gap:14,justifyContent:"center",marginBottom:err?12:24,animation:shake?"shake 0.4s ease":undefined}}>
+        <div style={{display:"flex",gap:14,justifyContent:"center",marginBottom:err?10:20,animation:shake?"shake 0.4s ease":undefined}}>
           {[0,1,2,3].map(i=>(
             <div key={i} style={{
               width:13,height:13,borderRadius:"50%",
@@ -830,14 +383,14 @@ function LoginScreen({onLogin}){
         {err&&<div style={{color:"#ef4444",fontSize:11,fontWeight:700,marginBottom:10,letterSpacing:1}}>PIN INCORRECTO</div>}
 
         {/* Keypad */}
-        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,maxWidth:270,margin:"0 auto"}}>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,maxWidth:230,margin:"0 auto"}}>
           {[1,2,3,4,5,6,7,8,9,"",0,"⌫"].map((d,i)=>(
             <button key={i} className="pin-btn" onClick={()=>d===""?null:d==="⌫"?del():digit(String(d))} disabled={d===""} style={{
-              height:60,borderRadius:12,
+              height:50,borderRadius:12,
               border:d===""?"none":`1px solid ${d==="⌫"?"rgba(255,255,255,0.1)":"rgba(96,165,250,0.4)"}`,
               background:d===""?"transparent":d==="⌫"?"rgba(255,255,255,0.05)":"rgba(37,99,235,0.15)",
               color:d==="⌫"?"rgba(255,255,255,0.4)":"#e2e8f0",
-              fontSize:d==="⌫"?22:24,fontWeight:700,
+              fontSize:d==="⌫"?18:20,fontWeight:700,
               cursor:d===""?"default":"pointer",
               backdropFilter:"blur(8px)",
             }}>
@@ -878,11 +431,7 @@ function BookingsTable({bookings,messages,isHistory,onAccept,onReject,onStart,on
               return(
                 <tr key={b.id} className="row-hover" style={{borderBottom:"1px solid #f1f5f9",cursor:"pointer",transition:"background 0.1s"}} onClick={()=>onSelect&&onSelect(b)}>
                   <td style={{padding:"14px 20px"}}>
-                    <div style={{display:"flex",alignItems:"center",gap:6}}>
-                      <div style={{color:"#0f172a",fontSize:13,fontWeight:700}}>{b.guest}</div>
-                      <span style={{background:b.isClientBooking?"#a78bfa":"#2563eb",borderRadius:5,padding:"1px 6px",fontSize:8,color:"#fff",fontWeight:700,whiteSpace:"nowrap"}}>{b.isClientBooking?"VIP":"RECEP."}</span>
-                      {["confirmed","inprogress"].includes(b.status)&&!b.routeDoc&&<span title="Falta hoja de ruta" style={{fontSize:11}}>⚠️</span>}
-                    </div>
+                    <div style={{color:"#0f172a",fontSize:13,fontWeight:700}}>{b.guest}</div>
                     <div style={{color:"#94a3b8",fontSize:10,marginTop:2}}>{b.hotel}</div>
                     {b.notes&&<div style={{color:"#d97706",fontSize:10,marginTop:3}}>📝 {b.notes.slice(0,28)}{b.notes.length>28?"…":""}</div>}
                   </td>
@@ -924,24 +473,14 @@ function BookingsTable({bookings,messages,isHistory,onAccept,onReject,onStart,on
 }
 
 // ─── DETAIL PANEL ─────────────────────────────────────────────────────────────
-function DetailPanel({b,fmt,CR,messages,onSend,onChat,onUploadDoc,setDocModal,setNoteModal}){
+function DetailPanel({b,fmt,CR,messages,onSend,onChat}){
   const [msg,setMsg]=useState("");
-  const showOps=["confirmed","inprogress","completed"].includes(b.status);
   return(
     <div>
       <div style={{background:sColor(b.status)+"15",border:`2px solid ${sColor(b.status)}33`,borderRadius:14,padding:"16px",marginBottom:16}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
-          <div style={{color:"#0f172a",fontSize:22,fontWeight:900,lineHeight:1}}>{b.guest}</div>
-          <span style={{background:b.isClientBooking?"#a78bfa":"#2563eb",borderRadius:6,padding:"2px 8px",fontSize:9,color:"#fff",fontWeight:700,whiteSpace:"nowrap"}}>{b.isClientBooking?"💜 VIP CLIENT":"🏨 RECEPCIÓN"}</span>
-        </div>
+        <div style={{color:"#0f172a",fontSize:22,fontWeight:900,lineHeight:1,marginBottom:6}}>{b.guest}</div>
         <span style={{background:sColor(b.status),color:"#fff",borderRadius:20,padding:"3px 12px",fontSize:11,fontWeight:700}}>{sLabel(b.status)}</span>
       </div>
-      {b.status==="price_proposed"&&(
-        <div style={{background:"#faf5ff",border:"1.5px solid #7c3aed44",borderRadius:10,padding:"10px 12px",marginBottom:12}}>
-          <div style={{color:"#7c3aed",fontSize:12,fontWeight:800}}>💜 Precio propuesto: {fmt(b.proposedPrice)} €</div>
-          <div style={{color:"#64748b",fontSize:11,marginTop:2}}>Esperando respuesta del cliente</div>
-        </div>
-      )}
       {[["📅 Fecha",b.date],["🕐 Hora",b.time],["👥 Pasajeros",b.passengers+" pax"],["🏨 Hotel",b.hotel],["💳 Pago",b.paymentMethod==="card"?"Tarjeta":"Efectivo"],["📞 Teléfono",b.guestPhone]].filter(([,v])=>v).map(([k,v])=>(
         <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"9px 0",borderBottom:"1px solid #f1f5f9"}}>
           <span style={{color:"#64748b",fontSize:12}}>{k}</span>
@@ -949,54 +488,20 @@ function DetailPanel({b,fmt,CR,messages,onSend,onChat,onUploadDoc,setDocModal,se
         </div>
       ))}
       {b.notes&&<div style={{background:"#fffbeb",borderRadius:10,padding:"10px 12px",margin:"12px 0",fontSize:12,color:"#92400e",fontWeight:600}}>📝 {b.notes}</div>}
-      {b.fare>0&&<div style={{background:"linear-gradient(135deg,#f0fdf4,#dcfce7)",border:"2px solid #22c55e33",borderRadius:12,padding:"14px",margin:"12px 0"}}>
+      {b.fare&&<div style={{background:"linear-gradient(135deg,#f0fdf4,#dcfce7)",border:"2px solid #22c55e33",borderRadius:12,padding:"14px",margin:"12px 0"}}>
         <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
           <span style={{color:"#15803d",fontSize:12,fontWeight:700}}>Total viaje</span>
           <span style={{color:"#16a34a",fontSize:22,fontWeight:900}}>{fmt(b.fare)} €</span>
         </div>
         <div style={{display:"flex",justifyContent:"space-between"}}>
           <span style={{color:"#64748b",fontSize:11}}>Tu ganancia</span>
-          <span style={{color:"#16a34a",fontSize:14,fontWeight:700}}>{fmt(b.fare*(b.isClientBooking?0.85:1-CR))} €</span>
+          <span style={{color:"#16a34a",fontSize:14,fontWeight:700}}>{fmt(b.fare*(1-CR))} €</span>
         </div>
       </div>}
       <div style={{display:"flex",flexDirection:"column",gap:8,marginTop:4}}>
         <a href={rUrl(b.origin,b.destination)} target="_blank" rel="noopener noreferrer" style={{display:"block",background:"linear-gradient(135deg,#1e3a8a,#2563eb)",borderRadius:10,padding:"10px 0",color:"#fff",fontSize:12,fontWeight:700,textDecoration:"none",textAlign:"center",boxShadow:"0 3px 10px rgba(37,99,235,0.3)"}}>🗺️ Ver ruta completa</a>
         <button onClick={onChat} style={{background:"linear-gradient(135deg,#6d28d9,#7c3aed)",border:"none",borderRadius:10,padding:"10px 0",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>💬 Abrir chat</button>
       </div>
-
-      {/* ── HOJA DE RUTA ── */}
-      {showOps&&(
-        <div style={{marginTop:16}}>
-          <div style={{color:"#1e3a8a",fontSize:11,fontWeight:800,letterSpacing:1,marginBottom:8}}>HOJA DE RUTA (FOMENTO)</div>
-          <a href="https://sede.transportes.gob.es/regvtc/gestion/" target="_blank" rel="noopener noreferrer" style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,width:"100%",marginBottom:6,background:"#eff6ff",border:"1.5px solid #2563eb44",borderRadius:8,padding:"9px 0",textDecoration:"none",color:"#1e3a8a",fontSize:11,fontWeight:700}}>📋 Completar Hoja de Ruta — Sede Fomento</a>
-          {b.routeDoc?(
-            <div style={{display:"flex",gap:6}}>
-              <button onClick={()=>setDocModal(b)} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:"#dcfce7",border:"1px solid #22c55e44",borderRadius:8,padding:"8px 0",cursor:"pointer",color:"#16a34a",fontSize:11,fontWeight:700}}>👁 Ver documento</button>
-              <label style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:"#f1f5f9",border:"1px solid #e2e8f0",borderRadius:8,padding:"8px 0",cursor:"pointer",color:"#64748b",fontSize:11,fontWeight:600}}>
-                <input type="file" accept=".pdf,image/*" onChange={e=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=ev=>onUploadDoc(b.id,{data:ev.target.result,name:file.name,type:file.type});reader.readAsDataURL(file);}} style={{display:"none"}}/>
-                🔄 Reemplazar
-              </label>
-            </div>
-          ):(
-            <label style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,width:"100%",background:"#f8fafc",border:"2px dashed #2563eb55",borderRadius:8,padding:"10px 0",cursor:"pointer",color:"#64748b",fontSize:11,fontWeight:600}}>
-              <input type="file" accept=".pdf,image/*" onChange={e=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=ev=>onUploadDoc(b.id,{data:ev.target.result,name:file.name,type:file.type});reader.readAsDataURL(file);}} style={{display:"none"}}/>
-              📎 Subir Hoja de Ruta (PDF / imagen)
-            </label>
-          )}
-          {!b.routeDoc&&b.status==="confirmed"&&(
-            <div style={{marginTop:6,padding:"6px 10px",borderRadius:6,background:"#fff7ed",border:"1px solid #f9731633",color:"#f97316",fontSize:10,textAlign:"center"}}>⚠️ Sube la hoja de ruta para poder iniciar el viaje</div>
-          )}
-        </div>
-      )}
-
-      {/* ── NOTA PRIVADA ── */}
-      {showOps&&(
-        <button onClick={()=>setNoteModal(b)} style={{display:"flex",alignItems:"center",gap:8,width:"100%",marginTop:10,background:b.driverNote?"#f0fdf4":"#f8fafc",border:`1px solid ${b.driverNote?"#22c55e33":"#e2e8f0"}`,borderRadius:8,padding:"9px 12px",cursor:"pointer",color:b.driverNote?"#16a34a":"#64748b",fontSize:12,textAlign:"left"}}>
-          <span>📝</span>
-          <span style={{flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{b.driverNote||"Añadir nota privada..."}</span>
-        </button>
-      )}
-
       {/* Mini chat */}
       <div style={{marginTop:16}}>
         <div style={{color:"#1e3a8a",fontSize:11,fontWeight:800,letterSpacing:1,marginBottom:8}}>ÚLTIMOS MENSAJES</div>
@@ -1018,7 +523,7 @@ function DetailPanel({b,fmt,CR,messages,onSend,onChat,onUploadDoc,setDocModal,se
 }
 
 // ─── BILLING ──────────────────────────────────────────────────────────────────
-function BillingSection({bookings,fmt,CR,byHotel,totalGross,setCommissionModal,setSelected}){
+function BillingSection({bookings,fmt,CR}){
   const done=bookings.filter(b=>b.status==="completed");
   const gross=done.reduce((s,b)=>s+Number(b.fare||0),0);
   const net=gross*(1-CR);
@@ -1030,9 +535,7 @@ function BillingSection({bookings,fmt,CR,byHotel,totalGross,setCommissionModal,s
     return{key,label:d.toLocaleDateString("es-ES",{month:"short"}).toUpperCase(),total};
   });
   const maxM=Math.max(...months.map(m=>m.total),1);
-  const hotelEntries=Object.entries(byHotel||{}).sort(([,a],[,b])=>(b.pendingAmt||0)-(a.pendingAmt||0));
   return(
-    <div>
     <div style={{display:"grid",gridTemplateColumns:"340px 1fr",gap:20}}>
       <div style={{display:"flex",flexDirection:"column",gap:14}}>
         {[
@@ -1068,337 +571,6 @@ function BillingSection({bookings,fmt,CR,byHotel,totalGross,setCommissionModal,s
         </div>
       </div>
     </div>
-
-    {/* ── INGRESOS POR HOTEL + COMISIONES ── */}
-    {hotelEntries.length>0&&(
-      <div style={{background:"#ffffff",borderRadius:20,padding:"24px",border:"2px solid #e2e8f0",boxShadow:"0 2px 12px rgba(0,0,0,0.04)",marginTop:20}}>
-        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:18}}>
-          <div style={{width:4,height:20,background:"linear-gradient(180deg,#1e3a8a,#2563eb)",borderRadius:2}}/>
-          <span style={{color:"#1e3a8a",fontSize:13,fontWeight:800,letterSpacing:2}}>🏨 INGRESOS POR HOTEL</span>
-        </div>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:12}}>
-          {hotelEntries.map(([hotel,data])=>(
-            <div key={hotel} onClick={()=>{if(data.pendingTrips.length>0){setCommissionModal({...data.pendingTrips[0],_empAllPending:data.pendingTrips,_empName:hotel,_totalComm:data.pendingAmt});}}} style={{
-              background:data.pendingAmt>0?"#fffbeb":"#f8fafc",
-              border:`2px solid ${data.pendingAmt>0?"#f59e0b":"#e2e8f0"}`,
-              borderRadius:14,padding:"14px 16px",
-              cursor:data.pendingTrips.length>0?"pointer":"default",
-              boxShadow:data.pendingAmt>0?"0 2px 10px rgba(245,158,11,0.15)":"none",
-            }}>
-              <div style={{color:"#0f172a",fontSize:13,fontWeight:800,marginBottom:4}}>{hotel||"—"}</div>
-              <div style={{color:"#64748b",fontSize:11,marginBottom:8}}>{data.trips} viaje{data.trips!==1?"s":""} · {fmt(data.gross)} € facturado</div>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <span style={{color:"#64748b",fontSize:11}}>Comisión total: {fmt(data.commissions||0)} €</span>
-                {data.pendingAmt>0?(
-                  <span style={{background:"#f59e0b",color:"#fff",borderRadius:8,padding:"3px 10px",fontSize:11,fontWeight:800}}>+{fmt(data.pendingAmt)} € pend.</span>
-                ):(
-                  <span style={{background:"#22c55e18",color:"#16a34a",borderRadius:8,padding:"3px 10px",fontSize:10,fontWeight:700}}>✓ al día</span>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    )}
-    </div>
-  );
-}
-
-// ─── CALENDARIO ───────────────────────────────────────────────────────────────
-function CalendarSection({bookings,onSelect}){
-  const [calDate,setCalDate]=useState(()=>new Date().toISOString().slice(0,10));
-  const hours=Array.from({length:17},(_,i)=>i+6); // 06:00 → 22:00
-
-  const dayBookings=bookings
-    .filter(b=>b.date===calDate&&b.status!=="rejected")
-    .sort((a,b)=>(a.time||"").localeCompare(b.time||""));
-
-  const shiftDay=delta=>{
-    const d=new Date(calDate+"T00:00:00");
-    d.setDate(d.getDate()+delta);
-    setCalDate(d.toISOString().slice(0,10));
-  };
-
-  const today=new Date().toISOString().slice(0,10);
-  const isToday=calDate===today;
-  const dateObj=new Date(calDate+"T00:00:00");
-  const dateLabel=dateObj.toLocaleDateString("es-ES",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
-
-  const navBtn={width:40,height:40,borderRadius:10,border:"2px solid #e2e8f0",background:"#ffffff",color:"#1e3a8a",fontSize:18,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"};
-
-  return(
-    <div>
-      {/* Date navigation */}
-      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
-        <button onClick={()=>shiftDay(-1)} className="nav-item" style={navBtn}>‹</button>
-        <div style={{flex:1,background:"#ffffff",border:"2px solid #e2e8f0",borderRadius:14,padding:"12px 20px",textAlign:"center"}}>
-          <div style={{color:"#0f172a",fontSize:16,fontWeight:800,textTransform:"capitalize"}}>{dateLabel}{isToday&&<span style={{marginLeft:10,background:"#2563eb22",color:"#2563eb",borderRadius:8,padding:"2px 10px",fontSize:11,fontWeight:700}}>HOY</span>}</div>
-        </div>
-        <button onClick={()=>shiftDay(1)} className="nav-item" style={navBtn}>›</button>
-        <button onClick={()=>setCalDate(today)} style={{...navBtn,width:"auto",padding:"0 16px",fontSize:12,fontWeight:700}}>Hoy</button>
-        <input type="date" value={calDate} onChange={e=>setCalDate(e.target.value)} style={{...navBtn,width:"auto",padding:"0 12px",fontSize:12,fontWeight:600,color:"#0f172a"}}/>
-      </div>
-
-      {/* Day count */}
-      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
-        <div style={{width:4,height:18,background:"linear-gradient(180deg,#1e3a8a,#2563eb)",borderRadius:2}}/>
-        <span style={{color:"#1e3a8a",fontSize:13,fontWeight:800,letterSpacing:2}}>AGENDA DEL DÍA</span>
-        {dayBookings.length>0&&<span style={{background:"#2563eb",color:"#fff",borderRadius:10,padding:"1px 8px",fontSize:10,fontWeight:700}}>{dayBookings.length} viaje{dayBookings.length!==1?"s":""}</span>}
-      </div>
-
-      {/* Hourly grid */}
-      <div style={{background:"#ffffff",borderRadius:20,border:"2px solid #e2e8f0",overflow:"hidden",boxShadow:"0 2px 12px rgba(0,0,0,0.04)"}}>
-        {hours.map(h=>{
-          const hStr=String(h).padStart(2,"0")+":00";
-          const trips=dayBookings.filter(b=>{
-            const startM=t2m(b.time);
-            const endM=startM+TRIP_DURATION;
-            const slotStart=h*60, slotEnd=(h+1)*60;
-            return startM<slotEnd&&endM>slotStart;
-          });
-          const occupied=trips.length>0;
-          return(
-            <div key={h} style={{display:"flex",alignItems:"stretch",borderBottom:"1px solid #f1f5f9",minHeight:60,background:occupied?"#f8fafc":"transparent"}}>
-              <div style={{width:64,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",borderRight:"1px solid #f1f5f9"}}>
-                <span style={{color:"#94a3b8",fontSize:12,fontWeight:700}}>{hStr}</span>
-              </div>
-              <div style={{flex:1,padding:"8px 14px",display:"flex",flexDirection:"column",justifyContent:"center",gap:6}}>
-                {occupied?trips.map(trip=>(
-                  <div key={trip.id} className="row-hover" onClick={()=>onSelect(trip)} style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer",padding:"8px 12px",borderRadius:10,background:"#ffffff",border:`1.5px solid ${sColor(trip.status)}33`}}>
-                    <span style={{width:8,height:8,borderRadius:"50%",background:sColor(trip.status),flexShrink:0}}/>
-                    <span style={{flex:1,minWidth:0,color:"#0f172a",fontSize:13,fontWeight:700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{trip.guest}</span>
-                    <span style={{color:"#64748b",fontSize:11,flexShrink:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:180}}>{trip.origin} → {trip.destination}</span>
-                    <span style={{color:"#1e3a8a",fontSize:12,fontWeight:700,flexShrink:0}}>{trip.time}</span>
-                    <span style={{fontSize:10,padding:"2px 9px",borderRadius:6,background:sColor(trip.status)+"22",color:sColor(trip.status),fontWeight:700,flexShrink:0,whiteSpace:"nowrap"}}>{sLabel(trip.status)}</span>
-                    <span style={{color:"#2563eb",fontSize:13,flexShrink:0}}>›</span>
-                  </div>
-                )):(
-                  <span style={{color:"#cbd5e1",fontSize:12}}>Libre</span>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// ─── MODAL OVERLAY (helper) ────────────────────────────────────────────────────
-function ModalOverlay({onClose,children,maxWidth=440}){
-  return(
-    <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(15,23,42,0.55)",zIndex:2000,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
-      <div onClick={e=>e.stopPropagation()} style={{background:"#ffffff",borderRadius:20,padding:24,width:"100%",maxWidth,boxShadow:"0 20px 60px rgba(0,0,0,0.25)",maxHeight:"90vh",overflowY:"auto"}}>
-        {children}
-      </div>
-    </div>
-  );
-}
-
-// ─── SERVICE STATUS MODAL ───────────────────────────────────────────────────────
-function ServiceModal({isOffline,returnDateDraft,setReturnDateDraft,lastActiveDraft,setLastActiveDraft,onClose,onSetService}){
-  const inputStyle={width:"100%",background:"#f8fafc",border:"2px solid #e2e8f0",borderRadius:10,color:"#0f172a",fontSize:14,fontWeight:700,padding:"12px 14px",outline:"none",colorScheme:"light",boxSizing:"border-box"};
-  return(
-    <ModalOverlay onClose={onClose}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16}}>
-        <div style={{color:"#1e3a8a",fontSize:16,fontWeight:800}}>⚙️ Estado de servicio</div>
-        <button onClick={onClose} style={{background:"#f1f5f9",border:"none",borderRadius:8,padding:"4px 10px",color:"#64748b",fontSize:12,cursor:"pointer"}}>✕</button>
-      </div>
-      {isOffline?(
-        <div>
-          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:18,padding:"14px",background:"#fff5f5",borderRadius:14,border:"2px solid #ef444433"}}>
-            <div style={{width:40,height:40,borderRadius:12,background:"#fee2e2",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>🔴</div>
-            <div>
-              <div style={{color:"#ef4444",fontSize:14,fontWeight:800}}>FUERA DE SERVICIO</div>
-              <div style={{color:"#64748b",fontSize:11}}>Actualiza tus fechas de disponibilidad</div>
-            </div>
-          </div>
-          <div style={{marginBottom:14}}>
-            <label style={{color:"#1e3a8a",fontSize:10,letterSpacing:2,fontWeight:800,display:"block",marginBottom:6}}>FECHA DE REINCORPORACIÓN</label>
-            <input type="date" value={returnDateDraft} onChange={e=>setReturnDateDraft(e.target.value)} style={inputStyle}/>
-          </div>
-          <div style={{marginBottom:18}}>
-            <label style={{color:"#1e3a8a",fontSize:10,letterSpacing:2,fontWeight:800,display:"block",marginBottom:6}}>ÚLTIMO DÍA OPERATIVO</label>
-            <input type="date" value={lastActiveDraft} onChange={e=>setLastActiveDraft(e.target.value)} style={inputStyle}/>
-          </div>
-          <button onClick={()=>onSetService({status:"offline",returnDate:returnDateDraft,lastActiveDate:lastActiveDraft})} style={{width:"100%",background:"#f8fafc",border:"2px solid #ef444433",borderRadius:12,padding:"13px 0",color:"#ef4444",fontSize:14,fontWeight:700,cursor:"pointer",marginBottom:10}}>Actualizar fechas</button>
-          <button onClick={()=>onSetService({status:"online",returnDate:"",lastActiveDate:""})} style={{width:"100%",background:"linear-gradient(135deg,#16a34a,#22c55e)",border:"none",borderRadius:12,padding:"14px 0",color:"#ffffff",fontSize:14,fontWeight:700,cursor:"pointer",boxShadow:"0 4px 12px rgba(34,197,94,0.3)"}}>🟢 Volver a EN SERVICIO</button>
-        </div>
-      ):(
-        <div>
-          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:18,padding:"14px",background:"#f0fdf4",borderRadius:14,border:"2px solid #22c55e33"}}>
-            <div style={{width:40,height:40,borderRadius:12,background:"#dcfce7",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>🟢</div>
-            <div>
-              <div style={{color:"#15803d",fontSize:14,fontWeight:800}}>EN SERVICIO</div>
-              <div style={{color:"#64748b",fontSize:11}}>Planifica tu disponibilidad futura</div>
-            </div>
-          </div>
-          <div style={{marginBottom:14}}>
-            <label style={{color:"#1e3a8a",fontSize:10,letterSpacing:2,fontWeight:800,display:"block",marginBottom:6}}>📅 ÚLTIMO DÍA OPERATIVO</label>
-            <input type="date" value={lastActiveDraft} onChange={e=>setLastActiveDraft(e.target.value)} style={{...inputStyle,background:"#eff6ff",border:"2px solid #2563eb"}}/>
-          </div>
-          <div style={{marginBottom:18}}>
-            <label style={{color:"#64748b",fontSize:10,letterSpacing:2,fontWeight:700,display:"block",marginBottom:6}}>FECHA DE REGRESO (opcional)</label>
-            <input type="date" value={returnDateDraft} onChange={e=>setReturnDateDraft(e.target.value)} style={inputStyle}/>
-          </div>
-          <button onClick={()=>onSetService({status:"online",returnDate:returnDateDraft,lastActiveDate:lastActiveDraft})} style={{width:"100%",background:"linear-gradient(135deg,#1e3a8a,#2563eb)",border:"none",borderRadius:12,padding:"14px 0",color:"#ffffff",fontSize:14,fontWeight:700,cursor:"pointer",marginBottom:10,boxShadow:"0 4px 12px rgba(37,99,235,0.3)"}}>💾 Publicar fecha</button>
-          <button onClick={()=>onSetService({status:"offline",returnDate:returnDateDraft,lastActiveDate:lastActiveDraft})} style={{width:"100%",background:"#fff5f5",border:"2px solid #ef444433",borderRadius:12,padding:"12px 0",color:"#ef4444",fontSize:13,fontWeight:700,cursor:"pointer"}}>🔴 Marcar FUERA DE SERVICIO</button>
-        </div>
-      )}
-    </ModalOverlay>
-  );
-}
-
-// ─── PRICE CONFIG MODAL ──────────────────────────────────────────────────────────
-function PriceConfigModal({draftPriceClient,setDraftPriceClient,draftPriceRecep,setDraftPriceRecep,onClose,onSave}){
-  return(
-    <ModalOverlay onClose={onClose} maxWidth={380}>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
-        <div>
-          <div style={{color:"#0f172a",fontSize:16,fontWeight:800}}>⚙️ Precio por km</div>
-          <div style={{color:"#64748b",fontSize:11,marginTop:2}}>Se aplica en todos los cálculos automáticos</div>
-        </div>
-        <button onClick={onClose} style={{background:"#f1f5f9",border:"none",borderRadius:8,padding:"4px 10px",color:"#64748b",fontSize:12,cursor:"pointer"}}>✕</button>
-      </div>
-      <div style={{marginBottom:16}}>
-        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
-          <span style={{background:"#2563eb18",border:"1px solid #2563eb55",borderRadius:6,padding:"2px 8px",color:"#2563eb",fontSize:10,fontWeight:700}}>📱 VELO APP</span>
-        </div>
-        <div style={{display:"flex",alignItems:"center",gap:8}}>
-          <input type="number" step="0.05" min="1" max="20" value={draftPriceClient} onChange={e=>setDraftPriceClient(e.target.value)} style={{flex:1,background:"#f8fafc",border:"1.5px solid #2563eb55",borderRadius:10,color:"#0f172a",fontSize:20,fontWeight:700,padding:"10px 14px",outline:"none",textAlign:"center"}}/>
-          <span style={{color:"#64748b",fontSize:14}}>€/km</span>
-        </div>
-        {draftPriceClient&&<div style={{color:"#2563eb",fontSize:10,marginTop:4}}>Ej. 30km → {Math.max(30,Math.round(30*Number(draftPriceClient)*100)/100)} €</div>}
-      </div>
-      <div style={{marginBottom:24}}>
-        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
-          <span style={{background:"#1e3a8a18",border:"1px solid #1e3a8a44",borderRadius:6,padding:"2px 8px",color:"#1e3a8a",fontSize:10,fontWeight:700}}>🏢 V. TRANSFER</span>
-        </div>
-        <div style={{display:"flex",alignItems:"center",gap:8}}>
-          <input type="number" step="0.05" min="1" max="20" value={draftPriceRecep} onChange={e=>setDraftPriceRecep(e.target.value)} style={{flex:1,background:"#f8fafc",border:"1.5px solid #2563eb44",borderRadius:10,color:"#0f172a",fontSize:20,fontWeight:700,padding:"10px 14px",outline:"none",textAlign:"center"}}/>
-          <span style={{color:"#64748b",fontSize:14}}>€/km</span>
-        </div>
-        {draftPriceRecep&&<div style={{color:"#2563eb",fontSize:10,marginTop:4}}>Ej. 30km → {Math.max(30,Math.round(30*Number(draftPriceRecep)*100)/100)} €</div>}
-      </div>
-      <div style={{display:"flex",gap:8}}>
-        <button onClick={onClose} style={{flex:1,background:"#f1f5f9",border:"1px solid #e2e8f0",borderRadius:10,padding:"11px 0",color:"#64748b",fontSize:12,fontWeight:600,cursor:"pointer"}}>Cancelar</button>
-        <button onClick={onSave} style={{flex:2,background:"linear-gradient(135deg,#22c55e,#16a34a)",border:"none",borderRadius:10,padding:"11px 0",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer"}}>✓ Guardar</button>
-      </div>
-    </ModalOverlay>
-  );
-}
-
-// ─── NOTE MODAL (nota privada) ───────────────────────────────────────────────────
-function NoteModal({booking,onSave,onClose}){
-  const [draft,setDraft]=useState(booking.driverNote||"");
-  return(
-    <ModalOverlay onClose={onClose}>
-      <div style={{color:"#16a34a",fontSize:11,letterSpacing:3,fontWeight:800,marginBottom:4}}>📝 NOTA PRIVADA</div>
-      <div style={{color:"#0f172a",fontSize:16,fontWeight:800,marginBottom:2}}>{booking.guest}</div>
-      <div style={{color:"#64748b",fontSize:11,marginBottom:16}}>{booking.date} · {booking.time}</div>
-      <textarea value={draft} onChange={e=>setDraft(e.target.value)} placeholder="Solo tú puedes ver esta nota. Útil para aparcamiento, instrucciones especiales, detalles del cliente..." rows={5} style={{width:"100%",background:"#f8fafc",border:"2px solid #e2e8f0",borderRadius:10,color:"#0f172a",fontSize:13,padding:"12px 14px",outline:"none",resize:"none",boxSizing:"border-box",marginBottom:16}}/>
-      <div style={{display:"flex",gap:8}}>
-        <button onClick={()=>onSave(booking.id,draft)} style={{flex:2,background:"linear-gradient(135deg,#22c55e,#16a34a)",border:"none",borderRadius:12,padding:"13px 0",color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer"}}>Guardar nota</button>
-        {booking.driverNote&&<button onClick={()=>onSave(booking.id,"")} style={{flex:1,background:"#f1f5f9",border:"1px solid #ef444433",borderRadius:12,padding:"13px 0",color:"#ef4444",fontSize:13,fontWeight:600,cursor:"pointer"}}>Eliminar</button>}
-      </div>
-    </ModalOverlay>
-  );
-}
-
-// ─── DOCUMENT VIEWER MODAL (hoja de ruta) ────────────────────────────────────────
-function DocModal({booking,onClose}){
-  const doc=booking.routeDoc;
-  const isPdf=doc?.type==="application/pdf"||(doc?.name||"").toLowerCase().endsWith(".pdf");
-  return(
-    <ModalOverlay onClose={onClose} maxWidth={680}>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
-        <div>
-          <div style={{color:"#2563eb",fontSize:11,letterSpacing:2,marginBottom:2}}>HOJA DE RUTA</div>
-          <div style={{color:"#0f172a",fontSize:14,fontWeight:800}}>{booking.guest}</div>
-          <div style={{color:"#64748b",fontSize:11}}>{booking.date} · {booking.time}</div>
-        </div>
-        <div style={{display:"flex",gap:8}}>
-          <a href={doc?.data} download={doc?.name||"hoja-de-ruta"} style={{background:"linear-gradient(135deg,#3b82f6,#1d4ed8)",border:"none",borderRadius:8,padding:"8px 14px",color:"#fff",fontSize:12,fontWeight:700,textDecoration:"none"}}>⬇ Descargar</a>
-          <button onClick={onClose} style={{background:"#f1f5f9",border:"1px solid #e2e8f0",borderRadius:8,color:"#64748b",fontSize:13,padding:"8px 14px",cursor:"pointer"}}>✕</button>
-        </div>
-      </div>
-      <div style={{background:"#f8fafc",borderRadius:12,padding:8,minHeight:380,display:"flex",alignItems:"center",justifyContent:"center"}}>
-        {isPdf?(
-          <iframe src={doc?.data} style={{width:"100%",height:480,border:"none",borderRadius:8}} title="Hoja de Ruta"/>
-        ):(
-          <img src={doc?.data} alt="Hoja de Ruta" style={{maxWidth:"100%",maxHeight:480,objectFit:"contain",borderRadius:8}}/>
-        )}
-      </div>
-      <div style={{textAlign:"center",marginTop:10,color:"#94a3b8",fontSize:10}}>Mantén esta pantalla abierta para mostrarla en un control policial</div>
-    </ModalOverlay>
-  );
-}
-
-// ─── REJECT MODAL (motivo de rechazo) ────────────────────────────────────────────
-function RejectModal({booking,onReject,onClose}){
-  return(
-    <ModalOverlay onClose={onClose}>
-      <div style={{color:"#ef4444",fontSize:11,fontWeight:800,letterSpacing:2,marginBottom:6}}>MOTIVO DE RECHAZO</div>
-      <div style={{color:"#0f172a",fontSize:18,fontWeight:800,marginBottom:2}}>{booking.guest}</div>
-      <div style={{color:"#64748b",fontSize:12,marginBottom:18}}>{booking.date} · {booking.time} · {booking.hotel}</div>
-      <div style={{display:"flex",flexDirection:"column",gap:8}}>
-        {REJECTION_REASONS.map(r=>(
-          <button key={r.id} onClick={()=>onReject(booking.id,r.label)} style={{display:"flex",alignItems:"center",gap:12,background:"#fff5f5",border:"2px solid #ef444433",borderRadius:12,padding:"13px 16px",cursor:"pointer",textAlign:"left"}}>
-            <span style={{color:"#0f172a",fontSize:13,fontWeight:600}}>{r.label}</span>
-          </button>
-        ))}
-      </div>
-      <button onClick={onClose} style={{width:"100%",marginTop:14,background:"#f8fafc",border:"1.5px solid #e2e8f0",borderRadius:10,padding:"12px 0",color:"#64748b",fontSize:13,fontWeight:600,cursor:"pointer"}}>Cancelar</button>
-    </ModalOverlay>
-  );
-}
-
-// ─── COMMISSION PAY MODAL ─────────────────────────────────────────────────────────
-function CommissionPayModal({booking,fmt,onPay,onClose}){
-  const [proof,setProof]=useState(null);
-  const isMulti=!!booking._empAllPending;
-  const pendingTrips=isMulti?booking._empAllPending:[booking];
-  const totalComm=isMulti?booking._totalComm:Number(booking.fare||0)*CR;
-  const empName=isMulti?booking._empName:booking.hotel;
-
-  const handleFile=e=>{
-    const file=e.target.files[0];
-    if(!file)return;
-    const reader=new FileReader();
-    reader.onload=ev=>setProof(ev.target.result);
-    reader.readAsDataURL(file);
-  };
-  const handleConfirm=()=>{
-    pendingTrips.forEach(t=>onPay(t.id,proof||"confirmed"));
-    onClose();
-  };
-
-  return(
-    <ModalOverlay onClose={onClose} maxWidth={420}>
-      <div style={{color:"#2563eb",fontSize:11,letterSpacing:3,fontWeight:800,marginBottom:6}}>REGISTRAR PAGO DE COMISIÓN</div>
-      <div style={{color:"#0f172a",fontSize:16,fontWeight:800,marginBottom:14}}>{empName}</div>
-      <div style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:10,padding:"12px 16px",marginBottom:16}}>
-        {pendingTrips.map(t=>(
-          <div key={t.id} style={{display:"flex",justifyContent:"space-between",marginBottom:6,paddingBottom:6,borderBottom:"1px solid #e2e8f0"}}>
-            <span style={{color:"#64748b",fontSize:12}}>{t.guest} · {t.time}</span>
-            <span style={{color:"#0f172a",fontSize:12,fontWeight:600}}>{fmt(Number(t.fare||0)*CR)} €</span>
-          </div>
-        ))}
-        <div style={{display:"flex",justifyContent:"space-between",paddingTop:6}}>
-          <span style={{color:"#2563eb",fontSize:14,fontWeight:700}}>Total comisión a pagar</span>
-          <span style={{color:"#2563eb",fontSize:20,fontWeight:800}}>{fmt(totalComm)} €</span>
-        </div>
-      </div>
-      <div style={{marginBottom:16}}>
-        <div style={{color:"#64748b",fontSize:11,letterSpacing:2,marginBottom:8}}>ADJUNTAR COMPROBANTE (opcional)</div>
-        <label style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,background:"#f8fafc",border:`1px dashed ${proof?"#2563eb":"#e2e8f0"}`,borderRadius:10,padding:"14px 0",cursor:"pointer"}}>
-          <input type="file" accept="image/*" onChange={handleFile} style={{display:"none"}}/>
-          {proof?<img src={proof} alt="comprobante" style={{maxHeight:100,borderRadius:8,objectFit:"contain"}}/>:<span style={{color:"#64748b",fontSize:13}}>📎 Toca para adjuntar imagen</span>}
-        </label>
-      </div>
-      <button onClick={handleConfirm} style={{width:"100%",background:"linear-gradient(135deg,#22c55e,#16a34a)",border:"none",borderRadius:12,padding:"14px 0",color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer"}}>✓ Marcar como PAGADA</button>
-      <button onClick={onClose} style={{width:"100%",marginTop:8,background:"transparent",border:"none",color:"#64748b",fontSize:13,cursor:"pointer",padding:"8px 0"}}>Cancelar</button>
-    </ModalOverlay>
   );
 }
 
